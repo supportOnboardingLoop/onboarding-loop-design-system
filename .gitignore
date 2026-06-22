@@ -3,3 +3,16 @@ dist/
 .DS_Store
 *.log
 .vercel/
+
+# design-sync (claude.ai/design)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+.design-sync/ol-compiled.css
+# generated TypeScript declarations (emitted by .design-sync/tsconfig.build.json)
+/index.d.ts
+/components/*.d.ts
+/lib/*.d.ts
+.design-sync/ol-styles.css

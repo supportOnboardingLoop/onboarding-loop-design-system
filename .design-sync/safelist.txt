@@ -1,0 +1,45 @@
+OL design-system utility safelist. Tailwind v4 tree-shakes to used classes;
+claude.ai/design ships only this compiled CSS (no Tailwind runtime), so these
+OL-token-backed utilities are emitted here for the design agent's own layout.
+
+Layout / flexbox / grid
+flex inline-flex grid block inline-block hidden contents
+flex-col flex-row flex-wrap flex-1 flex-none shrink-0 grow
+items-center items-start items-end items-baseline items-stretch
+justify-center justify-between justify-start justify-end justify-around
+self-start self-center self-end
+grid-cols-1 grid-cols-2 grid-cols-3 grid-cols-4
+col-span-1 col-span-2 col-span-full
+
+Gap and spacing
+gap-1 gap-2 gap-3 gap-4 gap-5 gap-6 gap-8 gap-10 gap-12
+gap-x-2 gap-x-3 gap-x-4 gap-y-2 gap-y-3 gap-y-4
+p-0 p-1 p-2 p-3 p-4 p-5 p-6 p-8 p-10 p-12
+px-2 px-3 px-4 px-5 px-6 px-8 py-1 py-2 py-3 py-4 py-5 py-6 py-8
+pt-1 pt-2 pt-4 pt-6 pb-1 pb-2 pb-4 pb-6 pl-2 pl-4 pr-2 pr-4
+m-0 mx-auto my-2 my-4 mt-1 mt-2 mt-3 mt-4 mt-6 mt-8 mb-1 mb-2 mb-3 mb-4 mb-6 mb-8
+
+Sizing
+w-full w-fit w-auto h-full h-auto h-screen size-full min-w-0 min-h-0
+max-w-xs max-w-sm max-w-md max-w-lg max-w-xl max-w-2xl max-w-3xl max-w-full
+
+Background (semantic OL roles)
+bg-background bg-card bg-popover bg-primary bg-secondary bg-muted bg-accent bg-destructive bg-transparent
+
+Text color (semantic OL roles)
+text-foreground text-card-foreground text-popover-foreground text-muted-foreground
+text-primary text-primary-foreground text-secondary-foreground text-accent-foreground text-destructive
+
+Type scale and weight (OL Inter scale)
+text-xs text-sm text-base text-lg text-xl text-2xl text-3xl
+font-normal font-medium font-semibold font-bold
+text-left text-center text-right leading-relaxed leading-snug tracking-tight truncate
+
+Borders, radius, shadow
+border border-0 border-t border-b border-l border-r border-border border-input
+rounded-sm rounded-md rounded-lg rounded-xl rounded-full rounded-none
+shadow-sm shadow
+
+Misc
+overflow-hidden overflow-auto overflow-y-auto relative absolute sticky
+top-0 left-0 right-0 bottom-0 z-10 z-50 cursor-pointer select-none

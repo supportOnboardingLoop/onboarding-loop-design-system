@@ -1,0 +1,39 @@
+{
+  "pkg": "@onboarding-loop/design-system",
+  "globalName": "OnboardingLoop",
+  "shape": "package",
+  "entry": "index.ts",
+  "srcDir": "components",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".design-sync/ol-styles.css",
+  "tokensGlob": ["tokens.css"],
+  "readmeHeader": ".design-sync/conventions.md",
+  "componentSrcMap": {
+    "CardHeader": null,
+    "CardTitle": null,
+    "CardDescription": null,
+    "CardAction": null,
+    "CardContent": null,
+    "CardFooter": null,
+    "ScrollBar": null,
+    "SelectContent": null,
+    "SelectGroup": null,
+    "SelectItem": null,
+    "SelectLabel": null,
+    "SelectScrollDownButton": null,
+    "SelectScrollUpButton": null,
+    "SelectSeparator": null,
+    "SelectTrigger": null,
+    "SelectValue": null
+  },
+  "overrides": {
+    "Select": { "cardMode": "single", "primaryStory": "Open", "viewport": "360x340" }
+  },
+  "dtsPropsFor": {
+    "Button": "variant?: \"default\" | \"outline\" | \"secondary\" | \"ghost\" | \"destructive\" | \"link\"; size?: \"default\" | \"xs\" | \"sm\" | \"lg\" | \"icon\" | \"icon-xs\" | \"icon-sm\" | \"icon-lg\"; disabled?: boolean; type?: \"button\" | \"submit\" | \"reset\"; onClick?: React.MouseEventHandler<HTMLButtonElement>; className?: string; children?: React.ReactNode; render?: React.ReactElement",
+    "Badge": "variant?: \"neutral\" | \"success\" | \"warning\" | \"error\"; className?: string; children?: React.ReactNode; render?: React.ReactElement",
+    "Separator": "orientation?: \"horizontal\" | \"vertical\"; className?: string",
+    "ScrollArea": "className?: string; style?: React.CSSProperties; children?: React.ReactNode",
+    "Select": "items?: ReadonlyArray<{ label: React.ReactNode; value: string }> | Record<string, React.ReactNode>; defaultValue?: string | null; value?: string | null; onValueChange?: (value: string | null) => void; defaultOpen?: boolean; open?: boolean; onOpenChange?: (open: boolean) => void; disabled?: boolean; required?: boolean; name?: string; children?: React.ReactNode"
+  }
+}

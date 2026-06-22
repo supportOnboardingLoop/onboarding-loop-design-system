@@ -1,0 +1,7 @@
+/* design-sync Tailwind build entry. Imports the repo's real theme layer, then
+   widens content scanning to the components plus the design-agent utility
+   safelist so the shipped CSS carries OL-token-backed utilities for designs.
+   Compiled by: npx @tailwindcss/cli -i .design-sync/tw-build.css -o .design-sync/ol-compiled.css */
+@import "../theme.css";
+@source "../components/**/*.tsx";
+@source "./safelist.txt";

@@ -19,6 +19,7 @@
 
   /* status + utility */
   --ol-success:#5f8d6f;     --ol-warning:#c2883e;  --ol-error:#bf4d43;
+  --ol-info:#5f7e9d;        /* neutral data blue (muted to match success) */
   --ol-focus:#61aaf2;
 
   /* --- Semantic tokens — roles; this is what product UI uses --- */
@@ -33,6 +34,16 @@
   --destructive:var(--ol-error);          --destructive-foreground:var(--ol-white);
   --success:var(--ol-success);
   --warning:var(--ol-warning);
+  --info:var(--ol-info);                  /* neutral data: charts + non-good/bad stats */
+
+  /* Chart palette — categorical. book-cloth is deliberately NOT in here
+     (CTA / clickable only); drop it in by hand as a highlighted series. */
+  --chart-1:var(--ol-info);               /* neutral blue — default single series */
+  --chart-2:var(--ol-kraft);
+  --chart-3:var(--ol-cloud);
+  --chart-4:var(--ol-manilla);
+  --chart-5:var(--ol-slate-light);
+
   --border:var(--ol-ivory);               /* subtle borders + dividers (ivory) */
   --input:var(--ol-ivory-dark);           /* field outlines, a touch stronger so they're findable */
   --ring:var(--ol-focus);
@@ -88,6 +99,15 @@
   --muted:var(--ol-slate-light);          --muted-foreground:var(--ol-cloud);
   --accent:var(--ol-slate-light);         --accent-foreground:var(--ol-ivory-light);
   --destructive:var(--ol-error);          --destructive-foreground:var(--ol-white);
+  --info:var(--ol-info);
+
+  /* Chart palette — dark (cloud-light replaces slate so the 5th stays visible) */
+  --chart-1:var(--ol-info);
+  --chart-2:var(--ol-kraft);
+  --chart-3:var(--ol-cloud);
+  --chart-4:var(--ol-manilla);
+  --chart-5:var(--ol-cloud-light);
+
   --border:rgba(255,255,255,.10);
   --input:rgba(255,255,255,.14);
   --ring:var(--ol-focus);
