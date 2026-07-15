@@ -1,6 +1,6 @@
 {
   "name": "@onboarding-loop/design-system",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Onboarding Loop design system — tokens and base UI primitives, reusable across products.",
   "license": "UNLICENSED",

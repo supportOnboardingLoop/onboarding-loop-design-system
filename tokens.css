@@ -1,114 +1,146 @@
 /* ============================================================
    Onboarding Loop — Design System
-   tokens.css  ·  the single source of truth for OL brand
-
-   Products reference the SEMANTIC tokens only (--primary, --background…).
-   The brand PRIMITIVES (--ol-*) change in one place and everything
-   downstream updates. Semantic names match shadcn so this file drops
-   straight into any shadcn project and into Claude Design /design-sync.
+   tokens.css  ·  GENERATED from the Loop Design System token source
+   Do not edit by hand. Edit tokens/source/*.json in the kit repo and
+   rebuild (node tokens/build.mjs). Products reference the SEMANTIC
+   tokens only (--primary, --background…); the --ol-* primitives feed them.
+   Status set: engine.
    ============================================================ */
 
 :root {
-  /* --- Brand primitives — the raw OL palette (kept deliberately small;
-         add darker/lighter shades only as needed) --- */
-  --ol-slate-dark:#191919;  --ol-slate:#262625;  --ol-slate-light:#40403e;
-  --ol-cloud-dark:#666663;  --ol-cloud:#91918d;  --ol-cloud-light:#bfbfba;
-  --ol-ivory-dark:#e5e4df;  --ol-ivory:#f0f0eb;  --ol-ivory-light:#fafaf7;
-  --ol-book-cloth:#cc785c;  --ol-kraft:#d4a27f;  --ol-manilla:#ebdbbc;
-  --ol-white:#ffffff;       --ol-black:#000000;
+  /* --- Brand primitives (hand-chosen OL palette) --- */
+  --ol-slate-dark: #191919;
+  --ol-slate: #262625;
+  --ol-slate-light: #40403e;
+  --ol-cloud-dark: #666663;
+  --ol-cloud: #91918d;
+  --ol-cloud-light: #bfbfba;
+  --ol-ivory-dark: #e5e4df;
+  --ol-ivory: #f0f0eb;
+  --ol-ivory-light: #fafaf7;
+  --ol-book-cloth: #cc785c;
+  --ol-kraft: #d4a27f;
+  --ol-manilla: #ebdbbc;
+  --ol-white: #ffffff;
+  --ol-black: #000000;
 
-  /* status + utility */
-  --ol-success:#5f8d6f;     --ol-warning:#c2883e;  --ol-error:#bf4d43;
-  --ol-info:#5f7e9d;        /* neutral data blue (muted to match success) */
-  --ol-focus:#61aaf2;
+  /* --- Status + utility (engine set) --- */
+  --ol-success: #4e9961;
+  --ol-warning: #dba659;
+  --ol-error: #b45e55;
+  --ol-info: #3e7bb7;
+  --ol-success-tint: #d8f8e2;
+  --ol-warning-tint: #ffebd5;
+  --ol-error-tint: #ffe9e5;
+  --ol-info-tint: #e2f0ff;
+  --ol-focus: #61aaf2;
 
-  /* --- Semantic tokens — roles; this is what product UI uses --- */
-  --background:var(--ol-ivory-light);     /* warm off-white */
-  --foreground:var(--ol-slate);
-  --card:var(--ol-white);                 --card-foreground:var(--ol-slate);
-  --popover:var(--ol-white);              --popover-foreground:var(--ol-slate);
-  --primary:var(--ol-book-cloth);         --primary-foreground:var(--ol-white);   /* CTAs / clickable only */
-  --secondary:var(--ol-ivory);            --secondary-foreground:var(--ol-slate);
-  --muted:var(--ol-ivory);                --muted-foreground:var(--ol-cloud-dark);
-  --accent:var(--ol-manilla);             --accent-foreground:var(--ol-slate);
-  --destructive:var(--ol-error);          --destructive-foreground:var(--ol-white);
-  --success:var(--ol-success);
-  --warning:var(--ol-warning);
-  --info:var(--ol-info);                  /* neutral data: charts + non-good/bad stats */
+  /* --- Semantic roles — the shadcn contract product UI uses --- */
+  --background: var(--ol-ivory-light);
+  --foreground: var(--ol-slate);
+  --card: var(--ol-white);
+  --card-foreground: var(--ol-slate);
+  --popover: var(--ol-white);
+  --popover-foreground: var(--ol-slate);
+  --primary: var(--ol-book-cloth);
+  --primary-foreground: var(--ol-white);
+  --secondary: var(--ol-ivory);
+  --secondary-foreground: var(--ol-slate);
+  --muted: var(--ol-ivory);
+  --muted-foreground: var(--ol-cloud-dark);
+  --accent: var(--ol-manilla);
+  --accent-foreground: var(--ol-slate);
+  --destructive: var(--ol-error);
+  --destructive-foreground: var(--ol-white);
+  --success: var(--ol-success);
+  --warning: var(--ol-warning);
+  --info: var(--ol-info);
 
-  /* Chart palette — categorical. book-cloth is deliberately NOT in here
-     (CTA / clickable only); drop it in by hand as a highlighted series. */
-  --chart-1:var(--ol-info);               /* neutral blue — default single series */
-  --chart-2:var(--ol-kraft);
-  --chart-3:var(--ol-cloud);
-  --chart-4:var(--ol-manilla);
-  --chart-5:var(--ol-slate-light);
+  /* --- Status tints — pale fills for badges/alerts (match the hand hues) --- */
+  --success-tint: var(--ol-success-tint);
+  --warning-tint: var(--ol-warning-tint);
+  --destructive-tint: var(--ol-error-tint);
+  --info-tint: var(--ol-info-tint);
 
-  --border:var(--ol-ivory);               /* subtle borders + dividers (ivory) */
-  --input:var(--ol-ivory-dark);           /* field outlines, a touch stronger so they're findable */
-  --ring:var(--ol-focus);
+  /* --- Chart palette (categorical; book-cloth deliberately excluded) --- */
+  --chart-1: var(--ol-info);
+  --chart-2: var(--ol-kraft);
+  --chart-3: var(--ol-cloud);
+  --chart-4: var(--ol-manilla);
+  --chart-5: var(--ol-slate-light);
 
-  /* --- Type: Inter only --- */
-  --font-sans:'Inter', system-ui, -apple-system, sans-serif;
+  --border: var(--ol-ivory);
+  --input: var(--ol-ivory-dark);
+  --ring: var(--ol-focus);
 
-  /* Product type scale (dense; body runs 14) */
-  --text-xs:0.75rem;     /* 12 */
-  --text-sm:0.8125rem;   /* 13 */
-  --text-base:0.875rem;  /* 14  — product body */
-  --text-md:1rem;        /* 16 */
-  --text-lg:1.125rem;    /* 18 */
-  --text-xl:1.375rem;    /* 22 */
-  --text-2xl:1.75rem;    /* 28 */
-  --text-3xl:2.25rem;    /* 36 */
+  /* --- Type --- */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --tracking-3xl: -0.03em;
+  --tracking-2xl: -0.03em;
+  --tracking-xl: -0.02em;
+  --tracking-lg: -0.015em;
+  --tracking-md: -0.01em;
+  --tracking-base: 0;
 
-  /* Letter spacing — tighter as type gets larger, 0 at body */
-  --tracking-3xl:-0.03em;
-  --tracking-2xl:-0.03em;
-  --tracking-xl:-0.02em;
-  --tracking-lg:-0.015em;
-  --tracking-md:-0.01em;
-  --tracking-base:0;
+  /* --- Spacing (4px base) --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
-  /* Spacing (4px base) */
-  --space-1:0.25rem; --space-2:0.5rem; --space-3:0.75rem; --space-4:1rem;
-  --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem; --space-10:2.5rem; --space-12:3rem;
+  /* --- Radius --- */
+  --radius-sm: 0.5rem;
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --corner-shape: squircle;
 
-  /* Radius */
-  --radius-sm:0.5rem;    /* 8  */
-  --radius:0.75rem;      /* 12 — base / buttons */
-  --radius-lg:1rem;      /* 16 — cards */
-  --radius-xl:1.5rem;    /* 24 */
-
-  /* Corner smoothing — squircle = superellipse(2), same as Figma iOS 100%.
-     Chromium-only today; falls back to a normal rounded corner elsewhere. */
-  --corner-shape:squircle;
-
-  /* Shadows */
-  --shadow-sm:0 1px 3px rgba(25,25,25,.06), 0 1px 2px rgba(25,25,25,.04);
-  --shadow-card:0 2px 8px rgba(25,25,25,.05), 0 12px 28px -16px rgba(25,25,25,.18);
-  --shadow-lift:0 18px 46px -22px rgba(25,25,25,.34), 0 2px 8px rgba(25,25,25,.06);
+  /* --- Shadows --- */
+  --shadow-sm: 0 1px 3px rgba(25,25,25,.06), 0 1px 2px rgba(25,25,25,.04);
+  --shadow-card: 0 2px 8px rgba(25,25,25,.05), 0 12px 28px -16px rgba(25,25,25,.18);
+  --shadow-lift: 0 18px 46px -22px rgba(25,25,25,.34), 0 2px 8px rgba(25,25,25,.06);
 }
 
 /* --- Dark theme: same roles, remapped primitives --- */
 .dark {
-  --background:var(--ol-slate-dark);      --foreground:var(--ol-ivory-light);
-  --card:var(--ol-slate);                 --card-foreground:var(--ol-ivory-light);
-  --popover:var(--ol-slate);              --popover-foreground:var(--ol-ivory-light);
-  --primary:var(--ol-ivory-light);        --primary-foreground:var(--ol-slate-dark);  /* CTA = ivory fill */
-  --secondary:var(--ol-slate-light);      --secondary-foreground:var(--ol-ivory-light);
-  --muted:var(--ol-slate-light);          --muted-foreground:var(--ol-cloud);
-  --accent:var(--ol-slate-light);         --accent-foreground:var(--ol-ivory-light);
-  --destructive:var(--ol-error);          --destructive-foreground:var(--ol-white);
-  --info:var(--ol-info);
-
-  /* Chart palette — dark (cloud-light replaces slate so the 5th stays visible) */
-  --chart-1:var(--ol-info);
-  --chart-2:var(--ol-kraft);
-  --chart-3:var(--ol-cloud);
-  --chart-4:var(--ol-manilla);
-  --chart-5:var(--ol-cloud-light);
-
-  --border:rgba(255,255,255,.10);
-  --input:rgba(255,255,255,.14);
-  --ring:var(--ol-focus);
+  --background: var(--ol-slate-dark);
+  --foreground: var(--ol-ivory-light);
+  --card: var(--ol-slate);
+  --card-foreground: var(--ol-ivory-light);
+  --popover: var(--ol-slate);
+  --popover-foreground: var(--ol-ivory-light);
+  --primary: var(--ol-ivory-light);
+  --primary-foreground: var(--ol-slate-dark);
+  --secondary: var(--ol-slate-light);
+  --secondary-foreground: var(--ol-ivory-light);
+  --muted: var(--ol-slate-light);
+  --muted-foreground: var(--ol-cloud);
+  --accent: var(--ol-slate-light);
+  --accent-foreground: var(--ol-ivory-light);
+  --destructive: var(--ol-error);
+  --destructive-foreground: var(--ol-white);
+  --success: var(--ol-success);
+  --warning: var(--ol-warning);
+  --info: var(--ol-info);
+  --chart-1: var(--ol-info);
+  --chart-2: var(--ol-kraft);
+  --chart-3: var(--ol-cloud);
+  --chart-4: var(--ol-manilla);
+  --chart-5: var(--ol-cloud-light);
+  --border: rgba(255,255,255,.10);
+  --input: rgba(255,255,255,.14);
+  --ring: var(--ol-focus);
 }
