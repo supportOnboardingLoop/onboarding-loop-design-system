@@ -1,0 +1,95 @@
+/* ============================================================
+   Loop Design System — components/kit.css
+   The handful of rules Tailwind utilities can't express for the
+   ported Blueprint components: icon draw-in + hover-loop keyframes,
+   and the reveal-icon path draw. Imported by theme.css so both the
+   library bundle and the styleguide pick it up. Class names keep the
+   kit's `bp-` prefix to stay recognizable and avoid utility clashes.
+   ============================================================ */
+
+/* ---- sized inline icon box (svg inherits currentColor) ---- */
+.bp-ico { display: inline-grid; place-items: center; color: inherit; flex: none; }
+.bp-ico svg { width: 100%; height: 100%; display: block; }
+
+/* ---- draw-in: the icon strokes itself in (paths need pathLength=1) ---- */
+.bp-ico-draw path {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.2s cubic-bezier(0.4, 0, 0.2, 1) 0.03s;
+}
+.bp-ico-draw path:nth-of-type(2) { transition-delay: 0.06s; }
+.bp-ico-draw path:nth-of-type(3) { transition-delay: 0.11s; }
+.bp-ico-host:hover .bp-ico-draw path,
+.bp-ico-draw.is-drawn path { stroke-dashoffset: 0; }
+
+/* ---- hover loops, matched to the icon (spin stays linear) ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .bp-ico-host:hover .bp-ico-nudge, .bp-ico-nudge.is-anim { animation: bp-ico-nudge 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.26s infinite; }
+  .bp-ico-host:hover .bp-ico-pulse, .bp-ico-pulse.is-anim { animation: bp-ico-pulse 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.26s infinite; }
+  .bp-ico-host:hover .bp-ico-bob,   .bp-ico-bob.is-anim   { animation: bp-ico-bob   0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.26s infinite; }
+  .bp-ico-host:hover .bp-ico-spin,  .bp-ico-spin.is-anim  { animation: bp-ico-spin 1.4s linear 0.26s infinite; }
+  .bp-ico-host:hover .bp-ico-fly,   .bp-ico-fly.is-anim   { animation: bp-ico-fly  0.75s cubic-bezier(0.34, 1.56, 0.64, 1) 0.26s infinite; }
+  .bp-ico-host:hover .bp-ico-pop,   .bp-ico-pop.is-anim   { animation: bp-ico-pop  0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+}
+@keyframes bp-ico-nudge { 0% { transform: translateX(0); } 50% { transform: translateX(3px); } 100% { transform: translateX(0); } }
+@keyframes bp-ico-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.16); } 100% { transform: scale(1); } }
+@keyframes bp-ico-bob   { 0% { transform: translateY(0); } 50% { transform: translateY(2.5px); } 100% { transform: translateY(0); } }
+@keyframes bp-ico-spin  { to { transform: rotate(360deg); } }
+@keyframes bp-ico-fly   { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 50% { transform: translate(4px, -2px) rotate(24deg) scale(1.12); } 100% { transform: translate(0, 0) rotate(0deg) scale(1); } }
+@keyframes bp-ico-pop   { 0% { transform: scale(1); } 45% { transform: scale(1.28); } 100% { transform: scale(1); } }
+
+/* ---- nav / menu row icon: tip left ~30deg on hover, fall back with a bounce ---- */
+@keyframes bp-navicon-tip {
+  0%   { transform: rotate(0deg); }
+  18%  { transform: rotate(-30deg); }
+  42%  { transform: rotate(-30deg); }
+  66%  { transform: rotate(9deg); }
+  80%  { transform: rotate(-4deg); }
+  91%  { transform: rotate(2deg); }
+  100% { transform: rotate(0deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bp-navicon-host:hover .bp-navicon { animation: bp-navicon-tip 0.8s ease-in-out 1; }
+}
+.bp-navicon { transform-origin: 50% 80%; }
+
+/* ---- reveal-icon button: the trailing/leading icon draws itself in as the
+   button widens to show it (paths need pathLength=1) ---- */
+.bp-reveal-ico path {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.2s cubic-bezier(0.4, 0, 0.2, 1) 0.03s;
+}
+.bp-reveal-ico path:nth-of-type(2) { transition-delay: 0.06s; }
+.bp-reveal-ico path:nth-of-type(3) { transition-delay: 0.11s; }
+.group\/button:hover .bp-reveal-ico path { stroke-dashoffset: 0; }
+
+/* reveal-icon slot: collapsed to 0 width until the button is hovered, then
+   slides in with a spring. Trailing (default) slides right; leading slides left. */
+.bp-reveal-slot {
+  flex: none; width: 0; opacity: 0; overflow: hidden;
+  display: grid; place-items: center;
+  transition: width 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+              margin 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+              opacity 0.14s ease;
+}
+.group\/button:hover .bp-reveal-slot { width: 20px; opacity: 1; }
+.group\/button:hover .bp-reveal-slot--trail { margin-left: 6px; }
+.group\/button:hover .bp-reveal-slot--lead { margin-right: 6px; }
+.bp-reveal-slot--sm { }
+.group\/button:hover .bp-reveal-slot--sm { width: 18px; }
+
+/* reveal-label: an icon-only button that grows a label on the LEFT of the icon
+   on hover (e.g. a Send button). Padding + the label's max-width animate; width
+   snaps to auto. Ease-out so the button never momentarily shrinks under the cursor. */
+.bp-reveal-label {
+  gap: 0; padding: 0; width: 34px; overflow: hidden;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease,
+              box-shadow 0.16s ease, transform 0.1s ease,
+              padding 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bp-reveal-label__txt {
+  max-width: 0; opacity: 0; white-space: nowrap; overflow: hidden;
+  transition: max-width 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.14s ease, margin 0.2s ease;
+}
+.bp-reveal-label:hover, .bp-reveal-label.is-hover { width: auto; padding: 0 14px; }
+.bp-reveal-label:hover .bp-reveal-label__txt,
+.bp-reveal-label.is-hover .bp-reveal-label__txt { max-width: 160px; opacity: 1; margin-right: 6px; }

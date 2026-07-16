@@ -12,8 +12,46 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./tokens.css";
+@import "./components/kit.css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------
+   Kit-parity tokens. The ported Blueprint components reference
+   these names the same way the vanilla kit reads --bp-*. Values
+   mirror tokens/contract.css, neutralized to the OL brand:
+   --bp-accent -> --primary, --bp-surface -> --card, tints derived
+   from --primary. Two border weights (kit --bp-border faint vs
+   --bp-border-strong crisp); the motion easings carry verbatim.
+   ------------------------------------------------------------ */
+:root {
+  /* Finessed neutral surfaces + borders, matched to the starter-layout slice
+     (the current source of truth). Solid greys, absolutely neutral. */
+  --border: #e9e9e9;              /* kit --n-border: card / panel / divider hairline */
+  --border-strong: #dcdcdc;       /* kit --bp-border-strong: crisp control / field / menu edge */
+  --fill: #f6f6f6;                /* kit --n-fill: hover / soft fill */
+  --canvas: #f9f9f9;              /* kit --n-canvas: the grey content canvas */
+  --accent-tint: #f0f0f0;         /* kit --bp-accent-tint: selected fills, nav-active (neutral) */
+  --dash: #c8c4c0;                /* dashed ring on an unchecked item */
+  --done-foreground: #a4a7ae;     /* completed, struck-through label */
+  /* live font picker overrides this; falls back to Inter */
+  --font-family: "Inter", system-ui, -apple-system, sans-serif;
+  /* motion (kit contract, carried verbatim) */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  --ease-back: cubic-bezier(0.68, -0.6, 0.32, 1.6);   /* ease-in-out-back: bounce in + out */
+  --dur-snap: 0.3s;
+}
+.dark {
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --fill: rgba(255, 255, 255, 0.06);
+  --canvas: var(--ol-slate-dark);
+  --accent-tint: rgba(255, 255, 255, 0.10);
+  --dash: rgba(255, 255, 255, 0.22);
+  --done-foreground: var(--ol-cloud);
+}
 
 @theme inline {
   /* Colours — map Tailwind's --color-* to our semantic tokens */
@@ -35,19 +73,45 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-dash: var(--dash);
+  --color-done: var(--done-foreground);
+  --color-accent-tint: var(--accent-tint);
+  --color-fill: var(--fill);       /* hover/soft fill (kit --n-fill) */
+  --color-canvas: var(--canvas);   /* the grey content canvas (kit --n-canvas) */
 
-  /* Fonts (Inter; literal to avoid a self-referential --font-* clash) */
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-heading: "Inter", system-ui, -apple-system, sans-serif;
+  /* Fonts — --font-family is themeable (the styleguide's live font picker sets it) */
+  --font-sans: var(--font-family, "Inter", system-ui, -apple-system, sans-serif);
+  --font-heading: var(--font-family, "Inter", system-ui, -apple-system, sans-serif);
 
-  /* Radius scale → Tailwind rounded-* (values mirror tokens.css) */
+  /* Radius scale → Tailwind rounded-* (values mirror tokens.css).
+     Kit mapping: controls (button/input/select/menu) = rounded-lg 16;
+     cards/headers/surface = rounded-xl 24. */
   --radius-sm: 0.5rem;   /* 8  */
-  --radius-md: 0.75rem;  /* 12 — buttons, inputs */
-  --radius-lg: 1rem;     /* 16 — cards */
-  --radius-xl: 1.5rem;   /* 24 */
+  --radius-md: 0.75rem;  /* 12 */
+  --radius-lg: 1rem;     /* 16 — controls */
+  --radius-xl: 1.5rem;   /* 24 — cards */
+
+  /* Type scale → Tailwind text-* (mirror tokens.css). base = 14px, the kit's
+     default control/body/label size; xs 12 is captions only. */
+  --text-xs: 0.75rem;    /* 12 */
+  --text-sm: 0.8125rem;  /* 13 */
+  --text-base: 0.875rem; /* 14 — default */
+  --text-md: 1rem;       /* 16 */
+  --text-lg: 1.125rem;   /* 18 */
+  --text-xl: 1.375rem;   /* 22 */
+  --text-2xl: 1.75rem;   /* 28 */
+  --text-3xl: 2.25rem;   /* 36 */
+
+  /* Elevation → Tailwind shadow-* (kit values). control = raised buttons /
+     dropdowns; pop = popovers/menus (hard edge); card = 3-layer soft. */
+  --shadow-control: 0 2px 4px -1px rgb(10 13 18 / 0.08);
+  --shadow-pop: 0 2px 8px rgb(10 13 18 / 0.22), 0 0 0 1px rgb(10 13 18 / 0.04);
+  --shadow-card: 0 12px 16px -4px rgb(10 13 18 / 0.08), 0 4px 6px -2px rgb(10 13 18 / 0.03), 0 2px 2px -1px rgb(10 13 18 / 0.04);
 }
 
 @layer base {
@@ -56,6 +120,6 @@
     corner-shape: var(--corner-shape); /* squircle in Chromium; rounded fallback elsewhere */
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans text-base;
   }
 }
