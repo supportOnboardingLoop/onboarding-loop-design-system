@@ -1,0 +1,8 @@
+/* Styleguide entry stylesheet.
+   Pulls in the design system's real Tailwind layer (theme.css -> tailwindcss +
+   tokens.css + the @theme bridge), then tells Tailwind to scan both the real
+   component source and the styleguide pages for utility classes. */
+@import "../../theme.css";
+
+@source "../../components/**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";

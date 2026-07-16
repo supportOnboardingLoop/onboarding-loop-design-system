@@ -10,14 +10,14 @@
 :root {
   /* --- Brand primitives (hand-chosen OL palette) --- */
   --ol-slate-dark: #191919;
-  --ol-slate: #262625;
-  --ol-slate-light: #40403e;
-  --ol-cloud-dark: #666663;
-  --ol-cloud: #91918d;
-  --ol-cloud-light: #bfbfba;
-  --ol-ivory-dark: #e5e4df;
-  --ol-ivory: #f0f0eb;
-  --ol-ivory-light: #fafaf7;
+  --ol-slate: #262626;
+  --ol-slate-light: #404040;
+  --ol-cloud-dark: #666666;
+  --ol-cloud: #919191;
+  --ol-cloud-light: #bfbfbf;
+  --ol-ivory-dark: #e5e5e5;
+  --ol-ivory: #f0f0f0;
+  --ol-ivory-light: #fafafa;
   --ol-book-cloth: #cc785c;
   --ol-kraft: #d4a27f;
   --ol-manilla: #ebdbbc;
@@ -42,13 +42,13 @@
   --card-foreground: var(--ol-slate);
   --popover: var(--ol-white);
   --popover-foreground: var(--ol-slate);
-  --primary: var(--ol-book-cloth);
+  --primary: var(--ol-slate);
   --primary-foreground: var(--ol-white);
   --secondary: var(--ol-ivory);
   --secondary-foreground: var(--ol-slate);
   --muted: var(--ol-ivory);
   --muted-foreground: var(--ol-cloud-dark);
-  --accent: var(--ol-manilla);
+  --accent: var(--ol-ivory-dark);
   --accent-foreground: var(--ol-slate);
   --destructive: var(--ol-error);
   --destructive-foreground: var(--ol-white);
@@ -63,15 +63,15 @@
   --info-tint: var(--ol-info-tint);
 
   /* --- Chart palette (categorical; book-cloth deliberately excluded) --- */
-  --chart-1: var(--ol-info);
-  --chart-2: var(--ol-kraft);
+  --chart-1: var(--ol-slate);
+  --chart-2: var(--ol-cloud-dark);
   --chart-3: var(--ol-cloud);
-  --chart-4: var(--ol-manilla);
-  --chart-5: var(--ol-slate-light);
+  --chart-4: var(--ol-cloud-light);
+  --chart-5: var(--ol-ivory-dark);
 
   --border: var(--ol-ivory);
   --input: var(--ol-ivory-dark);
-  --ring: var(--ol-focus);
+  --ring: var(--ol-cloud-dark);
 
   /* --- Type --- */
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -135,12 +135,12 @@
   --success: var(--ol-success);
   --warning: var(--ol-warning);
   --info: var(--ol-info);
-  --chart-1: var(--ol-info);
-  --chart-2: var(--ol-kraft);
+  --chart-1: var(--ol-ivory-light);
+  --chart-2: var(--ol-cloud-light);
   --chart-3: var(--ol-cloud);
-  --chart-4: var(--ol-manilla);
-  --chart-5: var(--ol-cloud-light);
+  --chart-4: var(--ol-cloud-dark);
+  --chart-5: var(--ol-slate-light);
   --border: rgba(255,255,255,.10);
   --input: rgba(255,255,255,.14);
-  --ring: var(--ol-focus);
+  --ring: var(--ol-cloud-light);
 }
