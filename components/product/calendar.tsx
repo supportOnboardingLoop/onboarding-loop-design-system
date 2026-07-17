@@ -133,15 +133,19 @@ function Calendar({ value, defaultValue, onValueChange, max: maxProp, presets = 
           const rl = inSpan && (col === 0 || isStart)
           const rr = inSpan && (col === 6 || isEnd)
           return (
-            <div
-              key={i}
-              className={cn(
-                "grid h-[38px] place-items-center",
-                inSpan && "bg-accent-tint",
-                rl && "rounded-l-full",
-                rr && "rounded-r-full"
+            <div key={i} className="relative grid h-[38px] place-items-center">
+              {/* the range span: one continuous PILL the height of the day circles (34px),
+                  rounded only at each end / week edge, so the middles connect seamlessly */}
+              {inSpan && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "pointer-events-none absolute inset-x-0 top-1/2 h-[34px] -translate-y-1/2 bg-accent-tint",
+                    rl && "rounded-l-full",
+                    rr && "rounded-r-full"
+                  )}
+                />
               )}
-            >
               <button
                 type="button"
                 disabled={disabled}
@@ -201,7 +205,7 @@ function DateRangePicker({
       <Popover.Trigger
         data-slot="date-range-trigger"
         className={cn(
-          "group/trigger flex h-[34px] w-full items-center gap-2 rounded-lg border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] px-3.5 text-base font-medium text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background]",
+          "group/trigger bp-chev-host flex h-[34px] w-full items-center gap-2 rounded-lg border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] px-3.5 text-base font-medium text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background]",
           "hover:border-[#cfcfcf] hover:bg-[linear-gradient(180deg,#ffffff,#f1f1f1)]",
           "data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]",
           className
@@ -209,11 +213,11 @@ function DateRangePicker({
       >
         <Icon name="calendar" size={18} className="shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-        <Icon name="chevron-down" size={18} className="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[popup-open]/trigger:rotate-180" />
+        <Icon name="chevron-down" size={18} className="bp-chev shrink-0 text-muted-foreground transition-transform duration-200 group-data-[popup-open]/trigger:rotate-180" />
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner sideOffset={6} align="start" className="isolate z-50 outline-none">
-          <Popover.Popup className="origin-[var(--transform-origin)] rounded-xl border border-border-strong bg-popover p-4 shadow-pop outline-none transition-[transform,opacity] data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0 data-[ending-style]:scale-[0.98] data-[ending-style]:opacity-0">
+          <Popover.Popup className="origin-[var(--transform-origin)] rounded-xl border border-border-strong bg-popover p-4 shadow-card outline-none transition-[transform,opacity] data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0 data-[ending-style]:scale-[0.98] data-[ending-style]:opacity-0">
             <Calendar
               value={range}
               max={max}

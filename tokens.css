@@ -1,30 +1,81 @@
 /* ============================================================
    Onboarding Loop — Design System
-   tokens.css  ·  GENERATED from the Loop Design System token source
-   Do not edit by hand. Edit tokens/source/*.json in the kit repo and
-   rebuild (node tokens/build.mjs). Products reference the SEMANTIC
-   tokens only (--primary, --background…); the --ol-* primitives feed them.
-   Status set: engine.
+   tokens.css  ·  the single source of truth for color roles.
+
+   THREE TIERS, read top to bottom:
+     1. NEUTRAL SCALE  --neutral-0 … --neutral-950, ordered light→dark.
+        One ramp. Every step derives its hue + chroma from the brand
+        (--tint-source) via relative color, so a grey brand stays pure
+        grey and a coloured brand leans the whole ramp a hair toward it.
+        L (lightness) is fixed per step, so the Neutral look is identical
+        to before — only the *hue* responds to the brand.
+     2. LAYOUT ROLES   readable names that map to the interface
+        (--surface, --canvas, --border, --edge, --icon, --text…). This is
+        the vocabulary to reach for. Each points at one scale step.
+     3. SHADCN ALIASES the classic contract (--card, --muted, --accent…)
+        kept so Tailwind utilities (bg-card, text-muted-foreground) keep
+        resolving. Each is just an alias of a role or scale step.
+   Status/utility hues (green/red/amber/blue) are the ONLY chroma the
+   system carries on purpose; they live untouched below the neutrals.
    ============================================================ */
 
 :root {
-  /* --- Brand primitives (hand-chosen OL palette) --- */
-  --ol-slate-dark: #191919;
-  --ol-slate: #262626;
-  --ol-slate-light: #404040;
-  --ol-cloud-dark: #666666;
-  --ol-cloud: #919191;
-  --ol-cloud-light: #bfbfbf;
-  --ol-ivory-dark: #e5e5e5;
-  --ol-ivory: #f0f0f0;
-  --ol-ivory-light: #fafafa;
-  --ol-book-cloth: #cc785c;
-  --ol-kraft: #d4a27f;
-  --ol-manilla: #ebdbbc;
-  --ol-white: #ffffff;
-  --ol-black: #000000;
+  /* === TIER 0 · brand ink + tint source ============================
+     --ink is the one literal the whole neutral system leans on: it is
+     --primary by default AND the default --tint-source. The styleguide
+     (or a product) overrides --primary with a brand hex; paste a hex into
+     --tint to steer the greys somewhere else (e.g. a warm complement to a
+     cool brand). A grey ink → chroma 0 everywhere → dead-neutral greys. */
+  --ink: #262626;
+  --tint-source: var(--tint, var(--primary));
+  --tint-strength: 0.1;   /* share of the brand's chroma the greys carry. 0 = pure neutral */
 
-  /* --- Status + utility (engine set) --- */
+  /* === TIER 1 · neutral scale (light → dark) ======================= */
+  --neutral-0:   #ffffff;  /* pure white — the ONE neutral that never tints (keeps cards white on any brand) */
+  --neutral-12:  oklch(from var(--tint-source) 0.988 calc(c * var(--tint-strength)) h);  /* #fbfbfb  page bg — a step lighter than the canvas/tray */
+  --neutral-25:  oklch(from var(--tint-source) 0.976 calc(c * var(--tint-strength)) h);  /* #f7f7f7  canvas / tray / hover */
+  --neutral-50:  oklch(from var(--tint-source) 0.955 calc(c * var(--tint-strength)) h);  /* #f0f0f0  subtle    */
+  --neutral-100: oklch(from var(--tint-source) 0.934 calc(c * var(--tint-strength)) h);  /* #e9e9e9  border    */
+  --neutral-200: oklch(from var(--tint-source) 0.895 calc(c * var(--tint-strength)) h);  /* #dcdcdc  edge      */
+  --neutral-300: oklch(from var(--tint-source) 0.855 calc(c * var(--tint-strength)) h);  /* #cfcfcf  line      */
+  --neutral-400: oklch(from var(--tint-source) 0.805 calc(c * var(--tint-strength)) h);  /* #bfbfbf            */
+  --neutral-500: oklch(from var(--tint-source) 0.716 calc(c * var(--tint-strength)) h);  /* #a3a3a3  icon      */
+  --neutral-600: oklch(from var(--tint-source) 0.657 calc(c * var(--tint-strength)) h);  /* #919191            */
+  --neutral-700: oklch(from var(--tint-source) 0.556 calc(c * var(--tint-strength)) h);  /* #737373  meta      */
+  --neutral-750: oklch(from var(--tint-source) 0.510 calc(c * var(--tint-strength)) h);  /* #666666  text-muted*/
+  --neutral-800: oklch(from var(--tint-source) 0.372 calc(c * var(--tint-strength)) h);  /* #404040            */
+  --neutral-900: oklch(from var(--tint-source) 0.269 calc(c * var(--tint-strength)) h);  /* #262626  text      */
+  --neutral-950: oklch(from var(--tint-source) 0.213 calc(c * var(--tint-strength)) h);  /* #191919            */
+
+  /* === TIER 2 · layout roles (the readable vocabulary) =============
+     Surfaces & lines — the greys you can point at in the layout:      */
+  --surface:     var(--neutral-0);    /* cards, panels, menus, popovers              */
+  --canvas:      var(--neutral-25);   /* app background  +  row / control hover fill */
+  --subtle:      var(--neutral-50);   /* quiet fills: secondary button, muted chip   */
+  --border:      var(--neutral-100);  /* hairline: card / divider / selected-row ring*/
+  --edge:        var(--neutral-200);  /* crisp control edge: field / button / menu   */
+  /* Text & icons: */
+  --icon:        var(--neutral-500);  /* leading icons  +  section headers           */
+  --text-muted:  var(--neutral-750);  /* secondary + meta text                       */
+  --text:        var(--neutral-900);  /* body ink                                    */
+
+  /* --- Brand primitives kept as aliases so legacy --ol-* refs resolve --- */
+  --ol-white:       var(--neutral-0);
+  --ol-ivory-light: var(--neutral-25);
+  --ol-ivory:       var(--neutral-50);
+  --ol-ivory-dark:  var(--neutral-100);
+  --ol-cloud-light: var(--neutral-400);
+  --ol-cloud:       var(--neutral-600);
+  --ol-cloud-dark:  var(--neutral-750);
+  --ol-slate-light: var(--neutral-800);
+  --ol-slate:       var(--neutral-900);
+  --ol-slate-dark:  var(--neutral-950);
+  --ol-black:       #000000;
+  --ol-book-cloth:  #cc785c;   /* legacy warm; not in the neutral system */
+  --ol-kraft:       #d4a27f;
+  --ol-manilla:     #ebdbbc;
+
+  /* --- Status + utility (engine set) — the only intentional hues --- */
   --ol-success: #4e9961;
   --ol-warning: #dba659;
   --ol-error: #b45e55;
@@ -35,23 +86,26 @@
   --ol-info-tint: #e2f0ff;
   --ol-focus: #61aaf2;
 
-  /* --- Semantic roles — the shadcn contract product UI uses --- */
-  --background: var(--ol-ivory-light);
-  --foreground: var(--ol-slate);
-  --card: var(--ol-white);
-  --card-foreground: var(--ol-slate);
-  --popover: var(--ol-white);
-  --popover-foreground: var(--ol-slate);
-  --primary: var(--ol-slate);
-  --primary-foreground: var(--ol-white);
-  --secondary: var(--ol-ivory);
-  --secondary-foreground: var(--ol-slate);
-  --muted: var(--ol-ivory);
-  --muted-foreground: var(--ol-cloud-dark);
-  --accent: var(--ol-ivory-dark);
-  --accent-foreground: var(--ol-slate);
-  --destructive: var(--ol-error);
-  --destructive-foreground: var(--ol-white);
+  /* === TIER 3 · shadcn aliases (keep Tailwind utilities resolving) === */
+  /* The PAGE background is one step lighter than --canvas, so the Card tray /
+     header / footer (which stay on --canvas) read as one step DARKER than the
+     background: a visible frame, with the white surface wells raised above both. */
+  --background:         var(--neutral-12);
+  --foreground:         var(--text);
+  --card:               var(--surface);
+  --card-foreground:    var(--text);
+  --popover:            var(--surface);
+  --popover-foreground: var(--text);
+  --primary:            var(--ink);          /* the brand — stays a literal, never tint-derived */
+  --primary-foreground: var(--neutral-0);
+  --secondary:          var(--subtle);
+  --secondary-foreground: var(--text);
+  --muted:              var(--subtle);       /* == secondary, by design now */
+  --muted-foreground:   var(--text-muted);
+  --accent:             var(--subtle);       /* neutral hover/active fill for menus */
+  --accent-foreground:  var(--text);
+  --destructive:        var(--ol-error);
+  --destructive-foreground: var(--neutral-0);
   --success: var(--ol-success);
   --warning: var(--ol-warning);
   --info: var(--ol-info);
@@ -63,15 +117,18 @@
   --info-tint: var(--ol-info-tint);
 
   /* --- Chart palette (categorical; book-cloth deliberately excluded) --- */
-  --chart-1: var(--ol-slate);
-  --chart-2: var(--ol-cloud-dark);
-  --chart-3: var(--ol-cloud);
-  --chart-4: var(--ol-cloud-light);
-  --chart-5: var(--ol-ivory-dark);
+  --chart-1: var(--neutral-900);
+  --chart-2: var(--neutral-750);
+  --chart-3: var(--neutral-600);
+  --chart-4: var(--neutral-400);
+  --chart-5: var(--neutral-100);
 
-  --border: var(--ol-ivory);
-  --input: var(--ol-ivory-dark);
-  --ring: var(--ol-cloud-dark);
+  --border-strong: var(--edge);              /* crisp control edge (alias of --edge) */
+  --input:  var(--edge);                     /* field border */
+  --ring:   var(--neutral-750);              /* neutral focus ring */
+  /* brand-tinted selection fill (nav-active, selected card). Carries the brand
+     on purpose; a grey brand yields a light grey. */
+  --accent-tint: color-mix(in srgb, var(--primary) 12%, white);
 
   /* --- Type --- */
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -106,41 +163,59 @@
   --radius: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
+  --radius-card:    2.25rem;  /* 36: the content-card frame (outer tray)   */
+  --radius-surface: 1.875rem; /* 30: the white surface well inside a card   */
   --corner-shape: squircle;
 
   /* --- Shadows --- */
+  --shadow-xs: 0 1px 2px 0 rgb(10 13 18 / .05);  /* the faint lift on a card surface (offset 1, blur 2, 5% black) */
   --shadow-sm: 0 1px 3px rgba(25,25,25,.06), 0 1px 2px rgba(25,25,25,.04);
   --shadow-card: 0 2px 8px rgba(25,25,25,.05), 0 12px 28px -16px rgba(25,25,25,.18);
   --shadow-lift: 0 18px 46px -22px rgba(25,25,25,.34), 0 2px 8px rgba(25,25,25,.06);
 }
 
-/* --- Dark theme: same roles, remapped primitives --- */
+/* --- Dark theme: same roles + scale, remapped lightness. The neutral scale
+   stays absolute (0 = white … 950 = near-black); the ROLES flip to dark
+   steps. Surfaces still take the brand's subtle lean via relative color;
+   borders stay translucent white so they read on any dark surface. --- */
 .dark {
-  --background: var(--ol-slate-dark);
-  --foreground: var(--ol-ivory-light);
-  --card: var(--ol-slate);
-  --card-foreground: var(--ol-ivory-light);
-  --popover: var(--ol-slate);
-  --popover-foreground: var(--ol-ivory-light);
-  --primary: var(--ol-ivory-light);
-  --primary-foreground: var(--ol-slate-dark);
-  --secondary: var(--ol-slate-light);
-  --secondary-foreground: var(--ol-ivory-light);
-  --muted: var(--ol-slate-light);
-  --muted-foreground: var(--ol-cloud);
-  --accent: var(--ol-slate-light);
-  --accent-foreground: var(--ol-ivory-light);
+  --ink: #f7f7f7;   /* dark brand ink → --primary is light */
+
+  --surface:     #262626;   /* cards stay a pure neutral slate; only canvas + lines take the tint */
+  --canvas:      oklch(from var(--tint-source) 0.213 calc(c * var(--tint-strength)) h);  /* slate-dark */
+  --subtle:      oklch(from var(--tint-source) 0.372 calc(c * var(--tint-strength)) h);  /* slate-light*/
+  --border:      rgba(255,255,255,.10);
+  --edge:        rgba(255,255,255,.16);
+  --icon:        oklch(from var(--tint-source) 0.657 calc(c * var(--tint-strength)) h);  /* cloud      */
+  --text-muted:  oklch(from var(--tint-source) 0.720 calc(c * var(--tint-strength)) h);
+  --text:        oklch(from var(--tint-source) 0.965 calc(c * var(--tint-strength)) h);  /* ivory-light*/
+
+  --background:         var(--canvas);
+  --foreground:         var(--text);
+  --card:               var(--surface);
+  --card-foreground:    var(--text);
+  --popover:            var(--surface);
+  --popover-foreground: var(--text);
+  --primary:            var(--ink);
+  --primary-foreground: oklch(from var(--tint-source) 0.213 calc(c * var(--tint-strength)) h);
+  --secondary:          var(--subtle);
+  --secondary-foreground: var(--text);
+  --muted:              var(--subtle);
+  --muted-foreground:   var(--icon);
+  --accent:             var(--subtle);
+  --accent-foreground:  var(--text);
   --destructive: var(--ol-error);
-  --destructive-foreground: var(--ol-white);
+  --destructive-foreground: var(--neutral-0);
   --success: var(--ol-success);
   --warning: var(--ol-warning);
   --info: var(--ol-info);
-  --chart-1: var(--ol-ivory-light);
-  --chart-2: var(--ol-cloud-light);
-  --chart-3: var(--ol-cloud);
-  --chart-4: var(--ol-cloud-dark);
-  --chart-5: var(--ol-slate-light);
-  --border: rgba(255,255,255,.10);
-  --input: rgba(255,255,255,.14);
-  --ring: var(--ol-cloud-light);
+  --chart-1: var(--text);
+  --chart-2: var(--neutral-400);
+  --chart-3: var(--neutral-600);
+  --chart-4: var(--neutral-750);
+  --chart-5: var(--subtle);
+  --border-strong: var(--edge);
+  --input:  rgba(255,255,255,.14);
+  --ring:   var(--neutral-400);
+  --accent-tint: color-mix(in srgb, var(--primary) 22%, transparent);
 }

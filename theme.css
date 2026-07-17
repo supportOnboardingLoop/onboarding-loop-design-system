@@ -13,6 +13,9 @@
 @import "tw-animate-css";
 @import "./tokens.css";
 @import "./components/kit.css";
+@import "./components/chat.css";
+@import "./components/launcher.css";
+@import "./components/workspace.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -25,15 +28,13 @@
    --bp-border-strong crisp); the motion easings carry verbatim.
    ------------------------------------------------------------ */
 :root {
-  /* Finessed neutral surfaces + borders, matched to the starter-layout slice
-     (the current source of truth). Solid greys, absolutely neutral. */
-  --border: #e9e9e9;              /* kit --n-border: card / panel / divider hairline */
-  --border-strong: #dcdcdc;       /* kit --bp-border-strong: crisp control / field / menu edge */
-  --fill: #f6f6f6;                /* kit --n-fill: hover / soft fill */
-  --canvas: #f9f9f9;              /* kit --n-canvas: the grey content canvas */
-  --accent-tint: #f0f0f0;         /* kit --bp-accent-tint: selected fills, nav-active (neutral) */
-  --dash: #c8c4c0;                /* dashed ring on an unchecked item */
-  --done-foreground: #a4a7ae;     /* completed, struck-through label */
+  /* Neutral surfaces/borders now live in tokens.css (the --neutral-* scale +
+     the layout roles --surface/--canvas/--border/--edge). These are the few
+     kit-only aliases that still need a name here, pointed at the roles so they
+     tint with the brand and stay in sync. */
+  --fill: var(--canvas);          /* kit --n-fill: hover / soft fill == the canvas grey */
+  --dash: var(--neutral-300);     /* dashed ring on an unchecked item */
+  --done-foreground: var(--icon); /* completed, struck-through label */
   /* live font picker overrides this; falls back to Inter */
   --font-family: "Inter", system-ui, -apple-system, sans-serif;
   /* motion (kit contract, carried verbatim) */
@@ -42,15 +43,70 @@
   --ease-spring: cubic-bezier(0.68, -0.55, 0.27, 1.55);
   --ease-back: cubic-bezier(0.68, -0.6, 0.32, 1.6);   /* ease-in-out-back: bounce in + out */
   --dur-snap: 0.3s;
+
+  /* ------------------------------------------------------------
+     Control family — the locked-down globals every button-family
+     sibling shares (Button, IconButton, NavItem, dropdown triggers,
+     menu rows, checkbox rows, the in-menu search field). Change one
+     of these and every sibling moves together. The individual
+     siblings tweak only what is genuinely different (shape, chrome).
+     ------------------------------------------------------------ */
+  --ctl-radius: var(--radius-lg);  /* 16 — buttons + menu rows + triggers + search */
+  --ctl-hover: var(--background);  /* quiet hover fill == the (lighter) page background */
+  --ctl-selected: var(--canvas);   /* selected fill == the canvas grey, a step DARKER than hover */
+  --ctl-outline: var(--border);    /* selected-row outline == the card border */
+  --ctl-icon: var(--icon);         /* a leading/standalone icon reads LIGHTER than the label */
+  --ctl-icon-on: var(--primary);   /* on hover / when current it lights up to the BRAND color */
+
+  /* ------------------------------------------------------------
+     --bp-* bridge. The Agent tier ports kit/chat.css nearly verbatim
+     (bubbles, thinking, the elapsed divider, the staggered build-out +
+     line-reveal keyframes) so both the static components and the live
+     conversation engine emit the exact same `bp-` markup the kit does.
+     These aliases let that ported CSS resolve against the React tokens
+     instead of the vanilla contract. Values mirror tokens/contract.css,
+     neutralized; the chat bubble greys match the starter-layout slice. */
+  --bp-accent: var(--primary);
+  --bp-accent-tint: var(--accent-tint);
+  --bp-surface: var(--card);
+  --bp-surface-foreground: var(--foreground);
+  --bp-surface-muted: var(--text-muted); /* the elapsed divider + "ME" avatar text */
+  --bp-border: var(--border);
+  --bp-border-strong: var(--border-strong);
+  --bp-bubble-bg: var(--canvas);        /* the bot output bubble (near-white canvas grey) */
+  --bp-bubble-border: var(--border);
+  --bp-gray-100: var(--subtle);         /* the initials-avatar fill, a step darker than the bubble */
+  --bp-bubble-user-bg: color-mix(in srgb, #000 3%, var(--bp-bubble-bg));  /* a shade darker than the bot's */
+  --bp-msg-name: var(--neutral-800);    /* the sender name in a message head */
+  --bp-msg-meta: var(--icon);           /* the role + timestamp */
+  /* semantic success (the launcher's positive-green notif state); theme-adaptive */
+  --bp-success: var(--success);
+  --bp-success-tint: var(--success-tint);
+  --bp-shadow: var(--shadow-card);    /* the launcher card's soft 3-layer elevation */
+  --bp-radius: var(--radius-lg);      /* 16 — control radius (chatbar, thinking) */
+  --bp-radius-btn: var(--radius-lg);  /* 16 — bubble corners match the buttons */
+  --bp-ease-back: var(--ease-back);
+  --bp-ease-emphasized: var(--ease-emphasized);
+  --bp-dur-snap: var(--dur-snap);
 }
 .dark {
-  --border: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  /* Neutral roles + borders come from tokens.css .dark. These are the kit
+     aliases that need a dark-specific value: on dark, hover/selected LIFT with
+     a translucent white instead of taking the (darker) canvas grey. */
   --fill: rgba(255, 255, 255, 0.06);
-  --canvas: var(--ol-slate-dark);
-  --accent-tint: rgba(255, 255, 255, 0.10);
+  --ctl-hover: rgba(255, 255, 255, 0.06);
+  --ctl-selected: rgba(255, 255, 255, 0.06);
+  --ctl-outline: rgba(255, 255, 255, 0.12);
+  /* --ctl-icon-on inherits var(--primary) from :root — brand color on hover/current */
   --dash: rgba(255, 255, 255, 0.22);
-  --done-foreground: var(--ol-cloud);
+  /* chat bubbles + head go translucent-on-dark so they read on the slate canvas */
+  --bp-surface-muted: rgba(255, 255, 255, 0.5);
+  --bp-bubble-bg: rgba(255, 255, 255, 0.05);
+  --bp-bubble-border: rgba(255, 255, 255, 0.10);
+  --bp-bubble-user-bg: rgba(255, 255, 255, 0.09);
+  --bp-gray-100: rgba(255, 255, 255, 0.08);
+  --bp-msg-name: rgba(255, 255, 255, 0.82);
+  --bp-msg-meta: rgba(255, 255, 255, 0.44);
 }
 
 @theme inline {
@@ -84,6 +140,29 @@
   --color-fill: var(--fill);       /* hover/soft fill (kit --n-fill) */
   --color-canvas: var(--canvas);   /* the grey content canvas (kit --n-canvas) */
 
+  /* Layout roles — the readable vocabulary (bg-surface, text-icon, border-edge…) */
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-edge: var(--edge);
+  --color-icon: var(--icon);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  /* The ordered neutral scale, if you need a raw step (bg-neutral-100…) */
+  --color-neutral-0: var(--neutral-0);
+  --color-neutral-25: var(--neutral-25);
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-750: var(--neutral-750);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-950: var(--neutral-950);
+
   /* Fonts — --font-family is themeable (the styleguide's live font picker sets it) */
   --font-sans: var(--font-family, "Inter", system-ui, -apple-system, sans-serif);
   --font-heading: var(--font-family, "Inter", system-ui, -apple-system, sans-serif);
@@ -91,10 +170,11 @@
   /* Radius scale → Tailwind rounded-* (values mirror tokens.css).
      Kit mapping: controls (button/input/select/menu) = rounded-lg 16;
      cards/headers/surface = rounded-xl 24. */
-  --radius-sm: 0.5rem;   /* 8  */
-  --radius-md: 0.75rem;  /* 12 */
-  --radius-lg: 1rem;     /* 16 — controls */
-  --radius-xl: 1.5rem;   /* 24 — cards */
+  --radius-sm: 0.5rem;      /* 8  */
+  --radius-md: 0.75rem;     /* 12 */
+  --radius-lg: 1rem;        /* 16 — controls */
+  --radius-surface: 1.875rem;/* 30: the surface well inside a content card */
+  --radius-xl: 1.5rem;      /* 24: cards / content-card frame */
 
   /* Type scale → Tailwind text-* (mirror tokens.css). base = 14px, the kit's
      default control/body/label size; xs 12 is captions only. */
@@ -107,8 +187,10 @@
   --text-2xl: 1.75rem;   /* 28 */
   --text-3xl: 2.25rem;   /* 36 */
 
-  /* Elevation → Tailwind shadow-* (kit values). control = raised buttons /
-     dropdowns; pop = popovers/menus (hard edge); card = 3-layer soft. */
+  /* Elevation → Tailwind shadow-* (kit values). xs = the faint lift on a
+     content-card surface; control = raised buttons / dropdowns; pop =
+     popovers/menus (hard edge); card = 3-layer soft. */
+  --shadow-xs: 0 1px 2px 0 rgb(10 13 18 / 0.05);
   --shadow-control: 0 2px 4px -1px rgb(10 13 18 / 0.08);
   --shadow-pop: 0 2px 8px rgb(10 13 18 / 0.22), 0 0 0 1px rgb(10 13 18 / 0.04);
   --shadow-card: 0 12px 16px -4px rgb(10 13 18 / 0.08), 0 4px 6px -2px rgb(10 13 18 / 0.03), 0 2px 2px -1px rgb(10 13 18 / 0.04);

@@ -7,6 +7,33 @@
    kit's `bp-` prefix to stay recognizable and avoid utility clashes.
    ============================================================ */
 
+/* ---- The GLOBAL scrollbar: the one scrollbar the whole product uses, applied to
+   every element so ANY scroll container inherits it. A 2px very-light thumb (an 8px
+   track with a 3px transparent border → 2px visible), transparent at rest, revealed
+   ONLY while that element is actively scrolling — installScrollReveal() (called at
+   each entry) toggles .is-scrolling on the live scroller for ~700ms. A surface that
+   wants no scrollbar still wins with a more specific rule (e.g. the launcher / chat
+   inputs set width:0). `.scroll-thin` remains an explicit opt-in marker but needs no
+   rules of its own now that the treatment is global.
+
+   NOTE: we deliberately DON'T set the standard `scrollbar-width` / `scrollbar-color`.
+   In Chrome, setting either one makes the browser IGNORE all ::-webkit-scrollbar
+   pseudo-element styling and fall back to its own (wider) "thin" bar — which is why
+   the 2px bar wasn't showing. Chrome is the target (squircles), so we style purely
+   via ::-webkit-scrollbar to get an exact 2px thumb. ---- */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: transparent; border-radius: 999px;
+  border: 3px solid transparent; background-clip: padding-box;   /* 8 - 2*3 = 2px visible thumb */
+  transition: background-color 0.25s ease;
+}
+/* revealed only while scrolling — the thumb is the same gray as the card borders /
+   dividers (--border), so it reads as part of the same hairline family, not darker. */
+.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+}
+
 /* ---- sized inline icon box (svg inherits currentColor) ---- */
 .bp-ico { display: inline-grid; place-items: center; color: inherit; flex: none; }
 .bp-ico svg { width: 100%; height: 100%; display: block; }
@@ -37,7 +64,8 @@
 @keyframes bp-ico-fly   { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 50% { transform: translate(4px, -2px) rotate(24deg) scale(1.12); } 100% { transform: translate(0, 0) rotate(0deg) scale(1); } }
 @keyframes bp-ico-pop   { 0% { transform: scale(1); } 45% { transform: scale(1.28); } 100% { transform: scale(1); } }
 
-/* ---- nav / menu row icon: tip left ~30deg on hover, fall back with a bounce ---- */
+/* ---- nav / menu row icon: tip left ~30deg on hover, fall back with a bounce ----
+   Applies on host :hover (mouse) AND [data-highlighted] (base-ui menu keyboard nav). */
 @keyframes bp-navicon-tip {
   0%   { transform: rotate(0deg); }
   18%  { transform: rotate(-30deg); }
@@ -48,9 +76,32 @@
   100% { transform: rotate(0deg); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .bp-navicon-host:hover .bp-navicon { animation: bp-navicon-tip 0.8s ease-in-out 1; }
+  .bp-navicon-host:hover .bp-navicon,
+  .bp-navicon-host[data-highlighted] .bp-navicon { animation: bp-navicon-tip 0.8s ease-in-out 1; }
 }
 .bp-navicon { transform-origin: 50% 80%; }
+
+/* ---- icon-only button (close / expand-collapse): tertiary chrome, a LIGHT icon
+   (control-family grey, darkens on hover) that animates on hover — the X rotates a
+   quarter turn, the double chevron pulses toward its side twice (its two chevrons
+   sit a touch apart). NOTE: <Icon> puts its class on the <svg> itself, so these
+   target .bp-icon-btn__ic directly (it IS the svg), not a child svg. ---- */
+.bp-icon-btn__ic { color: var(--ctl-icon); transition: color 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bp-icon-btn:hover .bp-icon-btn__ic { color: var(--ctl-icon-on); }
+.bp-icon-btn[data-motion="rotate"]:hover .bp-icon-btn__ic { transform: rotate(90deg); }
+.bp-icon-btn[data-motion^="arrow"] .bp-icon-btn__ic path:first-child { transform: translateX(-2px); }
+.bp-icon-btn[data-motion^="arrow"] .bp-icon-btn__ic path:last-child { transform: translateX(2px); }
+@media (prefers-reduced-motion: no-preference) {
+  .bp-icon-btn[data-motion="arrow-left"]:hover .bp-icon-btn__ic { animation: bp-arrow-l 0.42s ease-in-out 2; }
+  .bp-icon-btn[data-motion="arrow-right"]:hover .bp-icon-btn__ic { animation: bp-arrow-r 0.42s ease-in-out 2; }
+}
+@keyframes bp-arrow-l { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-3px); } }
+@keyframes bp-arrow-r { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+
+/* ---- dropdown trigger chevron: bobs DOWN twice on hover while the menu is closed ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .bp-chev-host:not([data-popup-open]):hover .bp-chev { animation: bp-ico-bob 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 2; }
+}
 
 /* ---- reveal-icon button: the trailing/leading icon draws itself in as the
    button widens to show it (paths need pathLength=1) ---- */

@@ -13,4 +13,14 @@ export default defineConfig({
       "@": fileURLToPath(new URL(".", import.meta.url)),
     },
   },
+  build: {
+    // two entries: the docs styleguide (index.html) and the full-viewport DEMO
+    // (demo.html — the design system + agent in action, reachable at /demo.html)
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL("./styleguide/index.html", import.meta.url)),
+        demo: fileURLToPath(new URL("./styleguide/demo.html", import.meta.url)),
+      },
+    },
+  },
 })

@@ -44,7 +44,7 @@ function CollapsibleSection({
         type="button"
         aria-expanded={!collapsed}
         onClick={toggle}
-        className="group/sec flex w-full cursor-pointer items-center gap-[5px] px-2.5 pt-2 pb-1.5 text-left text-xs leading-[1.4] font-medium text-[#a5a5a5] transition-colors hover:text-muted-foreground"
+        className="group/sec flex w-full cursor-pointer items-center gap-[5px] px-2.5 pt-2 pb-1.5 text-left text-xs leading-[1.4] font-medium text-icon transition-colors hover:text-muted-foreground"
       >
         <span className="shrink-0">{label}</span>
         <span

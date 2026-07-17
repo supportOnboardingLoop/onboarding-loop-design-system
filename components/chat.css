@@ -1,0 +1,235 @@
+/* ============================================================
+   Loop Design System — components/chat.css
+   The Agent tier's conversation surface, ported from kit/chat.css
+   (with the finesse from slices/starter-layout folded in). Both the
+   static Agent components AND the live conversation engine emit this
+   exact `bp-` markup, so the two can never drift into lookalikes.
+   Resolves against the --bp-* bridge declared in theme.css.
+
+   Reusable parts:
+     .bp-chat / .bp-msg / .bp-msg--user   a message row (avatar + content)
+     .bp-bubble / .bp-bubble--user        the bot / user bubbles (squared tail)
+     .bp-thinking                         a bulb + label (dots fallback)
+     .bp-chat__elapsed / .bp-elapsed      the "Thought for Ns" divider
+     .bp-anim-* / .bp-line                the staggered build-out + line reveal
+   Bot bubbles are neutral grey; the user bubble picks up a hair more ink.
+   ============================================================ */
+
+.bp-chat { display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- a message row ---------- */
+.bp-msg { display: flex; gap: 12px; align-items: flex-start; }
+.bp-msg__avatar {
+  flex: none; width: 38px; height: 38px;
+  border-radius: 50%; corner-shape: round;   /* avatars stay true circles, never squircled */
+  object-fit: cover; background: var(--bp-surface);
+}
+
+/* figure avatar (the agent head pokes out the top of its circle): the PNG is a
+   standalone floating illustration, absolutely placed, top overflowing — never
+   clipped into a disc. Same 38px footprint as a plain round <img> avatar. */
+.bp-fig-avatar { position: relative; flex: none; width: 38px; height: 38px; overflow: visible; }
+.bp-fig-avatar img { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; display: block; }
+
+.bp-msg__content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.bp-msg__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 12px; line-height: 18px;          /* name + role read at the timestamp's size */
+}
+.bp-msg__who { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.bp-msg__name { font-weight: 600; color: var(--bp-msg-name); }
+.bp-msg__role { font-weight: 400; color: var(--bp-msg-meta); }
+.bp-msg__time { flex: none; font-size: 12px; font-weight: 400; color: var(--bp-msg-meta); }
+
+/* ---------- the bot bubble ---------- */
+.bp-bubble {
+  align-self: stretch;                  /* runs full width, so its right edge lines up with
+                                           the timestamp above and any answer widget below */
+  max-width: 100%;
+  background: var(--bp-bubble-bg);
+  border: 1px solid var(--bp-bubble-border);
+  border-radius: var(--bp-radius-btn); corner-shape: squircle;   /* same radius as the buttons */
+  border-top-left-radius: 0;            /* sharp tail toward the avatar */
+  padding: 9px 14px;                    /* starter finesse (kit default was 8/12) */
+  font-size: 15px; line-height: 23px; font-weight: 400;
+  overflow-wrap: break-word;            /* text wraps INSIDE the bubble as its column resizes */
+  color: var(--bp-surface-foreground);
+}
+.bp-bubble p { margin: 0; }
+.bp-bubble p + p { margin-top: 14px; }
+
+/* ---------- the user message ----------
+   Avatar on the right; the name row keeps its natural order (name left, time
+   right) and the bubble runs full width, like the bot's — the speakers read by
+   which side the avatar + tail sit on, not by a chat-app right-alignment. */
+.bp-msg--user { flex-direction: row-reverse; }
+.bp-bubble--user {
+  align-self: stretch;
+  background: var(--bp-bubble-user-bg);   /* a shade darker than the agent bubble */
+  border-color: var(--bp-bubble-border);
+  border-radius: var(--bp-radius-btn); corner-shape: squircle;
+  border-top-right-radius: 0;          /* sharp tail toward the right-side avatar */
+  color: var(--bp-surface-foreground);
+}
+/* an unknown user: a light-gray circle with a slightly darker ring, holding
+   initials (e.g. "ME") when there's no photo. A <span>, no src. */
+.bp-msg__avatar--empty {
+  box-sizing: border-box;          /* the 1px ring stays inside the avatar's size */
+  background: var(--bp-gray-100);
+  border: 1px solid var(--bp-border-strong);
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+  color: var(--bp-surface-muted);
+}
+
+/* ---------- thinking ---------- */
+.bp-thinking {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bp-bubble-bg);
+  border: 1px solid var(--bp-bubble-border);
+  border-radius: var(--bp-radius-btn); corner-shape: squircle;
+  border-top-left-radius: 0;
+  padding: 9px 14px;
+  font-size: 15px; color: var(--bp-surface-foreground);
+}
+/* the bulb glyph: full opacity, a gentle scale-breathe. Its light fill is darkened
+   a touch so the thinking mark never reads faded. A Lottie doodle can drop into the
+   same slot later; the inline glyph + the dots are the guaranteed fallbacks. */
+.bp-thinking__bulb { width: 26px; height: 26px; flex: none; color: var(--bp-accent); display: block; opacity: 1; }
+.bp-thinking__bulb svg { width: 100%; height: 100%; }
+.bp-thinking__bulb .primary   { stroke: currentColor; }
+.bp-thinking__bulb .secondary { fill: var(--neutral-400); stroke: var(--neutral-400); }
+@media (prefers-reduced-motion: no-preference) {
+  .bp-thinking__bulb--pulse { animation: bp-bulb-pulse 1.1s ease-in-out infinite; }
+}
+@keyframes bp-bulb-pulse { 0%,100% { transform: scale(.94); } 50% { transform: scale(1); } }
+
+/* thinking as a bubble VARIANT (same bubble later expands into the reply, via the
+   engine's think->reply morph) + the dots fallback when no bulb is available */
+.bp-bubble--thinking { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; }
+.bp-thinklbl { color: var(--bp-surface-foreground); }
+.bp-dots { display: inline-flex; align-items: center; gap: 4px; color: var(--bp-accent); }
+.bp-dots i { width: 6px; height: 6px; border-radius: 50%; corner-shape: round; background: currentColor; opacity: .35; }
+@media (prefers-reduced-motion: no-preference) {
+  .bp-dots i { animation: bp-dots 1s ease-in-out infinite; }
+  .bp-dots i:nth-child(2) { animation-delay: .16s; } .bp-dots i:nth-child(3) { animation-delay: .32s; }
+}
+@keyframes bp-dots { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+
+/* inline answer options attached under an agent bubble */
+.bp-answer { margin-top: 0; }
+.bp-answer.is-done { pointer-events: none; }   /* once answered, the widget is a static record */
+
+/* ---------- elapsed / "thought for" divider ----------
+   Sits between a user turn and the agent's considered reply, showing how long
+   the agent took: a centred, quiet label with a hairline running out each side. */
+.bp-chat__elapsed {
+  display: flex; align-items: center; gap: 12px;
+  margin: 2px 0;
+  font-size: 12px; line-height: 18px; color: var(--bp-surface-muted);
+  white-space: nowrap;
+}
+.bp-chat__elapsed::before,
+.bp-chat__elapsed::after {
+  content: ""; flex: 1; height: 1px; background: var(--bp-border);
+}
+
+/* ---- sequenced-build variant ----
+   Instead of the whole divider hard-cutting in, it assembles in two beats: the
+   hairline draws out from the centre first, then the label pops in. Uses explicit
+   line spans (the base ::before/::after hairlines are dropped here) so each part
+   carries its own delay. */
+.bp-elapsed::before, .bp-elapsed::after { display: none; }
+.bp-elapsed__line { flex: 1 1 auto; height: 1px; background: var(--bp-border); transform-origin: center; }
+.bp-elapsed__txt  { flex: none; }
+.bp-elapsed:not(.is-build) .bp-elapsed__line,
+.bp-elapsed:not(.is-build) .bp-elapsed__txt { opacity: 0; }
+.bp-elapsed.is-build .bp-elapsed__line { animation: bp-elapsed-line .4s var(--bp-ease-emphasized, cubic-bezier(.22,1,.36,1)) both; }
+.bp-elapsed.is-build .bp-elapsed__txt  { animation: bp-elapsed-txt .34s var(--bp-ease-back, cubic-bezier(.68,-0.6,.32,1.6)) .22s both; }
+@keyframes bp-elapsed-line { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+@keyframes bp-elapsed-txt  { from { opacity: 0; transform: translateY(3px) scale(.92); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .bp-elapsed.is-build .bp-elapsed__line, .bp-elapsed.is-build .bp-elapsed__txt { animation: none; }
+}
+
+/* ---------- hint ---------- */
+.bp-hint {
+  padding: 0 4px;
+  font-size: 12px; line-height: 18px; color: var(--bp-msg-meta);   /* lighter than the body */
+}
+.bp-hint b { font-weight: 600; }
+
+/* ---------- build-out entrances ----------
+   Conversation parts don't just appear — each atomic part builds out with one
+   quick, snappy move: a scale-up from 70% + fade on an ease-in-out-back curve,
+   so it anticipates on the way in and overshoots slightly on the way out. Parts
+   enter as an overlapping wave (avatar -> name/role -> time -> bubble -> the copy
+   inside), staggered by a per-element animation-delay (`both` keeps each part
+   hidden at its start frame until its turn). */
+@keyframes bp-build-in {
+  0%   { opacity: 0; transform: scale(.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.bp-anim-in {
+  animation: bp-build-in var(--bp-dur-snap, .3s) var(--bp-ease-back, cubic-bezier(.68,-0.6,.32,1.6)) both;
+  transform-origin: top left;
+}
+@media (prefers-reduced-motion: reduce) { .bp-anim-in { animation: none; } }
+
+/* ---------- rise-in (for parts that shouldn't scale) ----------
+   Full-width rows (answer options, CTAs, cards) read wrong scaled from 70% — they
+   slide up from just below + fade on the same ease-in-out-back curve, keeping the
+   little anticipate/overshoot without the zoom. */
+@keyframes bp-rise-in {
+  0%   { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.bp-anim-rise {
+  /* `backwards` (not `both`): hide during the stagger delay, but revert to the
+     element's own styles after, so e.g. a disabled button's .45 opacity still wins. */
+  animation: bp-rise-in var(--bp-dur-snap, .3s) var(--bp-ease-back, cubic-bezier(.68,-0.6,.32,1.6)) backwards;
+}
+@media (prefers-reduced-motion: reduce) { .bp-anim-rise { animation: none; } }
+
+/* ---------- line-by-line text reveal ----------
+   Bubble copy isn't scaled in as one block — each wrapped line rises up from the
+   bottom of its own clip, one after another. `.bp-line` is the clip; `.bp-line__in`
+   is the text that slides (nowrap, so a pre-measured line never re-wraps while its
+   bubble is mid-expand). A clean ease-out keeps the text crisp. */
+.bp-line { display: block; overflow: hidden; }
+.bp-line__in { display: block; white-space: nowrap; }
+.bp-anim-line {
+  animation: bp-line-rise var(--bp-dur-snap, .3s) var(--bp-ease-emphasized, cubic-bezier(.22,1,.36,1)) both;
+}
+@keyframes bp-line-rise {
+  0%   { opacity: 0; transform: translateY(100%); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .bp-anim-line { animation: none; } }
+
+/* ============================================================ ATTACHMENTS
+   A staged card attachment: a chip in a composer (launcher / chat) and, once
+   sent, echoed under the user message. `.bp-attach` is shared by both the React
+   <AttachChip> and the engine-rendered in-message chips (convo-engine user()). */
+.bp-attach {
+  display: inline-flex; align-items: center; gap: 6px;
+  max-width: 232px; height: 30px; padding: 0 8px 0 9px;
+  border-radius: 10px; corner-shape: squircle;
+  background: var(--card); border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-xs);
+  font-size: 12px; line-height: 1; white-space: nowrap;
+}
+.bp-attach__clip { flex: none; display: grid; place-items: center; color: var(--ctl-icon); }
+.bp-attach__clip svg { display: block; }
+.bp-attach__accent { flex: none; font-weight: 700; color: var(--primary); }
+.bp-attach__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--foreground); }
+.bp-attach__x {
+  flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin: 0 -2px 0 1px;
+  border: none; background: transparent; color: var(--ctl-icon); cursor: pointer;
+  border-radius: 6px; corner-shape: squircle; transition: background .12s ease, color .12s ease;
+}
+.bp-attach__x:hover { background: var(--fill); color: var(--foreground); }
+
+/* the row of attachment chips echoed under a sent user message (right-aligned) */
+.bp-attachrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; justify-content: flex-end; }

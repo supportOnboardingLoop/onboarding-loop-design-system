@@ -95,7 +95,7 @@ function PanelHeader({
 
       {progress && (
         <div className="flex h-6 items-center gap-3.5">
-          <div className={cn("h-3 flex-1 overflow-hidden rounded-full", accent ? "bg-black/16" : "bg-[#e9eaeb]")}>
+          <div className={cn("h-3 flex-1 overflow-hidden rounded-full", accent ? "bg-black/16" : "bg-border")}>
             <div
               className={cn("h-full rounded-full transition-[width] duration-[400ms]", accent ? "bg-white" : "bg-primary")}
               style={{ width: `${Math.max(0, Math.min(100, progress.value))}%` }}

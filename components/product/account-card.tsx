@@ -32,7 +32,7 @@ function AccountCard({
       )}
       {...props}
     >
-      <span className="relative grid size-[38px] shrink-0 place-items-center rounded-full [corner-shape:round] border border-border-strong bg-[#f2f2f2] text-xs font-semibold text-muted-foreground dark:bg-white/8">
+      <span className="relative grid size-[38px] shrink-0 place-items-center rounded-full [corner-shape:round] border border-border-strong bg-subtle text-xs font-semibold text-muted-foreground dark:bg-white/8">
         {avatarSrc ? (
           <img src={avatarSrc} alt="" className="size-full rounded-full [corner-shape:round] object-cover" />
         ) : (

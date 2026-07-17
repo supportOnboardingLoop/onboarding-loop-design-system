@@ -1,0 +1,357 @@
+/* ============================================================
+   WorkspaceShell — the promoted layout system.
+
+   Owns the 4-column animated grid, the card columns + headers, the
+   resizable gutters, and the responsive drawers. Everything with SUBSTANCE
+   (nav rows, the launcher, the chat panel, the agent identity, brand marks)
+   is a real DS component or demo-local content; this file only POSITIONS
+   them. Promoted verbatim from the Demo's st-* CSS (tokens already on the DS
+   roles), renamed to a ws- namespace so a layout metric changed here moves
+   BOTH the styleguide's Layout showcase and the Demo together — no drift.
+
+   Loaded via theme.css (@import), so every entry (styleguide + demo) gets it.
+
+   Class map:
+     .ws-shell            the grid root (WorkspaceShell)
+     .ws-col--{nav,sub,content,work}  grid placement (added by the shell)
+     .ws-col              a column card (LayoutColumn)   .ws-col--card / --canvas
+     .ws-col__hdr         a column header bar (ColumnHeader)   --flush = no hairline
+     .ws-col__title       a truncating header title (ColumnTitle)
+     .ws-col__body        a scrolling column body (ColumnBody)
+     .ws-col__foot        a column footer (ColumnFooter)   --divider = top hairline
+     .ws-navlist          a nav-row list (NavList; gap = --ws-row-gap)
+     .ws-resize           a drag-to-resize gutter handle
+     .ws-scrim            the compact drawer scrim
+     .ws-chat__*          the ChatPanel column internals (de-drifted from demo)
+   ============================================================ */
+
+:root {
+  /* the gap between nav rows — change once, every NavList moves together */
+  --ws-row-gap: 2px;
+  /* the uniform inset for content inside a navigational card (nav / sub-nav): content
+     starts this far below the header divider AND the same distance from the left, right,
+     and bottom — so every nav card lines its content up identically. One rule, one token. */
+  --ws-card-inset: 16px;
+}
+
+/* ---- the grid root ---- */
+.ws-shell {
+  --dur: 0.38s;
+  --ease: var(--ease-standard);
+  --hdr-h: 60px;
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  padding: 4px;
+  display: grid;
+  gap: 0;
+  /* explicit gap-tracks: a collapsed column leaves EXACTLY 4px; the workspace is a
+     FIXED chat width, not a 50/50 split. Every edge animates in one motion because
+     only ONE property (grid-template-columns) transitions. */
+  grid-template-columns:
+    var(--c-nav) 4px var(--c-sub) var(--g-sub) minmax(0, 1fr) var(--g-work) var(--c-work);
+  /* ONE row, pinned to the shell height (not content): minmax(0,1fr) makes the track
+     definite so each column's height:100% resolves and its body can actually scroll +
+     its footer pins to the bottom. Without this the single implicit row auto-sizes to
+     content, the columns grow past the viewport, and footers get pushed off-screen. */
+  grid-template-rows: minmax(0, 1fr);
+  /* --c-*-open are the user-resizable OPEN widths (dragged via the edge handles); the
+     collapse classes set --c-* directly, so they win when a panel is collapsed. */
+  --c-nav-open: 272px;
+  --c-sub-open: 272px;
+  --c-work-open: 420px;
+  --c-nav: var(--c-nav-open);
+  --c-sub: var(--c-sub-open);
+  --g-sub: 4px;
+  --g-work: 0px;
+  --c-work: 0px;
+  transition: grid-template-columns var(--dur) var(--ease);
+  /* the whole viewport fill is the page-background grey — the gaps around every card
+     AND the content pane. The content column is transparent (below), so it reads as
+     one continuous background with the white nav / sub / chat cards floating on it.
+     This is a step LIGHTER than --canvas, so Card trays/footers read as frames. */
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.ws-shell.is-nav-collapsed { --c-nav: 68px; }
+.ws-shell.is-sub-collapsed { --c-sub: 0px; --g-sub: 0px; }
+.ws-shell.is-work-open { --c-work: var(--c-work-open); --g-work: 4px; }
+.ws-shell.is-resizing { transition: none; } /* track the cursor 1:1 while dragging an edge */
+
+/* ---- resize handles: drag a gutter edge to resize the nav / sub / work panels ---- */
+.ws-resize {
+  grid-row: 1; align-self: stretch; justify-self: center;
+  position: relative; width: 12px; z-index: 40;
+  cursor: ew-resize; touch-action: none; -webkit-tap-highlight-color: transparent;
+}
+.ws-resize::before {
+  content: ""; position: absolute; top: 50%; left: 50%; height: 64px; width: 2px;
+  transform: translate(-50%, -50%); border-radius: 2px; corner-shape: round;
+  background: transparent; transition: background 0.14s ease;
+}
+.ws-resize:hover::before,
+.ws-resize.is-dragging::before { background: color-mix(in srgb, var(--foreground) 22%, transparent); }
+.ws-resize.is-dragging::before { background: color-mix(in srgb, var(--foreground) 30%, transparent); }
+.ws-resize--nav { grid-column: 2; }
+.ws-resize--sub { grid-column: 4; }
+.ws-resize--work { grid-column: 6; }
+.ws-shell.is-nav-collapsed .ws-resize--nav { display: none; }
+.ws-shell.is-sub-collapsed .ws-resize--sub { display: none; }
+.ws-shell:not(.is-work-open) .ws-resize--work { display: none; }
+
+/* ---- column placement (added to each slot by the shell) ---- */
+.ws-col--nav { grid-column: 1; }
+.ws-col--sub { grid-column: 3; }
+.ws-col--content { grid-column: 5; }
+.ws-col--work { grid-column: 7; }
+/* a collapsed side column drops its border AND its white fill: at 0 width the 1px
+   borders can't shrink below 2px (border-box), and the card background would fill
+   that 2px as a visible white line on the grey canvas — so make it transparent too */
+.ws-shell.is-sub-collapsed .ws-col--sub { border-color: transparent; background: transparent; }
+.ws-shell:not(.is-work-open) .ws-col--work { border-color: transparent; background: transparent; }
+
+/* ---- LayoutColumn ---- */
+.ws-col { min-width: 0; height: 100%; display: flex; flex-direction: column; }
+.ws-col--card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px; corner-shape: squircle;
+  overflow: hidden;
+}
+.ws-col--canvas {
+  position: relative;
+  /* transparent: the content pane has no fill of its own — it shows the shell's canvas
+     grey, so the whole background reads as one continuous fill (see .ws-shell). */
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 24px; corner-shape: squircle;
+}
+
+/* ---- ColumnHeader / ColumnTitle ----
+   padding + gap are deliberately NOT set here: workspace.css is unlayered and
+   would beat Tailwind utilities, so the composing surface supplies them (pl-5,
+   gap-2.5, …). Only the structural box + the bottom hairline live here. */
+.ws-col__hdr {
+  flex: none;
+  height: var(--hdr-h);
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ws-col__hdr::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--border);
+}
+.ws-col__hdr--flush::after { display: none; }
+.ws-col__title {
+  flex: 1; min-width: 0; margin: 0;
+  font-size: 16px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.4;
+  color: var(--foreground);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---- ColumnBody / ColumnFooter ---- */
+.ws-col__body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* RULE: the body of a navigational CARD (nav / sub-nav) is inset uniformly on every
+   side by --ws-card-inset, so its content starts the same distance below the header
+   divider as it sits from the left / right / bottom — every nav card lines up. Baked in
+   here (workspace.css is unlayered, so it wins) — callers no longer pass px-/pt- on a
+   nav-card body. The content-canvas column is .ws-col--canvas (not --card), so it's
+   excluded and keeps its own wide docs padding. */
+.ws-col--card > .ws-col__body { padding: var(--ws-card-inset); }
+/* the collapsed icon rail (68px) needs tighter sides so the 40px icons still fit */
+.ws-shell.is-nav-collapsed .ws-col--nav > .ws-col__body { padding-inline: 12px; }
+.ws-col__foot { flex: none; }
+.ws-col__foot--divider { border-top: 1px solid var(--border); }
+
+/* ---- NavList: a flex-col row list; the row gap is the shared token ---- */
+.ws-navlist { display: flex; flex-direction: column; gap: var(--ws-row-gap); padding-bottom: 4px; }
+
+/* ---- ChatPanel column internals (de-drifted out of demo.css: a DS component
+   must not depend on a styleguide-local stylesheet) ---- */
+.ws-chat__body { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 20px 16px; }
+.ws-chat__body .bp-bubble { padding: 9px 14px; }
+.ws-chat__foot { flex: none; padding: 16px; border-top: 1px solid var(--border); }
+/* the follow-up Send = the DS <Button revealLabel>, sized to the field height (42px
+   square at rest) so it lines up; on hover it grows "Send" out the LEFT of the icon. */
+.ws-chat__send.bp-reveal-label { width: 42px; height: 42px; }
+.ws-chat__send.bp-reveal-label:hover,
+.ws-chat__send.bp-reveal-label.is-hover { width: auto; padding: 0 14px; }
+
+/* ---- the compact drawer scrim (hidden on desktop) ---- */
+.ws-scrim { display: none; }
+
+/* ============================================================
+   RESPONSIVE: below 1024px the 4-col grid becomes a single full-width content
+   pane + off-canvas drawers (Wilson-left opens the agent home; hamburger-right
+   opens the primary nav as a TOP sheet). Desktop >=1024px is untouched.
+   The compact top bar + its triggers (hamburger / agent button) live in the
+   content slot (demo content); this file owns the column -> drawer transforms.
+   ============================================================ */
+@media (max-width: 1023px) {
+  .ws-shell {
+    display: block;
+    height: 100vh; height: 100dvh;
+    transition: none;
+    --compact-hdr-h: 72px;
+  }
+  .ws-resize { display: none; }
+
+  /* content becomes a fixed full-screen pane */
+  .ws-col--content {
+    position: fixed; inset: 0;
+    border-radius: 0; border: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1;
+  }
+
+  /* the two nav columns become off-canvas drawers */
+  .ws-col--nav, .ws-col--sub { position: fixed; z-index: 100; border-radius: 0; }
+  /* agent home = LEFT drawer */
+  .ws-col--sub {
+    top: 0; bottom: 0; left: 0;
+    width: min(86vw, 340px);
+    transform: translateX(-102%);
+    border-right: 1px solid var(--border);
+    transition: transform 0.34s var(--ease);
+  }
+  .ws-shell.is-agent-open .ws-col--sub { transform: translateX(0); }
+  /* primary nav = TOP sheet dropping from under the bar (fit-to-content) */
+  .ws-col--nav {
+    top: var(--compact-hdr-h); right: 0;
+    width: 100%; max-width: 420px;
+    max-height: 0; overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    transition: max-height 0.34s var(--ease);
+  }
+  .ws-shell.is-nav-open .ws-col--nav { max-height: min(460px, calc(100dvh - var(--compact-hdr-h))); }
+  /* the sheet drops its header (brand + toggle); body is fit-to-content, footer
+     splits off under the lists with a full-width hairline */
+  .ws-col--nav .ws-col__hdr { display: none; }
+  .ws-col--nav .ws-col__body { flex: none; overflow: visible; padding-top: 12px; }
+  .ws-col--nav .ws-col__foot { border-top: 1px solid var(--border); }
+
+  /* chat = full-screen sheet */
+  .ws-col--work {
+    position: fixed; inset: 0; z-index: 110;
+    width: auto; border-radius: 0;
+    transform: translateX(102%);
+    transition: transform 0.34s var(--ease);
+  }
+  .ws-shell.is-work-open .ws-col--work { transform: translateX(0); }
+
+  /* scrim */
+  .ws-scrim {
+    display: block; position: fixed; inset: 0; z-index: 99;
+    background: rgba(10, 12, 16, 0.28);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .ws-shell.is-agent-open .ws-scrim { opacity: 1; pointer-events: auto; }
+  /* the nav TOP sheet is non-modal: its scrim drops below the bar so the hamburger stays live */
+  .ws-shell.is-nav-open .ws-scrim { opacity: 1; pointer-events: auto; top: var(--compact-hdr-h); }
+}
+
+@media (max-width: 639px) {
+  .ws-col--nav { max-width: none; }
+  .ws-col--sub { width: 90vw; max-width: 360px; }
+}
+
+/* ============================================================
+   SHARED WORKSPACE CHROME (promoted out of the Demo so the styleguide frame and
+   the Demo render the SAME parts): the sidebar brand mark, the agent-home
+   identity header, the travelling agent avatar + its content-header landing slot,
+   and the compact-bar triggers (hamburger / agent button). See the matching DS
+   components: brand-mark.tsx / agent-home-header.tsx / travelling-avatar.tsx /
+   compact-bar.tsx.
+   ============================================================ */
+
+/* ---- BrandMark: the sidebar brand (a squircle mark + the product name) ---- */
+.ws-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ws-brand__mark {
+  flex: none; width: 32px; height: 32px;
+  border-radius: 9px; corner-shape: squircle;
+  background: var(--primary); color: var(--primary-foreground);
+  display: grid; place-items: center; font-weight: 800; font-size: 15px;
+}
+.ws-brand__name { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; }
+
+/* ---- AgentHomeHeader: the agent-identity header atop the agent-home column
+   (108px; a travelling-avatar SLOT + name/role + a collapse toggle). The static
+   .ws-agent-hdr__av is shown only on compact, inside the drawer. ---- */
+.ws-agent-hdr { flex: none; position: relative; min-height: 108px; background: var(--card); }
+.ws-agent-hdr::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--border);
+}
+/* the identity row: fixed 108px, the positioning context for the absolute avatar
+   slot / name / toggle. Any header children (Context Engine) flow below it and grow
+   the gray header. */
+.ws-agent-hdr__idrow { position: relative; height: 108px; }
+.ws-agent-hdr__extra { padding: 0 16px 12px; }
+/* docked identity avatar (open sub-nav header): sized a touch under the disc's full
+   width so it doesn't crowd the header; top nudged to keep its centre on the name */
+.ws-agent-hdr__slot { position: absolute; left: 16px; top: 18px; width: 68px; height: 70px; display: block; pointer-events: none; }
+/* disc = full width, bottom-anchored; lift by the canvas headroom (11/75 of height) so the head overflows up */
+.ws-agent-hdr__av { display: none; position: absolute; left: 16px; top: 18px; width: 68px; height: auto; transform: translateY(-14.667%); }
+.ws-agent-hdr__id {
+  position: absolute; left: 100px; top: 53.5px; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px; white-space: nowrap;
+}
+.ws-agent-hdr__id b { font-weight: 700; font-size: 15px; line-height: 1.35; color: var(--foreground); }
+.ws-agent-hdr__id span { font-size: 13px; line-height: 1.35; color: var(--muted-foreground); }
+.ws-agent-hdr__toggle { position: absolute; right: 12px; top: 14px; }
+
+/* ---- TravellingAgentAvatar: ONE fixed PNG (a sibling of .ws-shell) that rAF-lerps
+   between the agent-home header slot and the content-header landing slot ---- */
+.ws-agent-av {
+  position: fixed; left: 0; top: 0; width: 76px; height: auto; z-index: 50;
+  display: block; object-fit: contain; pointer-events: none;
+}
+.ws-agent-av.is-clickable { pointer-events: auto; cursor: pointer; }
+@keyframes ws-av-wiggle {
+  0% { transform: rotate(0) scale(1); }
+  22% { transform: rotate(-8deg) scale(1.06); }
+  44% { transform: rotate(7deg) scale(1.06); }
+  66% { transform: rotate(-4deg) scale(1.04); }
+  84% { transform: rotate(2deg) scale(1.03); }
+  100% { transform: rotate(0) scale(1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ws-agent-av.is-clickable:hover { animation: ws-av-wiggle 0.7s ease-in-out; }
+}
+/* the landing slot placed in the content header: grows to launcher size (51px) when
+   the agent home collapses, so the travelling avatar lands next to the title */
+.ws-agent-slot {
+  flex: none; width: 0; height: 40px; margin-right: 0; overflow: hidden; pointer-events: none;
+  transition: width var(--dur) var(--ease), margin var(--dur) var(--ease);
+}
+.ws-shell.is-sub-collapsed .ws-agent-slot { width: 51px; height: 51px; margin-left: -6px; margin-right: 8px; }
+
+/* ---- compact-bar triggers (hidden on desktop): the hamburger opens the primary-nav
+   TOP sheet; the agent button opens the agent-home LEFT drawer ---- */
+.ws-hamburger, .ws-agentbtn { display: none; }
+
+@media (max-width: 1023px) {
+  /* the content header is the 72px compact bar; its travelling-avatar slot + the
+     travelling avatar hide (columns are drawers now); the drawer shows a static av */
+  .ws-col--content .ws-col__hdr { height: var(--compact-hdr-h); }
+  .ws-agent-slot { display: none; }
+  .ws-agent-av { display: none; }
+  .ws-agent-hdr__av { display: block; }
+  .ws-agent-hdr__toggle { display: none; } /* a drawer can't collapse */
+
+  .ws-hamburger { display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; border: 0; background: transparent; color: var(--foreground); cursor: pointer; border-radius: 10px; corner-shape: squircle; }
+  .ws-hamburger:hover { background: var(--fill); }
+  .ws-hamburger svg { width: 24px; height: 24px; display: block; overflow: visible; }
+  .ws-hamburger line { transform-box: view-box; transform-origin: 12px 12px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .ws-hamburger .l1 { transform: translateY(-3.5px); }
+  .ws-hamburger .l2 { transform: translateY(3.5px); }
+  .ws-shell.is-nav-open .ws-hamburger .l1 { transform: rotate(45deg); }
+  .ws-shell.is-nav-open .ws-hamburger .l2 { transform: rotate(-45deg); }
+
+  .ws-agentbtn { display: inline-grid; place-items: center; flex: none; padding: 0; margin-left: -2px; margin-right: 4px; border: 0; background: transparent; cursor: pointer; }
+  .ws-agentbtn img { width: 51px; height: auto; display: block; object-fit: contain; }
+}

@@ -1,0 +1,250 @@
+/* ============================================================
+   Loop Design System — components/launcher.css
+   The agent LAUNCHER: one fixed card + one persistent floating agent
+   PNG that MORPH between six states (default / input / modal / saving /
+   notif / coach) plus the coach-mark spotlight overlay. Ported nearly
+   verbatim from slices/starter-layout (the source of truth), remapped
+   from the slice's --n- / --bp- tokens onto the React design tokens.
+
+   This is the shell + morph CSS only — the geometry/FLIP, block
+   build-in/out sequencing, spotlight, timer rings and saving fill are
+   driven imperatively by launcher-engine.ts (mirrors convo-engine.ts).
+   The modal body reuses the real DS components (Input / Select /
+   Choices / Button); only the launcher-specific chrome lives here.
+
+   Foundational build-out/in law: ONE element, one movement — the card +
+   avatar travel + resize on --bp-ease-back; each state's parts build in
+   staggered (bp-anim-rise) and reverse-build out quicker (bp-anim-out).
+   ============================================================ */
+
+/* ---- backdrop: blurs (does NOT dim) the content region behind the modal.
+   The engine sizes it to the live region rect + rounds it to the panel's 24px
+   squircle, so the surrounding chrome stays sharp; its blur fades in/out. ---- */
+.launcher-backdrop {
+  position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: 90;
+  background: rgba(248, 248, 250, 0.14);
+  border-radius: 24px; corner-shape: squircle;
+  -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px);
+  opacity: 0; pointer-events: none;
+  transition: -webkit-backdrop-filter 0.42s ease, backdrop-filter 0.42s ease, opacity 0.42s ease;
+}
+.launcher-backdrop.is-on {
+  opacity: 1; pointer-events: auto;
+  -webkit-backdrop-filter: blur(7px) saturate(1.02); backdrop-filter: blur(7px) saturate(1.02);
+}
+.dark .launcher-backdrop { background: rgba(10, 12, 16, 0.28); }
+
+/* ---- the card ---- */
+.launcher {
+  position: fixed; left: 0; top: 0; z-index: 95; box-sizing: border-box;
+  width: auto; height: 68px;
+  border: 1px solid var(--border);
+  border-radius: 34px; corner-shape: squircle;
+  background: var(--card);
+  box-shadow: var(--bp-shadow);
+  font-family: var(--font-family);
+  overflow: visible; cursor: pointer;
+}
+/* the morph transition (duration + easing) is set inline per-move by the engine:
+   default<->input is a quick .3s snap, the long moves are a bounce-free ease-in-out */
+.launcher.is-hidden { opacity: 0; pointer-events: none; }
+.launcher[data-state="input"],
+.launcher[data-state="modal"],
+.launcher[data-state="saving"],
+.launcher[data-state="notif"] { cursor: default; }
+
+/* persistent avatar: absolute card child (never inside a clipped block), breaks out
+   the top-left; travels + resizes with the card on the same bounce. Always a
+   standalone floating PNG, never in a disc. */
+.launcher__av {
+  position: absolute; left: 14px; top: 8px; width: 51px; height: auto;
+  display: block; pointer-events: none; z-index: 3;
+  /* the disc is the bottom of the canvas (head overflows up), so lift by the canvas
+     headroom (11/75 of height) to seat the disc centred, head breaking out the top. */
+  transform: translateY(-14.667%);
+}
+.launcher[data-state="modal"] .launcher__av { left: 16px; top: 7px; width: 46px; }
+
+/* content blocks: absolute fill, only the active one shows; each clips its own
+   overflow so nothing spills during the morph (the avatar sits ABOVE these). */
+.launcher__block {
+  position: absolute; inset: 0; overflow: hidden; border-radius: inherit;
+  display: none; flex-direction: column; z-index: 1;
+}
+.launcher[data-state="default"] .launcher__default { display: flex; z-index: 3; }
+.launcher[data-state="input"]   .launcher__input   { display: flex; z-index: 3; }
+.launcher[data-state="modal"]   .launcher__modal   { display: flex; z-index: 3; }
+.launcher[data-state="saving"]  .launcher__saving  { display: flex; z-index: 3; }
+.launcher[data-state="notif"]   .launcher__notif   { display: flex; z-index: 3; }
+.launcher[data-state="coach"]   .launcher__coach   { display: flex; z-index: 3; }
+/* the outgoing block stays visible (under the incoming) while it reverse-builds out */
+.launcher__block.is-leaving { display: flex; z-index: 2; }
+
+/* ---- DEFAULT: identical box to INPUT; "Ask <agent>" + ⌘K where the field + send are ---- */
+.launcher__default { flex-direction: row; align-items: center; gap: 10px; padding: 0 16px 0 70px; }
+.launcher__cta { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.launcher__ask { font-weight: 600; font-size: 16px; line-height: 1; color: var(--foreground); letter-spacing: -0.01em; }
+.launcher__kbd {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  height: 24px; padding: 0 9px;
+  border: 1px solid var(--border-strong); border-radius: 12px; corner-shape: squircle;
+  font-weight: 500; font-size: 12px; line-height: 1; color: var(--bp-surface-muted);
+}
+
+/* ---- INPUT: the real composer (field + send), grows UP to 3 lines ---- */
+.launcher__input { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 16px 12px 70px; }
+.launcher__attachrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.launcher__composer { min-width: 0; display: flex; align-items: flex-start; gap: 12px; }
+.launcher__field { flex: 1; min-width: 0; }
+.launcher__field-control {
+  display: block; border: 1px solid var(--border-strong);
+  border-radius: 16px; corner-shape: squircle; background: var(--card);
+  transition: border-color 0.15s ease;
+}
+.launcher__field-control:focus-within { border-color: var(--primary); }
+/* auto-growing composer input: starts as one line, grows upward up to 3 lines, then
+   scrolls its own overflow (hiding the earliest lines). */
+textarea.launcher__input-field {
+  resize: none; display: block; width: 100%; box-sizing: border-box;
+  height: auto; min-height: 40px; max-height: 80px; line-height: 20px;
+  padding: 10px 14px; overflow-y: auto; scrollbar-width: none;
+  border: none; background: transparent; outline: none;
+  color: var(--foreground); font-weight: 400; font-size: 14px; line-height: 20px;
+}
+textarea.launcher__input-field::placeholder { color: var(--muted-foreground); }
+textarea.launcher__input-field::-webkit-scrollbar { width: 0; height: 0; }
+/* the Send button = the DS <Button revealLabel> (secondary). Size it to the field
+   height (a 42px square at rest, matching the composer field's outer height) so they
+   line up; on hover it expands and the kit .bp-reveal-label grows "Send" out to the
+   LEFT of the icon. Overrides the kit reveal-label's default 34px rest width. */
+.launcher__send.bp-reveal-label { width: 42px; height: 42px; }
+.launcher__send.bp-reveal-label:hover,
+.launcher__send.bp-reveal-label.is-hover { width: auto; padding: 0 14px; }
+/* the Send starts disabled (empty input). The rise reveal ends at opacity 1, then the
+   animation clears and the element snaps back to its disabled .45 — a visible flash.
+   Keep the DISABLED Send at .45 through its reveal so it reads disabled from frame one. */
+.launcher__send:disabled.bp-anim-rise { animation-name: bp-rise-in-dim; }
+@keyframes bp-rise-in-dim {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 0.45; transform: translateY(0); }
+}
+
+/* ---- MODAL: header (icon + title + close) + a body of real DS fields ---- */
+.launcher__modal { padding: 0; }
+.launcher__mhdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 16px 12px 16px 74px; border-bottom: 1px solid var(--border);
+}
+.launcher__mhdricon { flex: none; width: 20px; height: 20px; display: grid; place-items: center; color: var(--foreground); }
+.launcher__mhdricon svg { width: 100%; height: 100%; }
+.launcher__mtitle { flex: 1; min-width: 0; margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--foreground); }
+.launcher__mclose {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px;
+  border: 1px solid transparent; border-radius: 8px; corner-shape: squircle;
+  background: transparent; color: var(--foreground); cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.launcher__mclose:hover { border-color: var(--border-strong); background: var(--fill); }
+.launcher__mclose svg { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.launcher__mclose:hover svg { transform: rotate(90deg); }
+.launcher__mbody { padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.launcher__mlabel { font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
+.launcher__mfield { display: flex; flex-direction: column; gap: 8px; }
+/* the CTA lockup spans the full modal width (Cancel + Save each take half) */
+.launcher__mcta { display: flex; gap: 8px; }
+.launcher__mcta > * { flex: 1; }
+
+/* ---- SAVING: avatar left + a progress PILL, centred like the modal. The fill is driven
+       frame-by-frame by the engine (transition:none), so it never lags the rAF. ---- */
+.launcher__saving { flex-direction: row; align-items: center; padding: 0 20px 0 73px; }
+.launcher__progress { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.launcher__progress-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 14px; line-height: 20px; }
+.launcher__progress-label { color: var(--foreground); }
+.launcher__progress-pct { flex: none; color: var(--muted-foreground); font-variant-numeric: tabular-nums; transition: color 0.2s ease; }
+.launcher__saving .is-complete .launcher__progress-pct { color: var(--primary); }
+.launcher__progress-track { height: 12px; overflow: hidden; border-radius: 9999px; corner-shape: round; background: var(--border); }
+.dark .launcher__progress-track { background: rgba(255, 255, 255, 0.12); }
+.launcher__progress-fill { height: 100%; width: 0%; border-radius: 9999px; corner-shape: round; background: var(--primary); transition: none; }
+
+/* ---- NOTIF: the SAME 68px pill; avatar left, check + title + time, description under,
+       a squircle close button whose 4s dismiss ring draws bottom -> clockwise ---- */
+.launcher__notif { flex-direction: row; align-items: center; gap: 14px; padding: 0 14px 0 73px; }
+.notif__main { flex: none; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.notif__row { display: flex; align-items: center; gap: 8px; }
+.notif__check { flex: none; width: 20px; height: 20px; color: var(--bp-success); }
+.notif__check svg { width: 100%; height: 100%; }
+.notif__title { font-weight: 700; font-size: 15px; line-height: 1.2; color: var(--foreground); white-space: nowrap; }
+.notif__time { flex: none; font-weight: 400; font-size: 13px; line-height: 1; color: var(--muted-foreground); }
+.notif__desc { font-weight: 400; font-size: 13px; line-height: 1.35; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.notif__close {
+  position: relative; flex: none; width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 13px; corner-shape: round;
+  background: var(--card); color: var(--foreground); cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.notif__close:hover { border-color: var(--border-strong); background: var(--fill); }
+.notif__x { display: grid; place-items: center; }
+.notif__x svg { width: 15px; height: 15px; display: block; opacity: 0.7; transition: opacity 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.notif__close:hover .notif__x svg { opacity: 1; transform: rotate(90deg); }
+.notif__timer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.notif__timer-ring { fill: none; stroke: var(--icon); stroke-width: 1.5; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.launcher.is-drawing .notif__timer-ring { animation: notif-draw 4s linear forwards; }
+.launcher[data-state="coach"].is-drawing .notif__timer-ring { animation-duration: 6s; }
+@keyframes notif-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .launcher.is-drawing .notif__timer-ring { animation: none; stroke-dashoffset: 0; } }
+
+/* POSITIVE / affirmation notification: the whole card turns light green with a green
+   outline (the check is already green). Theme-adaptive via --bp-success. ONLY
+   [data-state="notif"] is green, so it reverts to the neutral card the instant it morphs
+   back (the colour fades with the morph — see the engine's background/border transition). */
+.launcher[data-state="notif"] {
+  background: color-mix(in srgb, var(--bp-success-tint) 50%, #fff);
+  border-color: color-mix(in srgb, var(--bp-success) 45%, #fff);
+}
+.launcher[data-state="notif"] .notif__close { background: transparent; border-color: color-mix(in srgb, var(--bp-success) 28%, transparent); }
+.launcher[data-state="notif"] .notif__close:hover { background: color-mix(in srgb, var(--bp-success) 12%, transparent); border-color: color-mix(in srgb, var(--bp-success) 42%, transparent); }
+.dark .launcher[data-state="notif"] { background: color-mix(in srgb, var(--bp-success) 16%, var(--card)); border-color: color-mix(in srgb, var(--bp-success) 40%, transparent); }
+
+/* ---- COACH-MARK: spotlight (dim + blur, squircle cutout) + the arrow tooltip ---- */
+/* the DIM: a squircle window (engine sizes it to the target); its huge box-shadow dims
+   everything OUTSIDE the cutout, so the cutout edge reads as a crisp 24px squircle */
+.coach-dim {
+  position: fixed; z-index: 88; border-radius: 24px; corner-shape: squircle;
+  box-shadow: 0 0 0 100vmax rgba(18, 18, 22, 0.10);
+  opacity: 0; pointer-events: none; transition: opacity 0.42s ease;
+}
+.coach-dim.is-on { opacity: 1; }
+.dark .coach-dim { box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.34); }
+/* the BLUR: a full-screen backdrop-filter, engine-masked so ONLY outside the cutout blurs */
+.coach-blur {
+  position: fixed; inset: 0; z-index: 88;
+  -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px);
+  opacity: 0; pointer-events: none;
+  transition: -webkit-backdrop-filter 0.42s ease, backdrop-filter 0.42s ease, opacity 0.42s ease;
+}
+.coach-blur.is-on { opacity: 1; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+
+/* the tooltip: taller card, avatar top-aligned, title + body, close with the 6s ring. An
+   arrow pokes out the edge (left for a right-of-target tooltip; up for a below-target one). */
+.launcher__coach { flex-direction: row; align-items: flex-start; gap: 12px; padding: 18px 20px 18px 80px; overflow: visible; }
+.launcher[data-state="coach"] .launcher__av { left: 16px; top: 18px; width: 54px; }
+.coach__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.coach__title { font-weight: 600; font-size: 16px; line-height: 1.4; color: var(--foreground); letter-spacing: -0.01em; }
+.coach__desc { font-weight: 400; font-size: 14px; line-height: 1.42; color: var(--muted-foreground); }
+/* the arrow: a rotated square carrying the card bg + its two outward borders + a soft shadow,
+   flush against the card edge so the line-ends meet the card's OUTER border (one shape). */
+.coach__arrow { position: absolute; width: 13px; height: 13px; background: var(--card); border-radius: 0 0 0 3px; corner-shape: round; }
+.launcher.is-coach-left .coach__arrow { left: -7px; top: 50%; transform: translateY(-50%) rotate(45deg); border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: -3px 3px 6px -1px rgba(10, 13, 18, 0.06); }
+.launcher.is-coach-top  .coach__arrow { top: -7px; left: var(--coach-arrow-x, 50%); transform: translateX(-50%) rotate(45deg); border-top: 1px solid var(--border); border-left: 1px solid var(--border); box-shadow: -3px -3px 6px -1px rgba(10, 13, 18, 0.05); }
+/* the arrow fades in during BEAT 2 — after the disc has travelled up and started to expand —
+   so it never shows on the bare avatar disc (opacity only, never fights the rotate) */
+.launcher[data-state="coach"] .coach__arrow { animation: coach-arrow-in 0.3s ease 0.57s both; }
+@keyframes coach-arrow-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .launcher[data-state="coach"] .coach__arrow { animation: none; } }
+
+/* build-out (removal): quicker than the staggered reveal (which reuses bp-anim-rise) */
+@keyframes bp-anim-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(5px) scale(0.97); } }
+.bp-anim-out { animation: bp-anim-out 0.16s ease both; }
+@media (prefers-reduced-motion: reduce) { .bp-anim-out { animation: none; opacity: 0; } }

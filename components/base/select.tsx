@@ -39,7 +39,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "group/trigger flex w-full items-center gap-2 rounded-lg border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] font-medium whitespace-nowrap text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background]",
+        "group/trigger bp-chev-host flex w-full items-center gap-2 rounded-lg border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] font-medium whitespace-nowrap text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background]",
         "hover:border-[#cfcfcf] hover:bg-[linear-gradient(180deg,#ffffff,#f1f1f1)]",
         "data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]",
         "disabled:pointer-events-none disabled:opacity-45",
@@ -50,7 +50,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon className="ml-auto flex shrink-0 text-muted-foreground transition-transform duration-200 group-data-[popup-open]/trigger:rotate-180">
-        <Icon name="chevron-down" size={size === "sm" ? 16 : 18} />
+        <Icon name="chevron-down" size={size === "sm" ? 16 : 18} className="bp-chev" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -60,15 +60,30 @@ function SelectContent({
   className,
   children,
   sideOffset = 6,
+  positionerClassName,
   ...props
-}: SelectPrimitive.Popup.Props & Pick<SelectPrimitive.Positioner.Props, "sideOffset" | "align" | "side">) {
+}: SelectPrimitive.Popup.Props &
+  Pick<SelectPrimitive.Positioner.Props, "sideOffset" | "align" | "side"> & {
+    /** extra classes for the Positioner (e.g. a higher z-index when the trigger
+     *  lives inside another fixed layer like the launcher) */
+    positionerClassName?: string
+  }) {
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner sideOffset={sideOffset} className="isolate z-50 outline-none" {...props}>
+      {/* a Select is just the single-select DROPDOWN: it drops BELOW the trigger
+          (alignItemWithTrigger=false turns off base-ui's native "anchor the chosen
+          row over the trigger" behavior) on the same surface as every other dropdown. */}
+      <SelectPrimitive.Positioner
+        side="bottom"
+        alignItemWithTrigger={false}
+        sideOffset={sideOffset}
+        className={cn("isolate z-50 outline-none", positionerClassName)}
+        {...props}
+      >
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
-            "max-h-[296px] min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-y-auto rounded-lg border border-border-strong bg-popover p-1.5 text-popover-foreground shadow-pop outline-none",
+            "max-h-[296px] min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-y-auto rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-border-strong bg-popover p-1.5 text-popover-foreground shadow-card outline-none",
             "transition-[transform,opacity] data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0 data-[ending-style]:scale-[0.98] data-[ending-style]:opacity-0",
             className
           )}
@@ -91,31 +106,47 @@ function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) 
   )
 }
 
-function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
+function SelectItem({
+  className,
+  children,
+  leading,
+  indicator = "check",
+  ...props
+}: SelectPrimitive.Item.Props & {
+  /** content before the label (e.g. a <Checkbox> for a multi-select row) */
+  leading?: React.ReactNode
+  /** the trailing selected indicator — the reveal-check disc, or "none" when the
+   *  row already shows its state some other way (e.g. a leading checkbox) */
+  indicator?: "check" | "none"
+}) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "group/item relative flex min-h-10 w-full cursor-default items-center gap-2 rounded-lg px-3 py-2.5 text-base font-medium text-foreground outline-none select-none",
-        "transition-colors data-[highlighted]:bg-[color-mix(in_oklab,var(--foreground)_5%,transparent)] data-[selected]:bg-accent-tint",
+        // control-family row: same radius + hover as every other dropdown row
+        "group/item relative flex min-h-[34px] w-full cursor-default items-center gap-2 rounded-[var(--ctl-radius)] [corner-shape:squircle] px-2.5 py-[7px] text-base font-medium text-foreground outline-none select-none",
+        "transition-colors data-[highlighted]:bg-[var(--ctl-hover)] data-[selected]:bg-[var(--ctl-hover)]",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-45",
         className
       )}
       {...props}
     >
+      {leading}
       <SelectPrimitive.ItemText className="min-w-0 flex-1 truncate">{children}</SelectPrimitive.ItemText>
-      {/* reveal check: 0-width until highlighted or selected; outline ring -> accent disc */}
-      <span className="flex w-0 shrink-0 items-center justify-center overflow-hidden opacity-0 transition-[width,opacity,margin] duration-200 [transition-timing-function:var(--ease-emphasized)] group-data-[highlighted]/item:ml-2 group-data-[highlighted]/item:w-5 group-data-[highlighted]/item:opacity-100 group-data-[selected]/item:ml-2 group-data-[selected]/item:w-5 group-data-[selected]/item:opacity-100">
-        <span
-          aria-hidden="true"
-          className="relative block size-5 shrink-0 rounded-full [corner-shape:round] bg-transparent shadow-[inset_0_0_0_1.5px_var(--border-strong)] transition-[background,box-shadow] group-data-[selected]/item:bg-primary group-data-[selected]/item:shadow-none"
-        >
+      {indicator === "check" && (
+        /* reveal check: 0-width until highlighted or selected; outline ring -> accent disc */
+        <span className="flex w-0 shrink-0 items-center justify-center overflow-hidden opacity-0 transition-[width,opacity,margin] duration-200 [transition-timing-function:var(--ease-emphasized)] group-data-[highlighted]/item:ml-2 group-data-[highlighted]/item:w-5 group-data-[highlighted]/item:opacity-100 group-data-[selected]/item:ml-2 group-data-[selected]/item:w-5 group-data-[selected]/item:opacity-100">
           <span
-            className="absolute inset-0 bg-muted-foreground transition-colors group-data-[selected]/item:bg-[var(--primary-foreground)]"
-            style={maskStyle(12)}
-          />
+            aria-hidden="true"
+            className="relative block size-5 shrink-0 rounded-full [corner-shape:round] bg-transparent shadow-[inset_0_0_0_1.5px_var(--border-strong)] transition-[background,box-shadow] group-data-[selected]/item:bg-primary group-data-[selected]/item:shadow-none"
+          >
+            <span
+              className="absolute inset-0 bg-muted-foreground transition-colors group-data-[selected]/item:bg-[var(--primary-foreground)]"
+              style={maskStyle(12)}
+            />
+          </span>
         </span>
-      </span>
+      )}
     </SelectPrimitive.Item>
   )
 }

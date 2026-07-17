@@ -68,7 +68,7 @@ function Slider({ plain = false, value, defaultValue = 50, onValueChange, readFo
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[#e9eaeb] dark:bg-white/12" />
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-border dark:bg-white/12" />
         <div
           className="absolute top-1/2 left-0 h-1.5 -translate-y-1/2 rounded-full transition-[width,background] duration-75"
           style={{ width: `${current}%`, background: color }}

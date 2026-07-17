@@ -1,55 +1,42 @@
-"use client"
-
 import * as React from "react"
-import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area"
 
 import { cn } from "@/lib/utils"
 
-function ScrollArea({
-  className,
-  children,
-  ...props
-}: ScrollAreaPrimitive.Root.Props) {
-  return (
-    <ScrollAreaPrimitive.Root
-      data-slot="scroll-area"
-      className={cn("relative", className)}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        data-slot="scroll-area-viewport"
-        className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
-      >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
-  )
+// The DS scroll container — the canonical home of the ONE global scrollbar: a 2px
+// thumb, transparent at rest, revealed ONLY while scrolling (styled in
+// components/kit.css, driven by lib/scroll-reveal's installScrollReveal). It's just a
+// native-overflow box: the treatment is global, so anywhere content overflows it
+// applies automatically and most surfaces use `overflow-*` directly. Reach for
+// <ScrollArea> when you want an explicit, self-contained scroll box (a fixed-size
+// panel, a menu, the styleguide's Scroll-area showcase).
+type ScrollAreaProps = React.ComponentProps<"div"> & {
+  /** which axis scrolls (default vertical) */
+  orientation?: "vertical" | "horizontal" | "both"
 }
 
-function ScrollBar({
-  className,
-  orientation = "vertical",
-  ...props
-}: ScrollAreaPrimitive.Scrollbar.Props) {
+const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea(
+  { orientation = "vertical", className, children, ...props },
+  ref
+) {
   return (
-    <ScrollAreaPrimitive.Scrollbar
-      data-slot="scroll-area-scrollbar"
-      data-orientation={orientation}
-      orientation={orientation}
+    <div
+      ref={ref}
+      data-slot="scroll-area"
       className={cn(
-        "flex touch-none p-px transition-colors select-none data-horizontal:h-2.5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:h-full data-vertical:w-2.5 data-vertical:border-l data-vertical:border-l-transparent",
+        "scroll-thin min-h-0",
+        orientation === "horizontal"
+          ? "overflow-x-auto overflow-y-hidden"
+          : orientation === "both"
+            ? "overflow-auto"
+            : "overflow-y-auto overflow-x-hidden",
         className
       )}
       {...props}
     >
-      <ScrollAreaPrimitive.Thumb
-        data-slot="scroll-area-thumb"
-        className="relative flex-1 rounded-full bg-border"
-      />
-    </ScrollAreaPrimitive.Scrollbar>
+      {children}
+    </div>
   )
-}
+})
 
-export { ScrollArea, ScrollBar }
+export { ScrollArea }
+export type { ScrollAreaProps }

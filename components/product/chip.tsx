@@ -12,7 +12,7 @@ const chipVariants = cva(
   {
     variants: {
       variant: {
-        neutral: "border-[#e4e4e7] bg-[#fcfcfc] text-[#717680] dark:border-white/12 dark:bg-white/5 dark:text-muted-foreground",
+        neutral: "border-border bg-surface text-text-muted dark:border-white/12 dark:bg-white/5 dark:text-muted-foreground",
         new: "bg-[var(--success-tint)] text-[color-mix(in_srgb,var(--success)_72%,#000)] border-[color-mix(in_srgb,var(--success)_40%,#fff)]",
         warn: "bg-[var(--warning-tint)] text-[color-mix(in_srgb,var(--warning)_68%,#000)] border-[color-mix(in_srgb,var(--warning)_42%,#fff)]",
       },

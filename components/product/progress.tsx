@@ -29,7 +29,7 @@ function Progress({
           </span>
         </div>
       )}
-      <div className="h-3 overflow-hidden rounded-full bg-[#e9eaeb] dark:bg-white/12">
+      <div className="h-3 overflow-hidden rounded-full bg-border dark:bg-white/12">
         <div
           className="h-full rounded-full bg-primary transition-[width] duration-[180ms] ease-linear"
           style={{ width: `${pct}%` }}
