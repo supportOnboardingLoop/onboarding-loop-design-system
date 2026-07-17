@@ -33,7 +33,7 @@ import { ChatPanel, type ChatPanelOption } from "@/components/product/chat-panel
 import type { LauncherApi } from "@/components/product/launcher-engine"
 import type { ConversationHandle } from "@/components/product/conversation"
 import { applySkin } from "./skins"
-import { PRESET_LIST, PRESETS, DEFAULT_PRESET_ID, resolvePresetId } from "./presets"
+import { PRESET_LIST, PRESETS, DEFAULT_PRESET_ID, resolvePresetId, resolveHostPresetId } from "./presets"
 import type { DemoPreset, DemoContext } from "./presets/types"
 import { DragProvider, type DragCallbacks } from "./drag"
 import type { Attachment } from "@/components/product/attach-chip"
@@ -50,7 +50,7 @@ import type { CardRef, CardActionsValue } from "./presets/analytics-ui"
 // Finance, CRM. The renderer owns all app STATE + behavior (chats, collection
 // rows, launcher, travelling avatar); the preset supplies only CONTENT + a Skin.
 // A visitor flips between presets with the SaaS picker; a deploy can lock to one
-// (the Heatmap client link → ?saas=analytics&lock=1).
+// via ?saas=&lock=1, or a pinned client host (see CLIENT_HOSTS in presets/index).
 // ============================================================
 
 // strip only polite / imperative openers; keep question words (they read fine as titles)
@@ -197,6 +197,12 @@ function SaasPicker({
    preset, and remounts the workspace on switch (a clean slate + skin per SaaS).
    --------------------------------------------------------------------------- */
 function readParams() {
+  // A pinned client domain (e.g. heatmap.onboardingloop.ai) forces its preset and
+  // locks the picker, regardless of the URL, so the client link can't be switched
+  // to another SaaS. Every other host reads ?saas= / ?lock= as normal.
+  const hostId = resolveHostPresetId(window.location.hostname)
+  if (hostId) return { id: hostId, locked: true }
+
   const p = new URLSearchParams(window.location.search)
   const lock = p.get("lock")
   return {

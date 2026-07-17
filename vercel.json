@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/", "has": [{ "type": "host", "value": "demo.onboardingloop.ai" }], "destination": "/demo.html" },
+    { "source": "/", "has": [{ "type": "host", "value": "heatmap.onboardingloop.ai" }], "destination": "/demo.html" }
+  ]
+}
