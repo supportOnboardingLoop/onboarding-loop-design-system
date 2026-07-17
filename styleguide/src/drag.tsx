@@ -140,21 +140,39 @@ export function DragProvider({ children, cb }: { children: React.ReactNode; cb: 
       const toy = Math.max(-60, Math.min(60, dy * strength))
       d.lox += (tox - d.lox) * 0.2
       d.loy += (toy - d.loy) * 0.2
-      // excitement: within the last ~90px it wiggles + scales up, ramping with closeness
-      const ex = Math.max(0, (near - 0.8) / 0.2)
+
+      // "receiving" = the card is over the launcher, so it has morphed out of its
+      // resting pill into the input field (any state but default). The anticipation
+      // wiggle is ONLY for the resting pill; once it's receiving, it holds still.
+      const receiving = L.getAttribute("data-state") !== "default"
+
+      // GLOW: a primary-coloured bloom that ramps in with proximity, held full while
+      // the card is over the launcher. CSS reads --drag-glow (0→1) for blur/spread.
+      const glow = receiving ? 1 : Math.max(0, Math.min(1, (260 - dist) / (260 - 40)))
+      L.style.setProperty("--drag-glow", glow.toFixed(3))
+
+      // SHAKE: an anticipation wiggle — very subtle as the card gets close, ramping UP
+      // the nearer it gets — that STOPS completely the moment the card is over the top
+      // (the launcher becomes the input field). Ramp-up over distance from ~230px in.
+      const S_START = 230
+      const S_PEAK = 60
+      let shake = 0
+      if (!receiving && dist < S_START) {
+        // eased ramp-up (subtle at first), holding at the peak until it's over the top
+        shake = Math.min(1, Math.pow((S_START - dist) / (S_START - S_PEAK), 1.6))
+      }
       let jx = 0
       let jy = 0
       let rot = 0
       let scale = 1
-      if (ex > 0) {
+      if (shake > 0) {
         const t = performance.now()
-        const amp = ex * 3
+        const amp = shake * 3.2
         jx = Math.sin(t / 26) * amp
         jy = Math.cos(t / 21) * amp
-        rot = Math.sin(t / 34) * ex * 2
-        scale = 1 + ex * 0.025
+        rot = Math.sin(t / 34) * shake * 2
+        scale = 1 + shake * 0.022
       }
-      L.classList.toggle("is-excited", ex > 0.15)
       L.style.transform = `translate(${(d.lox + jx).toFixed(1)}px, ${(d.loy + jy).toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`
     }
 
@@ -182,10 +200,11 @@ export function DragProvider({ children, cb }: { children: React.ReactNode; cb: 
     }
     document.body.style.userSelect = ""
     document.body.classList.remove("is-dragging-card")
-    // spring the launcher back to its dock (drop the drag outline + excited wiggle)
+    // spring the launcher back to its dock (drop the drag outline + glow + wiggle)
     const L = launcherEl()
     if (L) {
       L.classList.remove("is-drag-active", "is-excited")
+      L.style.removeProperty("--drag-glow")
       L.style.transition = `transform .42s ${BACK}`
       L.style.transform = "translate(0px, 0px) rotate(0deg) scale(1)"
       window.setTimeout(() => {

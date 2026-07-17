@@ -160,14 +160,17 @@
 .drag-ghost__accent { flex: none; font-size: 13px; font-weight: 700; color: var(--primary); white-space: nowrap; }
 .drag-ghost__title { min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* the launcher takes a primary outline the moment a drag begins, brightens to an
-   accent ring when the card is over / near it, and glows strongest while it's
-   "excited" (vibrating, very close). The box-shadow eases in (the engine only sets
-   an inline transition mid-morph, so this CSS one governs the rest of the time). */
-.launcher.is-drag-active { transition: box-shadow 0.18s ease; }
-.launcher.is-drag-active { box-shadow: 0 0 0 1.5px var(--primary), var(--bp-shadow); }
-.launcher.is-drop { box-shadow: 0 0 0 3px var(--accent-tint), 0 0 0 1.5px var(--primary), var(--bp-shadow); }
-.launcher.is-excited { box-shadow: 0 0 0 5px var(--accent-tint), 0 0 0 2px var(--primary), var(--bp-shadow); }
+/* the launcher takes a primary outline the moment a drag begins; as the card nears,
+   a PRIMARY-coloured glow blooms in — its blur + spread ramp with --drag-glow (0→1,
+   set per-frame by drag.tsx from proximity), reaching full when the card is over the
+   top. Same hue throughout (no light accent-tint), just a growing primary halo. */
+.launcher.is-drag-active {
+  box-shadow:
+    0 0 0 1.5px var(--primary),
+    0 0 calc(var(--drag-glow, 0) * 28px) calc(var(--drag-glow, 0) * 3px)
+      color-mix(in srgb, var(--primary) 60%, transparent),
+    var(--bp-shadow);
+}
 
 /* a dashboard row lights up when the drag is over it */
 [data-drop="dashboard"].is-drop { background: var(--accent-tint) !important; box-shadow: inset 0 0 0 1.5px var(--primary); }
