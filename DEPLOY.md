@@ -42,20 +42,99 @@ its own URL but should not appear in the public picker, or it leaks client
 specifics to anyone browsing the demo. Keep client presets unlisted; only
 showcase states go in the picker list.
 
+## Two kinds of preset: showcase vs product
+
+Not every preset is the same thing.
+
+- **Showcase / client presets** (e.g. `analytics` = Heatmap) are mockups. They
+  live only in the demo, run on seeded fake data, and never become a real app.
+  This is client deliverable work.
+- **Product presets** (e.g. `crm` -> Loop OS pipeline, `project-mgmt` -> Loop OS
+  projects) are previews of REAL Loop OS pages. The page UI is a shared component
+  in this design system; the demo renders it with fake data, Loop OS renders the
+  same component with real data.
+
+The demo is where you design pages, for clients and for Loop OS alike. Loop OS is
+the working app. The rule that keeps that sane: the demo holds layout and
+components on fake data; real data and behavior live only in Loop OS.
+
+## Product presets: one page, shared with Loop OS
+
+A product page is three layers. Only the first is shared.
+
+1. **Presentational component** — lives here, in `components/product/` (e.g.
+   `components/product/projects-page.tsx`). Pure UI. It takes ALL its data and
+   callbacks as props. It never fetches, never touches the vault, never routes.
+   Mark it `"use client"` if interactive. This is the single source for the page's
+   look and layout.
+2. **Demo consumer** — the product preset imports the component and feeds it
+   seeded fake data (and no-op or local-state callbacks). This is what shows in
+   the demo.
+3. **Loop OS consumer** — Loop OS imports the SAME component (it already pulls
+   this repo as a dependency) and feeds it real data from the vault plus real
+   callbacks (write, reorder, GitHub sync).
+
+The contract between design and data is a props type defined here, next to the
+component. Both consumers satisfy it.
+
+```tsx
+// design system: components/product/projects-page.tsx
+export type ProjectsPageProps = {
+  projects: ProjectRow[]
+  onReorder?: (from: number, to: number) => void
+  onEditTask?: (id: string, patch: Partial<Task>) => void
+}
+export function ProjectsPage(props: ProjectsPageProps) {
+  /* pure UI: layout, cards, nav. no data fetching, no vault, no router. */
+}
+
+// demo preset (project-mgmt): fake data, look only
+<ProjectsPage projects={SEED_PROJECTS} />
+
+// loop os route: real data + real behavior
+<ProjectsPage
+  projects={realProjects}
+  onReorder={writeReorderToVault}
+  onEditTask={writeTaskToVault}
+/>
+```
+
+**Propagation.** Change `projects-page.tsx`, push. The demo picks it up (same
+repo). Loop OS picks it up when you pull this dependency (`npm update
+@onboarding-loop/design-system` or bump the git ref). That pull is the "update
+Loop OS if I ask it to." One source for the UI, two data feeds.
+
+**Boundary rules (do not break):**
+- The shared component takes data in via props and sends events out via
+  callbacks. It never fetches, never reads the vault, never routes.
+- Fake data (demo) and real data (Loop OS) both conform to the same props type.
+- Behavior (persistence, sync, routing) lives in the Loop OS consumer only, never
+  in the shared component or the preset.
+
+**Migration.** Loop OS's existing projects/pipeline pages were built separately in
+Cursor on shadcn. Adopting this means refactoring each to render the shared
+component, page by page. New pages: design them in the demo as the shared
+component first, then wire Loop OS to it. New is clean; existing is a migration.
+
 ## Deploy map
 
 One repo, one primary Vercel project, host-based routing off the same build.
 `npm run build:styleguide` (Vite) emits two pages into `styleguide/dist`:
 `index.html` (the styleguide) and `demo.html` (the demo).
 
-- `system.onboardingloop.ai` -> serves `index.html` (the design system, public).
-- `demo.onboardingloop.ai` -> serves `demo.html` (the public demo).
+- `demo.onboardingloop.ai` -> serves `demo.html`. This is the ONE public surface:
+  the real "see it working". Marketing points here.
+- `system.onboardingloop.ai` -> the GATED product (the Onboarding Loop system /
+  DIY kit). Serves the kit, access-gated by magic link (Supabase + a Stripe
+  webhook; see strategy.md 2026-07-17 and the future auth brief). NOT public. Do
+  not attach this domain or ship it publicly until the gate is built. Until then,
+  `index.html` is the styleguide for internal/dev use only.
 - Client domains -> serve `demo.html?saas=<client>`, but pinned to that client's
   branch, not to `main` (see below).
 
-`main` is always-latest and drives the two public URLs. Push to `main`, the system
-and demo redeploy. Do not push work to `main` that you do not want live on the
-public system and demo. Keep unfinished work on a branch.
+`main` is always-latest and drives the public demo (and, once built, the gated
+system). Push to `main`, they redeploy. Do not push work to `main` that you do not
+want live on the public demo. Keep unfinished work on a branch.
 
 ## Client lifecycle
 
