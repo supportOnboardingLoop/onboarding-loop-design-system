@@ -129,12 +129,34 @@ One repo, one primary Vercel project, host-based routing off the same build.
   webhook; see strategy.md 2026-07-17 and the future auth brief). NOT public. Do
   not attach this domain or ship it publicly until the gate is built. Until then,
   `index.html` is the styleguide for internal/dev use only.
-- Client domains -> serve `demo.html?saas=<client>`, but pinned to that client's
-  branch, not to `main` (see below).
+- Client domains -> serve `demo.html`, pinned to that client's branch, not to
+  `main`. The app locks to the client's preset by hostname, so the URL stays clean
+  (no `?saas=`). See below.
 
 `main` is always-latest and drives the public demo (and, once built, the gated
 system). Push to `main`, they redeploy. Do not push work to `main` that you do not
 want live on the public demo. Keep unfinished work on a branch.
+
+## How routing and the client gate work
+
+Host routing and the client password gate live in `middleware.ts` (Edge
+Middleware), not `vercel.json`. `vercel.json` rewrites run after the filesystem
+check, so a request for `/` is answered by the existing `index.html` (the
+styleguide) before any rewrite fires, and every host shows the styleguide.
+Middleware runs before the filesystem, so it serves `demo.html` at the clean root
+`/` for the demo and client hosts.
+
+- Client lock: the app reads its preset and lock from `window.location` (`DemoApp`
+  `readParams` + `CLIENT_HOSTS` in `presets/index.ts`). A client host forces its
+  preset and hides the SaaS picker by hostname, so the URL stays clean and can't be
+  switched. Add a client host in both places.
+- Vercel wiring: assign a client domain to its branch as a Preview environment
+  (Domains -> Edit -> Connect to an environment -> Preview -> the branch), not
+  Production.
+- In-progress gate: client links are password-protected by HTTP Basic Auth in
+  `middleware.ts` (`CLIENT_GATE`), because Vercel's own Password Protection is a
+  $150/mo add-on. Keep Vercel Authentication off so Basic Auth is the wall; delete
+  a host's `CLIENT_GATE` line to open its link to the public.
 
 ## Client lifecycle
 
@@ -157,16 +179,17 @@ Propagation still flows both ways because it is one codebase: system changes rea
 clients when you merge, and improvements made while building a client land in the
 system when you merge back to `main`. The merge is the intentional gate.
 
-## Current state (2026-07-17)
+## Current state (2026-07-18)
 
-- Heatmap: active, live client. Lives as the analytics preset. Runs on a
-  `client/heatmap` branch; `heatmap.onboardingloop.ai` points at that branch.
+- Heatmap: active, live client. Lives as the analytics preset on the primary
+  Vercel project, `client/heatmap` branch; `heatmap.onboardingloop.ai` points at
+  that branch and is password-gated while in progress (see the routing note above).
   Merge `main` into it to push the client an update.
 - Corebee: delivered, frozen, on the legacy static repo. Left as-is. Rebuild in
   this system if reopened.
-- `blueprint-deliverables/heatmap-agency-portal`: the old duplicated static build.
-  Superseded by the heatmap preset here. Retire its repo and Vercel project once
-  the new deploy is verified.
+- Old `heatmap-agency-portal`: retired 2026-07-18. Vercel project deleted, GitHub
+  repo archived, local folder moved to `~/Desktop/code/archive/`. The old
+  duplicate-and-sync flow is dead.
 
 ## Adding a new build (the recipe)
 
