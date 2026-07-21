@@ -49,11 +49,10 @@ export const GET_STARTED_MENU: MenuItem[] = [
   { key: "plan", label: "Plan", desc: "Done for you, $750.", href: undefined, icon: "calendar" },
 ]
 
-/** Top-level plain nav items after System + Products. Pricing and FAQ have no
- *  page yet (href undefined → inert placeholder). */
+/** Top-level plain nav items after System + Products. */
 export const NAV_MORE: { key: NavKey; label: string; href?: string }[] = [
-  { key: "pricing", label: "Pricing", href: undefined },
-  { key: "faq", label: "FAQ", href: undefined },
+  { key: "pricing", label: "Pricing", href: "/pricing" },
+  { key: "faq", label: "FAQ", href: "/faq" },
 ]
 
 /** Footer nav — a flat mirror of the header's destinations (no dropdowns). */
@@ -61,7 +60,7 @@ export const FOOTER_NAV: { label: string; href?: string; external?: boolean }[] 
   { label: "System", href: "/system" },
   { label: "Build", href: "/product" },
   { label: "Plan", href: "/service" },
-  { label: "Pricing", href: undefined },
-  { label: "FAQ", href: undefined },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
   { label: "View Demo", href: DEMO_URL, external: true },
 ]

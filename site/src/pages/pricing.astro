@@ -1,0 +1,21 @@
+---
+/*
+ * /pricing — the two-plan comparison table (Build vs Plan) on the global chrome.
+ * PricingPage is static (no island): a table, links, CSS only.
+ */
+import Base from "../layouts/Base.astro"
+import { TopBar } from "@/components/web/TopBar"
+import { Footer } from "@/components/web/Footer"
+import PricingPage from "../PricingPage"
+---
+
+<Base
+  title="Pricing · Onboarding Loop"
+  description="Two ways to get it: Build it yourself for $129, or have it done for you for $750. Compare what's in each."
+>
+  <TopBar client:load variant="global" active="pricing" />
+  <main id="top">
+    <PricingPage />
+  </main>
+  <Footer client:load reveal variant="global" />
+</Base>

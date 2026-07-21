@@ -1,0 +1,39 @@
+/* ============================================================
+   faq.css — /faq. A centered accordion (the Untitled faq-accordion layout) in OL
+   style: a centered page header, the DS <Qa> accordion (reusing .prod-faq-list),
+   and a "still have questions" card with an avatar group + a contact CTA.
+
+   Scoped to `.ol-web`, tokens only. Built in place per the master build prompt.
+   ============================================================ */
+
+.ol-web .faq-page { max-width: 768px; margin: 0 auto; padding: 64px var(--pad) 96px }
+
+.ol-web .faq-page-header { text-align: center; margin-bottom: 40px }
+.ol-web .faq-page-header .kicker { text-align: center }
+.ol-web .faq-page-header h1 {
+  font-family: var(--font-display); font-weight: 400; color: var(--ink-strong);
+  font-size: clamp(34px, 3.4vw, 50px); line-height: 1.16; margin: 12px 0 14px; text-wrap: balance;
+}
+.ol-web .faq-page-header .faq-sub { max-width: 560px; margin: 0 auto; font-size: 19px; line-height: 29px; color: var(--muted) }
+
+/* the accordion list reuses .prod-faq-list (border-top + <Qa> rows) */
+
+/* --- still have questions card --- */
+.ol-web .faq-help {
+  margin-top: 56px; padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
+}
+.ol-web .faq-avatars { display: flex; margin-bottom: 20px }
+.ol-web .faq-avatars img {
+  width: 48px; height: 48px; border-radius: 999px; corner-shape: round;   /* stay circular, not squircled */
+  border: 2px solid var(--white); background: var(--panel); object-fit: cover; display: block;
+}
+.ol-web .faq-avatars img + img { margin-left: -14px }
+.ol-web .faq-help h3 { font-size: 20px; line-height: 28px; font-weight: 600; color: var(--ink-strong); margin-bottom: 6px }
+.ol-web .faq-help p { max-width: 420px; margin-bottom: 22px; font-size: 16px; line-height: 24px; color: var(--muted) }
+
+@media (max-width: 767px) {
+  .ol-web .faq-page { padding-top: 40px }
+  .ol-web .faq-page-header h1 { font-size: clamp(30px, 8vw, 40px) }
+  .ol-web .faq-help { padding: 32px 24px }
+}
