@@ -369,6 +369,7 @@ export function Demo() {
       skin={skin}
       showCustomize={!isClient && !boot.embedded}
       showSaasPicker={!boot.embedded}
+      showAccount={!isClient}
     />
   )
 }
@@ -389,6 +390,7 @@ function DemoWorkspace({
   skin,
   showCustomize,
   showSaasPicker,
+  showAccount,
 }: {
   preset: DemoPreset
   locked: boolean
@@ -400,6 +402,7 @@ function DemoWorkspace({
   skin: SkinState
   showCustomize: boolean
   showSaasPicker: boolean
+  showAccount: boolean
 }) {
   const AGENT = identity.agent
   const AV = agentSrc
@@ -948,7 +951,9 @@ function DemoWorkspace({
               >
                 Settings
               </NavItem>
-              <AccountCard name="Bal Sieber" email="bal@onboardingloop.ai" initials="ME" online collapsed={navCollapsed} />
+              {showAccount && (
+                <AccountCard name="Bal Sieber" email="bal@onboardingloop.ai" initials="ME" online collapsed={navCollapsed} />
+              )}
             </ColumnFooter>
           </LayoutColumn>
         }
