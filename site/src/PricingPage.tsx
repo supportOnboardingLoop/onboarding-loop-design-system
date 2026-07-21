@@ -13,35 +13,35 @@ import { primary, secondary } from "./product-kit"
 type Val = boolean | string
 interface Row {
   label: string
-  build: Val
-  plan: Val
+  diy: Val
+  dfy: Val
 }
 const GROUPS: { title: string; rows: Row[] }[] = [
   {
     title: "What's included",
     rows: [
-      { label: "The protocols · 4 documents", build: true, plan: true },
-      { label: "The Claude skill", build: true, plan: true },
-      { label: "The design system · GitHub access", build: true, plan: true },
-      { label: "Readable web pages", build: true, plan: true },
+      { label: "The protocols · 4 documents", diy: true, dfy: true },
+      { label: "The Claude skill", diy: true, dfy: true },
+      { label: "The design system · GitHub access", diy: true, dfy: true },
+      { label: "Readable web pages", diy: true, dfy: true },
     ],
   },
   {
     title: "Done for you",
     rows: [
-      { label: "Onboarding blueprint on your product", build: false, plan: true },
-      { label: "Interactive prototype of the first win", build: false, plan: true },
-      { label: "The build roadmap", build: false, plan: true },
-      { label: "Live walkthrough, recorded", build: false, plan: true },
+      { label: "Onboarding blueprint on your product", diy: false, dfy: true },
+      { label: "Interactive prototype of the first win", diy: false, dfy: true },
+      { label: "The build roadmap", diy: false, dfy: true },
+      { label: "Live walkthrough, recorded", diy: false, dfy: true },
     ],
   },
   {
     title: "Support and delivery",
     rows: [
-      { label: "Community support", build: true, plan: true },
-      { label: "Support", build: "Standard", plan: "Priority" },
-      { label: "Delivery", build: "Instant", plan: "3 days" },
-      { label: "Free updates, forever", build: true, plan: true },
+      { label: "Community support", diy: true, dfy: true },
+      { label: "Support", diy: "Standard", dfy: "Priority" },
+      { label: "Delivery", diy: "Instant", dfy: "3 days" },
+      { label: "Free updates, forever", diy: true, dfy: true },
     ],
   },
 ]
@@ -77,7 +77,7 @@ export default function PricingPage() {
           <div className="price-corner" />
           <div className="price-plan price-plan--featured">
             <div className="price-plan-name">
-              Build <span className="price-badge">Most popular</span>
+              Plan <span className="price-badge">Most popular</span>
             </div>
             <div className="price-amount">
               <b>$129</b>
@@ -89,7 +89,7 @@ export default function PricingPage() {
             </a>
           </div>
           <div className="price-plan">
-            <div className="price-plan-name">Plan</div>
+            <div className="price-plan-name">Build</div>
             <div className="price-amount">
               <b>$750</b>
               <span>one-time</span>
@@ -107,8 +107,8 @@ export default function PricingPage() {
               {g.rows.map((r) => (
                 <React.Fragment key={r.label}>
                   <div className="price-feat">{r.label}</div>
-                  <Cell value={r.build} featured />
-                  <Cell value={r.plan} />
+                  <Cell value={r.diy} featured />
+                  <Cell value={r.dfy} />
                 </React.Fragment>
               ))}
             </React.Fragment>
