@@ -83,7 +83,9 @@
 /* ---- DEFAULT: identical box to INPUT; "Ask <agent>" + ⌘K where the field + send are ---- */
 .launcher__default { flex-direction: row; align-items: center; gap: 10px; padding: 0 16px 0 70px; }
 .launcher__cta { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
-.launcher__ask { font-weight: 600; font-size: 16px; line-height: 1; color: var(--foreground); letter-spacing: -0.01em; }
+/* matches the DS text-base (14px) so the standalone LauncherPill and the full
+   Launcher's resting state read identically (both render <LauncherResting>) */
+.launcher__ask { font-weight: 600; font-size: 14px; line-height: 1; color: var(--foreground); letter-spacing: -0.01em; }
 .launcher__kbd {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
   height: 24px; padding: 0 9px;
@@ -92,9 +94,12 @@
 }
 
 /* ---- INPUT: the real composer (field + send), grows UP to 3 lines ---- */
-.launcher__input { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 16px 12px 70px; }
+/* the two inner gaps (avatar->field via padding-left, field->send via composer gap)
+   are ~half the launcher's 16px frame padding, so the composer reads evenly spaced
+   rather than crowding the avatar and over-spacing the send button. */
+.launcher__input { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 16px 12px 74px; }
 .launcher__attachrow { display: flex; flex-wrap: wrap; gap: 6px; }
-.launcher__composer { min-width: 0; display: flex; align-items: flex-start; gap: 12px; }
+.launcher__composer { min-width: 0; display: flex; align-items: flex-start; gap: 8px; }
 .launcher__field { flex: 1; min-width: 0; }
 .launcher__field-control {
   display: block; border: 1px solid var(--border-strong);
@@ -171,8 +176,25 @@ textarea.launcher__input-field::-webkit-scrollbar { width: 0; height: 0; }
 .launcher__notif { flex-direction: row; align-items: center; gap: 14px; padding: 0 14px 0 73px; }
 .notif__main { flex: none; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .notif__row { display: flex; align-items: center; gap: 8px; }
-.notif__check { flex: none; width: 20px; height: 20px; color: var(--bp-success); }
+.notif__check { flex: none; width: 20px; height: 20px; }
 .notif__check svg { width: 100%; height: 100%; }
+/* tone-swapped glyph: green check for a positive toast, muted trash for a neutral
+   (reversible-delete) one. Only one shows, per the tone the engine sets. */
+.notif__ico--positive { color: var(--bp-success); }
+.notif__ico--neutral { display: none; color: var(--muted-foreground); }
+.launcher[data-notif-tone="neutral"] .notif__ico--positive { display: none; }
+.launcher[data-notif-tone="neutral"] .notif__ico--neutral { display: block; }
+
+/* the optional action (Undo): a plain text button sitting before the close ring */
+.notif__action {
+  flex: none; padding: 5px 8px; border: 0; background: transparent; cursor: pointer;
+  font-weight: 700; font-size: 13px; line-height: 1; color: var(--foreground);
+  border-radius: 9px; corner-shape: squircle; white-space: nowrap;
+  text-decoration: underline; text-underline-offset: 2px;
+  transition: background 0.15s ease, text-decoration-color 0.15s ease;
+}
+.notif__action:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); text-decoration-color: transparent; }
+.notif__action[hidden] { display: none; }
 .notif__title { font-weight: 700; font-size: 15px; line-height: 1.2; color: var(--foreground); white-space: nowrap; }
 .notif__time { flex: none; font-weight: 400; font-size: 13px; line-height: 1; color: var(--muted-foreground); }
 .notif__desc { font-weight: 400; font-size: 13px; line-height: 1.35; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -206,6 +228,14 @@ textarea.launcher__input-field::-webkit-scrollbar { width: 0; height: 0; }
 .launcher[data-state="notif"] .notif__close { background: transparent; border-color: color-mix(in srgb, var(--bp-success) 28%, transparent); }
 .launcher[data-state="notif"] .notif__close:hover { background: color-mix(in srgb, var(--bp-success) 12%, transparent); border-color: color-mix(in srgb, var(--bp-success) 42%, transparent); }
 .dark .launcher[data-state="notif"] { background: color-mix(in srgb, var(--bp-success) 16%, var(--card)); border-color: color-mix(in srgb, var(--bp-success) 40%, transparent); }
+
+/* NEUTRAL tone: a reversible action (e.g. a pin deleted + Undo) is not an
+   affirmation, so it stays the plain card instead of turning green. Overrides the
+   positive rules above; scoped to the notif state like them, so it reverts on morph. */
+.launcher[data-state="notif"][data-notif-tone="neutral"] { background: var(--card); border-color: var(--border); }
+.dark .launcher[data-state="notif"][data-notif-tone="neutral"] { background: var(--card); border-color: var(--border); }
+.launcher[data-state="notif"][data-notif-tone="neutral"] .notif__close { border-color: var(--border); }
+.launcher[data-state="notif"][data-notif-tone="neutral"] .notif__close:hover { background: var(--fill); border-color: var(--border-strong); }
 
 /* ---- COACH-MARK: spotlight (dim + blur, squircle cutout) + the arrow tooltip ---- */
 /* the DIM: a squircle window (engine sizes it to the target); its huge box-shadow dims
@@ -248,3 +278,14 @@ textarea.launcher__input-field::-webkit-scrollbar { width: 0; height: 0; }
 @keyframes bp-anim-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(5px) scale(0.97); } }
 .bp-anim-out { animation: bp-anim-out 0.16s ease both; }
 @media (prefers-reduced-motion: reduce) { .bp-anim-out { animation: none; opacity: 0; } }
+
+/* ============================================================ SEARCH
+   The launcher run as the styleguide's command-palette (App.tsx docks it as the
+   global search). The launcher CHROME is IDENTICAL to the demo agent — the avatar
+   and composer are untouched. The only search layout: in the input state the block
+   uses symmetric padding so the results / answer (rendered BELOW the composer by
+   <SearchLauncher>, using the REAL design-system components — NavItem, Choices,
+   ScrollArea, IconButton) span full width, while the composer keeps a left inset so
+   the field still clears the top-left avatar exactly as it does in the demo. */
+.launcher.is-search[data-state="input"] .launcher__input { padding: 12px 16px 12px 12px; gap: 6px; }
+.launcher.is-search[data-state="input"] .launcher__composer { padding-left: 62px; }

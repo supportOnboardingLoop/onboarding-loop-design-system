@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils"
+import { SectionHeader } from "@/components/product/section-header"
 import { Card, CardSurface, CardHeader, CardFooter, CardTitle, CardContent } from "@/components/base/card"
 import { Icon } from "@/components/base/icon"
 import { PinAction, AttachAction, SparkDefs, CardActionsProvider } from "./analytics-ui"
 import { PortfolioView } from "./analytics-portfolio"
 import { ReportView } from "./analytics-reports"
+import { DashboardView } from "./analytics-dashboard"
 import { useDrag } from "../drag"
+import { useDemoIdentity } from "../identity"
 import type { SlotProps } from "./types"
 
 // ============================================================================
@@ -22,79 +25,81 @@ import type { SlotProps } from "./types"
 // Portfolio, generated reports, and drag-to-launcher are later iterations.
 // ============================================================================
 
-type Insight = { money: string; site: string; title: string; body: string }
+// `siteIndex` points into the resolved DemoIdentity sites (generic in the public
+// demo, the real portfolio in a client build); no client site name is baked here.
+type Insight = { money: string; siteIndex: number; title: string; body: string }
 
-// Wilson's money-ranked insights (verbatim copy from the shipped portal).
+// The agent's money-ranked insights (verbatim copy from the shipped portal).
 const INSIGHTS: Insight[] = [
   {
     money: "$135K",
-    site: "blanketwaves.com",
+    siteIndex: 3,
     title: "Cart abandonment spike on mobile checkout",
     body: "Mobile checkout abandonment up 23% in 14 days. CLS on the checkout page degraded after a theme update; the layout shift interrupts the tap target on the CTA.",
   },
   {
     money: "$48K",
-    site: "laticoleathers.com",
+    siteIndex: 0,
     title: "Homepage hero above-fold engagement low",
     body: "Only 12% of visitors interact with the hero CTA. Click activity concentrates on the nav bar instead of the primary conversion path.",
   },
   {
     money: "$27K",
-    site: "gearrush.com",
+    siteIndex: 1,
     title: "Search users convert 4x but search is buried",
     body: "Visitors who use site search convert at 8.9% vs 2.2% overall, and the search entry point sits below the fold on mobile.",
   },
   {
     money: "$15K",
-    site: "plushlair.com",
+    siteIndex: 2,
     title: "PDP gallery dead zone on tablet",
     body: "Second and third gallery images get near-zero engagement on tablet; the swipe affordance is not visible.",
   },
   {
     money: "$62K",
-    site: "vaultleather.com",
+    siteIndex: 4,
     title: "Guest checkout hidden behind a forced account wall",
     body: "New shoppers must create an account before paying; 38% drop at the account step on mobile. Guest checkout is supported by the theme but switched off in settings.",
   },
   {
     money: "$41K",
-    site: "gearrush.com",
+    siteIndex: 1,
     title: "Product reviews load below the fold and lazily",
     body: "Reviews are the top trust signal for this catalog, but render after a 1.2s delay and sit under the fold. PDPs with reviews visible convert 2.1x higher.",
   },
   {
     money: "$33K",
-    site: "crateandtimber.com",
+    siteIndex: 5,
     title: "Free-shipping threshold never surfaced in cart",
     body: "The $75 free-shipping threshold is not shown until the final step. Sites that surface it in the mini-cart lift AOV 9-14% on this category.",
   },
   {
     money: "$29K",
-    site: "laticoleathers.com",
+    siteIndex: 0,
     title: "Category pages LCP 4.1s on 4G",
     body: "Largest Contentful Paint on collection pages is 4.1s on throttled 4G. Every second over 2.5s costs an estimated 7% of add-to-cart on mobile.",
   },
   {
     money: "$24K",
-    site: "plushlair.com",
+    siteIndex: 2,
     title: "Out-of-stock variants still look buyable",
     body: "Sold-out sizes render identically to in-stock ones until the Add to Cart tap fails. The dead-end interaction shows a 61% exit rate.",
   },
   {
     money: "$19K",
-    site: "blanketwaves.com",
+    siteIndex: 3,
     title: "Prominent promo field trains discount hunting",
     body: "An empty promo code box at checkout sends 18% of users off-site to hunt for codes; 40% do not return. A collapsed link recovers most of them.",
   },
   {
     money: "$12K",
-    site: "gearrush.com",
+    siteIndex: 1,
     title: "Mobile filter drawer resets on back",
     body: "Applying filters then tapping back clears the whole selection, so users re-filter or abandon. Preserving filter state on history navigation recovers the session.",
   },
   {
     money: "$8K",
-    site: "crateandtimber.com",
+    siteIndex: 5,
     title: "No trust badges at the payment step",
     body: "The payment step shows no security or guarantee cues. Adding SSL and returns badges at payment lifts completion 3-5% for first-time buyers.",
   },
@@ -123,13 +128,15 @@ function MoneyFigure({ amount, hero }: { amount: string; hero?: boolean }) {
 
 /* One insight = its own Card: a pure-content surface + a footer that carries the
    client (left) and the Pin / Attach actions (right). */
-function InsightCard({ money, site, title, body }: Insight) {
+function InsightCard({ money, siteIndex, title, body }: Insight) {
   const { startDrag } = useDrag()
-  const card = { id: title, title, accent: `${money}/mo` }
+  const { sites } = useDemoIdentity()
+  const site = sites[siteIndex]?.name ?? ""
+  const card = { id: title, title, accent: `${money}/mo`, tile: { type: "insight" as const, money, site, title, body } }
   return (
     <Card
       className="cursor-grab select-none active:cursor-grabbing"
-      onPointerDown={(e) => startDrag({ title: card.title, accent: card.accent, sourceId: card.id }, e)}
+      onPointerDown={(e) => startDrag({ title: card.title, accent: card.accent, sourceId: card.id, tile: card.tile }, e)}
     >
       <CardSurface className="gap-3 p-5">
         <MoneyFigure amount={money} />
@@ -154,6 +161,7 @@ function InsightCard({ money, site, title, body }: Insight) {
 /* The AI summary = its own headline card: a labeled header + a brand-tinted
    surface with the total opportunity as a big number. */
 function SummaryCard() {
+  const { agent } = useDemoIdentity()
   return (
     <Card>
       <CardHeader
@@ -163,7 +171,7 @@ function SummaryCard() {
       <CardSurface className="gap-3 border-[color-mix(in_srgb,var(--primary)_22%,transparent)] bg-[var(--accent-tint)] p-5">
         <MoneyFigure amount="$453K" hero />
         <CardContent className="text-sm leading-relaxed text-foreground">
-          Wilson ranked these by money. Each one actions into a task, a fix, or a client report.
+          {agent.name} ranked these by money. Each one actions into a task, a fix, or a client report.
         </CardContent>
       </CardSurface>
     </Card>
@@ -174,11 +182,8 @@ function SummaryCard() {
 function InsightsView() {
   return (
     <section className="flex flex-col gap-4">
-      {/* the section header — outside the cards, a plain heading + divider */}
-      <div className="flex items-baseline justify-between gap-6 border-b border-border px-1 pb-3">
-        <h2 className="shrink-0 text-md font-semibold tracking-[-0.01em] text-foreground">Insights</h2>
-        <p className="truncate text-sm text-muted-foreground">What the AI found, ranked by money</p>
-      </div>
+      {/* the section header — outside the cards, on the page grey (shared SectionHeader) */}
+      <SectionHeader title="Insights" description="What the AI found, ranked by money" placement="inline" divider />
 
       <SummaryCard />
 
@@ -198,15 +203,32 @@ function InsightsView() {
 export function AnalyticsBody({ ctx }: SlotProps) {
   return (
     <CardActionsProvider value={ctx.cardActions}>
-      <div className="absolute inset-0 overflow-y-auto pt-6 pr-4 pb-[120px] pl-5">
+      {/* full-width content, flush with the "Overview" + actions header. The
+          scroll gutter is RESERVED (scrollbar-gutter: stable) so the 8px DS
+          scrollbar never eats into the content width; the right padding is then
+          4px (= the header's 12px minus that 8px gutter) so the cards' right edge
+          lands exactly on the header actions' right edge, scrollbar or not. Left
+          stays 14px (pl-3.5) to match the header icon. */}
+      <div className="absolute inset-0 overflow-y-auto [scrollbar-gutter:stable] pt-6 pr-1 pb-[120px] pl-3.5">
         <SparkDefs />
-        <div className="mx-auto flex max-w-[1180px] flex-col gap-6">
-          {ctx.activeReport ? (
+        <div className="flex flex-col gap-6">
+          {ctx.selectedDash ? (
+            <DashboardView
+              dashboard={ctx.selectedDash}
+              handlers={ctx.dashboardHandlers}
+              meName="Bal Sieber"
+              bannerComposerOpen={ctx.bannerComposerOpen}
+              onCloseBannerComposer={ctx.closeBannerComposer}
+            />
+          ) : ctx.activeReport ? (
             <ReportView id={ctx.activeReport.id} />
-          ) : ctx.navSelected === "Portfolio" ? (
-            <PortfolioView />
           ) : (
-            <InsightsView />
+            // Overview = the money-ranked Insights + the (former) Portfolio content
+            // (Scorecard + client table) stacked into one view.
+            <>
+              <InsightsView />
+              <PortfolioView />
+            </>
           )}
         </div>
       </div>

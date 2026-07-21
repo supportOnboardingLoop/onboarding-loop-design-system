@@ -111,7 +111,8 @@ type CardChromeProps = React.ComponentProps<"div"> & {
   onClose?: () => void
 }
 
-// Top row on the tray gray. Title (16/600) OR an identity, then actions + close.
+// Top row on the tray gray. Title (14/500 — a quiet label that sits UNDER the
+// section header, not level with it) OR an identity, then actions + close.
 function CardHeader({
   title,
   avatar,
@@ -134,7 +135,7 @@ function CardHeader({
         (identity ? (
           <Identity avatar={avatar} name={name} role={role} stacked />
         ) : (
-          <div className="min-w-0 flex-1 truncate text-md leading-6 font-semibold text-foreground">{title}</div>
+          <div className="min-w-0 flex-1 truncate text-sm leading-5 font-medium text-foreground">{title}</div>
         ))}
       {action && <div className="flex shrink-0 items-center gap-3">{action}</div>}
       {onClose && <IconButton icon="x" motion="rotate" size={32} onClick={onClose} aria-label="Close" className="-mr-1.5" />}

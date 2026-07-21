@@ -1,14 +1,17 @@
 // ============================================================================
-// Skins — the single source of truth for the demo/styleguide "look": brand
-// theme, typeface, and agent identity.
+// Skins — the single source of truth for the "look": brand theme, typeface, and
+// agent identity, plus the helpers that apply them to :root.
 //
-// BOTH surfaces read from here so a skin is defined exactly once:
-//   • the styleguide's live re-skin panel  (App.tsx "Customize")
-//   • the demo's SaaS presets              (presets/*.tsx)
+// The Customize panel (customize.tsx, shared by the styleguide and the demo)
+// reads these lists so the picker is defined exactly once. Branding is NOT a
+// property of a preset: a preset (presets/*) is content only, and the demo's
+// brand comes from the visitor's Customize choices (public) or a client record
+// (clients.ts, a client build). Client-only brands (their raw hex, their agent)
+// live in clients.ts, not here, so the public picker never offers them.
 //
 // A "skin" is only the visual layer (colors + font + agent identity). The
 // CONTENT of a demo (nav, sub-nav, cards, conversation) lives in a DemoPreset
-// (presets/types.ts); a preset carries a Skin plus its content.
+// (presets/types.ts).
 // ============================================================================
 
 export const FONTS: Record<string, string> = {
@@ -18,40 +21,50 @@ export const FONTS: Record<string, string> = {
   Manrope: '"Manrope", system-ui, sans-serif',
 }
 
-// `tint` = the selected-item fill (--accent-tint). `neutralTint` (optional) = the
-// hue the greys borrow (--tint); omit it and the greys just follow the brand.
-// Anthropic's terracotta reads pink on the greys, so it borrows warm Manila instead.
-export type ThemeDef = { primary: string; tint: string; neutralTint?: string }
+// `neutralTint` (optional) = the hue the greys borrow (--tint); omit it and the
+// greys just follow the brand. Anthropic's terracotta reads pink on the greys,
+// so it borrows warm Manila instead. `color` = the plain-English name of the
+// hue, shown in brackets in the picker ("Spotify (Green)").
+//
+// There is no `tint` here anymore: the selected-item fill (--accent-tint) is
+// derived from --primary per color-scheme in tokens.css, which is what lets it
+// stay legible in dark mode. One color in, both modes out.
+export type ThemeDef = { primary: string; color: string; neutralTint?: string }
 
 // null = the system's own neutral brand (no hue). Named brands set a preview hue.
+// This is a PUBLIC showcase palette; client-only brands live in clients.ts as a
+// raw hex (applyTheme supports that), never here, so they never reach the picker.
 export const THEMES: Record<string, ThemeDef | null> = {
   Neutral: null,
   // Greens read minty when the greys borrow their own hue, so they borrow warm
   // Manila instead. Cool brands + orange look good self-tinted, so no override.
-  Heatmap: { primary: "#10b068", tint: "#e7fdef", neutralTint: "#ebdbbc" },
-  LinkedIn: { primary: "#0068c9", tint: "#e6f0fb" },
-  Anthropic: { primary: "#d97757", tint: "color-mix(in srgb, #d97757 12%, white)", neutralTint: "#ebdbbc" },
-  Spotify: { primary: "#1db954", tint: "color-mix(in srgb, #1db954 12%, white)", neutralTint: "#ebdbbc" },
-  Stripe: { primary: "#635bff", tint: "color-mix(in srgb, #635bff 12%, white)" },
-  Twitch: { primary: "#9146ff", tint: "color-mix(in srgb, #9146ff 12%, white)" },
-  HubSpot: { primary: "#ff7a59", tint: "color-mix(in srgb, #ff7a59 12%, white)" },
+  LinkedIn: { primary: "#0068c9", color: "Blue" },
+  Anthropic: { primary: "#d97757", color: "Terracotta", neutralTint: "#ebdbbc" },
+  Spotify: { primary: "#1db954", color: "Green", neutralTint: "#ebdbbc" },
+  Stripe: { primary: "#635bff", color: "Indigo" },
+  Twitch: { primary: "#9146ff", color: "Purple" },
+  HubSpot: { primary: "#ff7a59", color: "Orange" },
+}
+
+// Label for the primary-color picker: "Neutral" has no hue to name, every brand
+// carries its color in brackets.
+export function themeLabel(name: string): string {
+  const t = THEMES[name]
+  return t ? `${name} (${t.color})` : name
 }
 
 export type AgentDef = { name: string; role: string; src: string }
+// Order matters; this is the order the avatar picker renders. Bal is the default
+// and leads; "Custom" (the client-logo disc) always sits last. This is the PUBLIC
+// list; a client-only agent (e.g. Heatmap's Wilson) lives in its client record
+// (clients.ts), never here, so the public picker never offers it.
 export const AGENTS: Record<string, AgentDef> = {
-  Wilson: { name: "Wilson", role: "Heatmap agent", src: "/avatars/wilson.svg" },
-  Bal: { name: "Bal", role: "Onboarding guide", src: "/avatars/bal.svg" },
-  Jaimie: { name: "Jaimie", role: "AI assistant", src: "/avatars/jaimie.svg" },
+  Bal: { name: "Bal", role: "Founder", src: "/avatars/bal.svg" },
+  Angel: { name: "Angel", role: "Onboarding guide", src: "/avatars/angel.svg" },
+  Murph: { name: "Murph", role: "Onboarding guide", src: "/avatars/murph.svg" },
+  Jaimie: { name: "Jaimie", role: "Onboarding guide", src: "/avatars/jaimie.svg" },
+  Casey: { name: "Casey", role: "Onboarding guide", src: "/avatars/casey.svg" },
   Blank: { name: "Custom", role: "Client logo", src: "/avatars/blank.svg" },
-}
-
-// A resolved skin: which theme / font / agent a surface wears. `neutralTint`
-// optionally steers the greys somewhere other than the brand (empty = follow it).
-export type Skin = {
-  theme: string // key into THEMES
-  font: string // key into FONTS
-  agent: AgentDef // resolved agent identity (name/role/avatar)
-  neutralTint?: string // optional #hex override for --tint
 }
 
 const HEX6 = /^#([0-9a-f]{6})$/i
@@ -60,24 +73,100 @@ const HEX6 = /^#([0-9a-f]{6})$/i
 
 // Brand hue. Pass a valid #hex to preview an arbitrary color; otherwise the
 // named theme is applied (Neutral clears the vars back to the neutral brand).
+//
+// This writes ONLY the brand source, never --primary / --primary-foreground /
+// --accent-tint. Those are derived per color-scheme in tokens.css, and an inline
+// style on <html> outranks the .dark rules: setting them here is what used to
+// strand dark mode on the light-mode brand (and on a light selection tint that
+// left selected states at ~1:1 against their own label).
+//
+// --brand-lift is the same color raised to a fixed oklch lightness so it reads
+// off the dark canvas and can carry dark ink. The two are written and cleared
+// together, so the neutral brand keeps its own --ink in both modes.
 export function applyTheme(name: string, hex = "") {
   const s = document.documentElement.style
+  const set = (color: string) => {
+    s.setProperty("--brand", color)
+    s.setProperty("--brand-lift", `oklch(from ${color} 0.78 calc(c * 0.95) h)`)
+  }
   const clear = () => {
-    s.removeProperty("--primary")
-    s.removeProperty("--accent-tint")
-    s.removeProperty("--primary-foreground")
+    s.removeProperty("--brand")
+    s.removeProperty("--brand-lift")
   }
-  if (HEX6.test(hex)) {
-    s.setProperty("--primary", hex)
-    s.setProperty("--accent-tint", `color-mix(in srgb, ${hex} 12%, white)`)
-    s.setProperty("--primary-foreground", "#fff")
-    return
-  }
+  if (HEX6.test(hex)) return set(hex)
   const t = THEMES[name]
   if (!t) return clear()
-  s.setProperty("--primary", t.primary)
-  s.setProperty("--accent-tint", t.tint)
-  s.setProperty("--primary-foreground", "#fff")
+  set(t.primary)
+}
+
+// ---- automatic neutral tint ------------------------------------------------
+
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  const n = parseInt(hex.slice(1), 16)
+  const r = ((n >> 16) & 255) / 255
+  const g = ((n >> 8) & 255) / 255
+  const b = (n & 255) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const d = max - min
+  const l = (max + min) / 2
+  if (d === 0) return { h: 0, s: 0, l }
+  const s = d / (1 - Math.abs(2 * l - 1))
+  const h =
+    max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+  return { h: ((h * 60) % 360 + 360) % 360, s, l }
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  const seg = Math.floor(h / 60) % 6
+  const [r, g, b] = [
+    [c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x],
+  ][seg]
+  const to = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, "0")
+  return `#${to(r)}${to(g)}${to(b)}`
+}
+
+// The shortest signed distance from angle `a` to angle `b`, in degrees.
+function hueDelta(a: number, b: number) {
+  return ((b - a + 540) % 360) - 180
+}
+
+// Pick the neutral tint that COMPLEMENTS an arbitrary brand hex, so the greys
+// never just echo the brand (a green brand self-tinted goes minty; a terracotta
+// one goes pink). We take the true complement, then snap it into whichever of
+// the two grey-safe bands is nearer (warm Manila ~42° or cool slate ~214°),
+// keeping a little of the complement's own character inside that band. Warm
+// brands land on cool greys and vice versa, which is what "complementary" buys
+// us. Saturation stays low and lightness high so the result reads as a tinted
+// grey, not a color.
+const BANDS = [
+  { center: 42, sat: 0.55 }, // warm Manila: the tint used by the green presets
+  { center: 214, sat: 0.3 }, // cool slate: needs less chroma to still read grey
+]
+
+export function complementaryNeutralTint(hex: string): string {
+  if (!HEX6.test(hex)) return ""
+  const { h, s } = hexToHsl(hex)
+  // A brand with no chroma of its own (pure grey/black/white) has no complement
+  // worth borrowing, so let the greys stay neutral.
+  if (s < 0.08) return ""
+  const comp = (h + 180) % 360
+  const band = BANDS.reduce((best, b) =>
+    Math.abs(hueDelta(comp, b.center)) < Math.abs(hueDelta(comp, best.center)) ? b : best
+  )
+  // drift up to ±14° inside the band so distinct brands get distinct tints
+  const drift = Math.max(-14, Math.min(14, hueDelta(band.center, comp) * 0.15))
+  return hslToHex((band.center + drift + 360) % 360, band.sat, 0.83)
+}
+
+// The neutral tint a given (theme, hex) pair should wear: a custom hex derives
+// its complement automatically, a named theme keeps its hand-picked override.
+export function resolveNeutralTint(theme: string, hex = ""): string {
+  if (HEX6.test(hex)) return complementaryNeutralTint(hex)
+  return THEMES[theme]?.neutralTint ?? ""
 }
 
 // The hue the greys borrow. Empty → greys follow --primary.
@@ -89,14 +178,6 @@ export function applyNeutralTint(tintHex = "") {
 
 export function applyFont(font: string) {
   document.documentElement.style.setProperty("--font-family", FONTS[font] ?? FONTS.Inter)
-}
-
-// Apply a whole Skin at once (used by the demo when a preset loads). The neutral
-// tint defaults to the theme's own preference, then to following the brand.
-export function applySkin(skin: Skin) {
-  applyTheme(skin.theme)
-  applyFont(skin.font)
-  applyNeutralTint(skin.neutralTint ?? THEMES[skin.theme]?.neutralTint ?? "")
 }
 
 // ---- client-logo compositor (styleguide "Custom" agent) --------------------

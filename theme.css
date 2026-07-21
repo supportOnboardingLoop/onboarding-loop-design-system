@@ -51,7 +51,7 @@
      of these and every sibling moves together. The individual
      siblings tweak only what is genuinely different (shape, chrome).
      ------------------------------------------------------------ */
-  --ctl-radius: var(--radius-lg);  /* 16 — buttons + menu rows + triggers + search */
+  --ctl-radius: var(--radius-lg);  /* 24 — buttons + menu rows + triggers + search + nav rows */
   --ctl-hover: var(--background);  /* quiet hover fill == the (lighter) page background */
   --ctl-selected: var(--canvas);   /* selected fill == the canvas grey, a step DARKER than hover */
   --ctl-outline: var(--border);    /* selected-row outline == the card border */
@@ -83,8 +83,8 @@
   --bp-success: var(--success);
   --bp-success-tint: var(--success-tint);
   --bp-shadow: var(--shadow-card);    /* the launcher card's soft 3-layer elevation */
-  --bp-radius: var(--radius-lg);      /* 16 — control radius (chatbar, thinking) */
-  --bp-radius-btn: var(--radius-lg);  /* 16 — bubble corners match the buttons */
+  --bp-radius: var(--radius-lg);      /* 24 — control radius (chatbar, thinking) */
+  --bp-radius-btn: var(--radius-lg);  /* 24 — bubble corners match the buttons */
   --bp-ease-back: var(--ease-back);
   --bp-ease-emphasized: var(--ease-emphasized);
   --bp-dur-snap: var(--dur-snap);
@@ -168,11 +168,12 @@
   --font-heading: var(--font-family, "Inter", system-ui, -apple-system, sans-serif);
 
   /* Radius scale → Tailwind rounded-* (values mirror tokens.css).
-     Kit mapping: controls (button/input/select/menu) = rounded-lg 16;
+     Kit mapping: controls + sidebar nav rows (button/input/select/menu/nav) =
+     rounded-lg 24; small badges / calendar cells / composer = rounded-sm 12;
      cards/headers/surface = rounded-xl 24. */
-  --radius-sm: 0.5rem;      /* 8  */
+  --radius-sm: 0.75rem;     /* 12 — small badges, calendar cells, composer */
   --radius-md: 0.75rem;     /* 12 */
-  --radius-lg: 1rem;        /* 16 — controls */
+  --radius-lg: 1.5rem;      /* 24 — controls + nav rows */
   --radius-surface: 1.875rem;/* 30: the surface well inside a content card */
   --radius-xl: 1.5rem;      /* 24: cards / content-card frame */
 

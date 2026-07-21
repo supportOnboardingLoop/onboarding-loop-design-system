@@ -1,0 +1,309 @@
+/* ============================================================
+   product.css — the /product (Do-it-yourself, $129) page, plus the shared
+   GLOBAL marketing nav chrome it is the first page to use.
+
+   Everything is scoped to `.ol-web` (the marketing layer) and uses ONLY the
+   web-layer + design-system tokens (colors, type, --radius/--radius-lg,
+   --shadow-*). No invented values. The page is built in place per the master
+   build prompt; a later componentization pass extracts what earns it.
+
+   Two blocks:
+     1) GLOBAL NAV — header actions + footer additions for the decided
+        System · Product · Service · View Demo · Get Started nav. Shared chrome;
+        migrate into the header/footer's own CSS home in the /system routing
+        session, when every page flips onto the global variant.
+     2) PRODUCT PAGE — the two-column buy shell, hero, inventory, steps, founder,
+        results, FAQ, cross-link band, and the mobile buy bar.
+   ============================================================ */
+
+/* ============================================================
+   1) GLOBAL NAV (shared marketing chrome)
+   ============================================================ */
+
+/* the two header buttons (View Demo secondary · Get Started primary), right of
+   the route links. The buttons are the design-system Button rendered as anchors,
+   so they already carry the marketing brand fill (--primary #404040). */
+.ol-web .nav-actions { display: flex; align-items: center; gap: 10px }
+
+/* the route links reuse .nav-desktop's text-link styling; the current page tints. */
+.ol-web .nav-global a.is-active { color: var(--ink); background: var(--panel) }
+
+/* mobile: the desktop links + actions hide (matching .nav-desktop's 767 rule);
+   the slide-open menu stacks the links then the two full-width buttons. */
+@media (max-width: 767px) {
+  .ol-web .nav-actions { display: none }
+  /* the two action buttons carry `.ol-cta`, so the existing
+     `.mobile-menu .ol-cta` rule (display:flex; width:100%; margin-top:16px)
+     stacks them full-width; nothing extra needed on the wrapper. */
+  .ol-web .mm-actions { display: block }
+}
+@media (min-width: 768px) { .ol-web .mm-actions { display: none } }
+
+/* footer: the global nav row wraps if it runs long; the support email sits with
+   Terms · Privacy in the legal row (Footer.tsx renders it inside .legal). */
+.ol-web footer .foot-nav { flex-wrap: wrap }
+/* footer placeholder items (Pricing, FAQ) — inert, quiet */
+.ol-web footer .foot-soon { cursor: default; opacity: .85 }
+
+/* --- header dropdowns: Products (nav) + Get Started (button) mega-menus.
+   Reveal on hover / focus-within (no JS); each is a card of rows (framed
+   thumbnail + title + description), the Attio/Untitled layout in OL style. --- */
+.ol-web .nav-dd { position: relative; display: inline-flex }
+
+/* the Products trigger reads as a nav link; the chevron rotates when open */
+.ol-web .nav-desktop .nav-dd-trigger {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: 0; background: none;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+  color: var(--secondary); padding: 4px 8px; border-radius: 8px; transition: background .14s ease, color .14s ease;
+}
+.ol-web .nav-desktop .nav-dd:hover .nav-dd-trigger,
+.ol-web .nav-desktop .nav-dd:focus-within .nav-dd-trigger,
+.ol-web .nav-desktop .nav-dd-trigger.is-active { background: var(--panel); color: var(--ink) }
+.ol-web .nav-dd-trigger--btn { cursor: pointer }   /* Get Started keeps its Button fill */
+.ol-web .nav-chev { transition: transform .2s ease }
+.ol-web .nav-dd:hover .nav-chev, .ol-web .nav-dd:focus-within .nav-chev { transform: rotate(180deg) }
+
+/* placeholder top-level items (Pricing, FAQ) — look like nav links, inert for now */
+.ol-web .nav-desktop .nav-soon {
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+  color: var(--secondary); padding: 4px 8px; border-radius: 8px; cursor: default;
+  transition: background .14s ease, color .14s ease;
+}
+.ol-web .nav-desktop .nav-soon:hover { background: var(--panel); color: var(--ink) }
+
+/* the panel: a transparent positioned wrapper (top padding bridges the hover gap)
+   holding the white card */
+.ol-web .nav-dd-panel {
+  position: absolute; top: 100%; left: 0; z-index: 60; padding-top: 10px;
+  opacity: 0; visibility: hidden; transform: translateY(6px); pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+.ol-web .nav-dd--right .nav-dd-panel { left: auto; right: 0 }
+.ol-web .nav-dd:hover .nav-dd-panel,
+.ol-web .nav-dd:focus-within .nav-dd-panel { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto }
+@media (prefers-reduced-motion: reduce) { .ol-web .nav-dd-panel { transition: none; transform: none } }
+
+.ol-web .nav-menu {
+  width: 340px; display: flex; flex-direction: column; gap: 2px; padding: 8px;
+  background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop);
+}
+.ol-web .nav-menu-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px; text-decoration: none; transition: background .14s ease }
+.ol-web .nav-menu-item:hover { background: var(--panel) }
+.ol-web .nav-menu-item--soon { cursor: default }   /* future Stripe link, not wired yet */
+/* framed thumbnail slot — a dot-grid blueprint square + Tabler icon (placeholder
+   for a real thumbnail image Bal can drop in) */
+.ol-web .nav-menu-thumb {
+  flex: none; width: 44px; height: 44px; display: grid; place-items: center; color: var(--secondary);
+  border: 1px solid var(--line-strong); border-radius: 12px; background: var(--paper);
+  background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 6px 6px;
+}
+.ol-web .nav-menu-text { display: flex; flex-direction: column; gap: 1px; min-width: 0 }
+.ol-web .nav-menu-title { font-size: 15px; font-weight: 600; line-height: 20px; color: var(--ink-strong) }
+.ol-web .nav-menu-desc { font-size: 13px; line-height: 18px; color: var(--muted) }
+
+/* mobile: taller open menu for the fuller list + the "Get started" caption */
+@media (max-width: 767px) {
+  .ol-web.nav-open .mobile-menu { max-height: 620px; overflow-y: auto }
+  .ol-web .mobile-menu .mm-soon {
+    display: block; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500; color: var(--secondary); padding: 14px 4px;
+  }
+  .ol-web .mobile-menu .mm-label {
+    display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 18px 4px 2px;
+  }
+}
+
+/* ============================================================
+   2) PRODUCT PAGE (/product)
+   ============================================================ */
+
+/* --- the buy shell: content column + sticky buy rail --- */
+.ol-web .prod-shell {
+  max-width: var(--page); margin: 0 auto; padding-inline: var(--pad);
+  display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 56px; align-items: start;
+}
+.ol-web .prod-main { min-width: 0 }
+.ol-web .prod-main > section { padding: 72px 0; border-bottom: 1px solid var(--line) }
+.ol-web .prod-main > section:first-child { padding-top: 44px }
+.ol-web .prod-main > section:last-child { border-bottom: none }
+
+/* section chrome — kicker is global; h2 stays Inter (only the display face marks
+   the hero, the step numbers, and the pull-quote, exactly as the wireframe did). */
+.ol-web .prod-main h2 {
+  font-family: 'Inter', sans-serif; font-size: clamp(30px, 2.6vw, 38px); line-height: 1.26;
+  font-weight: 600; letter-spacing: -.02em; color: var(--ink-strong); margin: 12px 0 10px;
+}
+.ol-web .prod-sub { font-size: 19px; line-height: 29px; color: var(--muted); max-width: 560px; margin-bottom: 8px }
+
+/* --- hero --- */
+.ol-web .prod-hero { position: relative }
+.ol-web .prod-hero::before {
+  content: ""; position: absolute; inset: -44px 0 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 70%);
+          mask-image: linear-gradient(180deg, #000, transparent 70%);
+}
+.ol-web .prod-hero > * { position: relative; z-index: 1 }
+.ol-web .prod-hero h1 {
+  font-family: var(--font-display); font-weight: 400; color: var(--ink-strong);
+  font-size: clamp(34px, 3.4vw, 50px); line-height: 1.16; letter-spacing: 0;
+  margin: 14px 0 16px; max-width: 15ch; text-wrap: balance;
+}
+.ol-web .prod-cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 22px }
+
+/* --- show strip (3 tiles) --- */
+.ol-web .prod-show3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px }
+.ol-web .prod-tile-label { font-size: 13px; font-weight: 600; color: var(--secondary); margin-top: 10px }
+.ol-web .prod-tile-sub { font-size: 12.5px; line-height: 18px; color: var(--faint) }
+
+/* the framed screenshot surface — real <img> fills it; a missing asset shows a
+   clean, labeled placeholder (never a wireframe hatch). */
+.ol-web .prod-shot {
+  display: block; position: relative; overflow: hidden; border: 1px solid var(--line-strong);
+  border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow-xs);
+}
+.ol-web .prod-tile .prod-shot,
+.ol-web .prod-invmedia .prod-shot { aspect-ratio: 4 / 3 }
+.ol-web .prod-shot > img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block }
+.ol-web a.prod-shot { transition: box-shadow .2s ease, transform .2s ease }
+.ol-web a.prod-shot:hover { box-shadow: var(--shadow-card); transform: translateY(-2px) }
+/* placeholder state */
+.ol-web .prod-shot--ph {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  text-align: center; padding: 16px; background:
+    linear-gradient(180deg, var(--white), var(--panel));
+}
+.ol-web .prod-shot--ph .ph-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint);
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 9px;
+}
+.ol-web .prod-shot--ph .ph-note { font-size: 12px; font-weight: 600; color: var(--secondary); line-height: 17px }
+
+/* --- logo strip (slim career-proof wall) --- */
+.ol-web .prod-logos-cap { font-size: 15px; line-height: 22px; color: var(--faint); margin-bottom: 20px }
+.ol-web .prod-logostrip { display: flex; align-items: center; gap: 40px; flex-wrap: wrap }
+/* per-logo optical heights so the wall reads evenly (matching the landing's
+   approach) — the wordmarks differ in weight, so a single height leaves the
+   bolder ones (Nokia) dominating. Slim, smaller than the About page's. */
+.ol-web .prod-logostrip img { width: auto; opacity: .55 }
+.ol-web .prod-logostrip img[alt="Google"] { height: 20px }
+.ol-web .prod-logostrip img[alt="Microsoft"] { height: 22px }
+.ol-web .prod-logostrip img[alt="Intel"] { height: 19px }
+.ol-web .prod-logostrip img[alt="Couchbase"] { height: 21px }
+.ol-web .prod-logostrip img[alt="Nokia"] { height: 15px }
+
+/* --- what's inside (3 inventory rows) --- */
+.ol-web .prod-inv { display: flex; flex-direction: column; gap: 18px; margin-top: 34px }
+.ol-web .prod-invrow {
+  border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--white);
+  display: grid; grid-template-columns: 7fr 5fr; gap: 28px; padding: 28px; align-items: center;
+}
+.ol-web .prod-invrow h3 { font-size: 22px; line-height: 30px; font-weight: 600; color: var(--ink-strong) }
+.ol-web .prod-count { font-size: 15px; font-weight: 600; color: var(--ink); margin: 6px 0 8px }
+.ol-web .prod-desc { font-size: 15.5px; line-height: 24px; color: var(--muted) }
+
+/* --- how it works (numbered rail) --- */
+.ol-web .prod-steps { margin-top: 24px }
+.ol-web .prod-step { display: grid; grid-template-columns: 64px 1fr; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--line) }
+.ol-web .prod-step:last-child { border-bottom: none }
+.ol-web .prod-step-num { font-family: var(--font-display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--line-strong); font-variant-numeric: tabular-nums }
+.ol-web .prod-step h4 { font-size: 18px; line-height: 26px; font-weight: 600; color: var(--ink-strong); margin-bottom: 4px }
+.ol-web .prod-step p { font-size: 15px; line-height: 23px; color: var(--muted) }
+
+/* --- founder --- */
+.ol-web .prod-founder { display: grid; grid-template-columns: 4fr 8fr; gap: 32px; align-items: center }
+.ol-web .prod-founder-photo {
+  max-width: 260px; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); background: var(--panel);
+}
+.ol-web .prod-founder-photo img { width: 100%; height: 100%; object-fit: cover; display: block }
+.ol-web .prod-h2-sm { font-size: 30px !important; line-height: 38px !important }
+
+/* --- results (one big Corebee ad card) --- */
+.ol-web .prod-result {
+  display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; margin-top: 12px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: var(--paper);
+  box-shadow: var(--shadow-xs); transition: box-shadow .22s ease, transform .22s ease;
+}
+.ol-web .prod-result:hover { box-shadow: var(--shadow-card); transform: translateY(-2px) }
+.ol-web .prod-result-media { min-height: 340px; border-right: 1px solid var(--line); background: var(--panel) }
+.ol-web .prod-result-media img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block }
+.ol-web .prod-result-body { padding: 40px; display: flex; flex-direction: column }
+.ol-web .prod-quote { font-family: var(--font-display); font-weight: 400; font-size: 21px; line-height: 1.5; color: var(--ink-strong); margin-bottom: 10px }
+.ol-web .prod-attr { font-size: 13.5px; color: var(--muted); margin-bottom: 20px }
+.ol-web .prod-stats { display: flex; gap: 32px; margin: 4px 0 22px }
+.ol-web .prod-stat b { display: block; font-size: 30px; line-height: 1.05; font-weight: 600; color: var(--ink-strong); letter-spacing: -.02em; font-variant-numeric: tabular-nums }
+.ol-web .prod-stat span { font-size: 13px; color: var(--faint) }
+.ol-web .prod-result-link { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; color: var(--ink-strong) }
+.ol-web .prod-result-link svg { transition: transform .22s ease }
+.ol-web .prod-result:hover .prod-result-link svg { transform: translateX(3px) }
+
+/* --- FAQ (reuses the DS <Qa> accordion) --- */
+.ol-web .prod-faq-list { margin-top: 10px; border-top: 1px solid var(--line) }
+.ol-web .prod-faq-list .qa { border-bottom: 1px solid var(--line) }
+
+/* --- sticky buy rail --- */
+.ol-web .prod-buyrail { position: sticky; top: 92px; margin-top: 44px }
+.ol-web .prod-buycard {
+  border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: var(--white);
+  box-shadow: var(--shadow-card); padding: 30px; scroll-margin-top: 92px;
+}
+.ol-web .prod-pname { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px }
+.ol-web .prod-price { font-size: 44px; line-height: 1; font-weight: 600; letter-spacing: -.02em; color: var(--ink-strong); font-variant-numeric: tabular-nums }
+.ol-web .prod-price small { font-size: 14px; font-weight: 500; color: var(--faint) }
+.ol-web .prod-terms { font-size: 13px; color: var(--muted); margin: 8px 0 18px }
+.ol-web .prod-inc { margin-top: 18px }
+.ol-web .prod-inc div { position: relative; padding: 7px 0 7px 24px; font-size: 14px; line-height: 21px; color: var(--secondary); border-bottom: 1px solid var(--panel) }
+.ol-web .prod-inc div:last-child { border-bottom: none }
+.ol-web .prod-inc div::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700 }
+.ol-web .prod-fineprint { margin-top: 14px; font-size: 12px; line-height: 17px; color: var(--faint); text-align: center }
+
+/* --- cross-link band (full width) --- */
+.ol-web .prod-cross { background: var(--paper); border-top: 1px solid var(--line) }
+.ol-web .prod-cross-in { max-width: var(--page); margin: 0 auto; padding: 44px var(--pad); display: flex; align-items: center; justify-content: space-between; gap: 24px }
+.ol-web .prod-cross h3 { font-size: 22px; line-height: 30px; font-weight: 600; color: var(--ink-strong) }
+.ol-web .prod-cross p { font-size: 15px; line-height: 23px; color: var(--muted); max-width: 520px; margin-top: 4px }
+
+/* --- /service extras: single hero visual + struck price + honest-reason box --- */
+.ol-web .prod-heroshot { margin-top: 40px }
+.ol-web .prod-heroshot .prod-shot { aspect-ratio: 16 / 9 }
+.ol-web .prod-price-row { display: flex; align-items: baseline; flex-wrap: wrap }
+.ol-web .prod-was { margin-right: 8px; font-size: 18px; color: var(--faint); text-decoration: line-through; font-variant-numeric: tabular-nums }
+.ol-web .prod-why {
+  margin: 12px 0 18px; padding: 10px 12px; font-size: 13px; line-height: 20px; color: var(--muted);
+  border: 1px dashed var(--line-strong); border-radius: 8px; background: var(--paper);
+}
+
+/* --- mobile buy bar (fixed) --- */
+.ol-web .prod-buybar { display: none }
+.ol-web .prod-buybar-price { font-size: 20px; font-weight: 600; color: var(--ink-strong); font-variant-numeric: tabular-nums }
+.ol-web .prod-buybar-price span { margin-left: 5px; font-size: 12px; font-weight: 500; color: var(--faint) }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1000px) {
+  /* single column: the buy rail drops out of the rail and flows inline at the
+     bottom of the content, and the fixed bottom bar carries the persistent CTA. */
+  .ol-web .prod-shell { grid-template-columns: 1fr; gap: 0 }
+  .ol-web .prod-buyrail { position: static; margin-top: 0; padding: 40px 0 0; border-top: 1px solid var(--line) }
+  .ol-web .prod-buybar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    align-items: center; justify-content: space-between; gap: 16px;
+    padding: 12px var(--pad); background: var(--white); border-top: 1px solid var(--line-strong);
+    box-shadow: 0 -2px 12px rgba(10, 13, 18, .06);
+  }
+  .ol-web .prod-buybar .nav-btn { flex: none }
+  /* clear the fixed bar so the footer's last row is never hidden under it */
+  .ol-web.has-buybar { padding-bottom: 76px }
+}
+
+@media (max-width: 900px) {
+  .ol-web .prod-show3 { grid-template-columns: 1fr }
+  .ol-web .prod-invrow { grid-template-columns: 1fr; gap: 20px }
+  .ol-web .prod-founder { grid-template-columns: 1fr }
+  .ol-web .prod-founder-photo { max-width: 220px }
+  .ol-web .prod-result { grid-template-columns: 1fr }
+  .ol-web .prod-result-media { min-height: 220px; border-right: none; border-bottom: 1px solid var(--line) }
+  .ol-web .prod-result-body { padding: 28px }
+  .ol-web .prod-cross-in { flex-direction: column; align-items: flex-start }
+}

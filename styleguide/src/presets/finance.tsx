@@ -1,4 +1,3 @@
-import { AGENTS } from "../skins"
 import { choiceConversation } from "./_shared"
 import type { DemoPreset } from "./types"
 
@@ -9,7 +8,6 @@ export const financePreset: DemoPreset = {
   tagline: "Cash flow, reports, and runway",
   pickerIcon: "chart-pie",
   status: "soon",
-  skin: { theme: "Twitch", font: "Inter", agent: { name: "Morgan", role: "Finance analyst", src: AGENTS.Jaimie.src } },
 
   brand: { mark: "L", name: "Ledger" },
   nav: [

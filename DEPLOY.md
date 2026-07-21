@@ -23,17 +23,21 @@ branches, not folders, decide what each URL shows.
 
 ## Presets are states
 
-A "state" is a `DemoPreset` in `styleguide/src/presets/`. A preset is content plus
-a skin and owns no behavior. `DemoApp.tsx` is the single renderer and owns all app
-state and behavior; it is identical across every preset. So a component change
-reaches every preset automatically, and a new build is a new data file, not a fork.
+A "state" is a `DemoPreset` in `styleguide/src/presets/`. A preset is content and
+owns no behavior AND no branding. Branding is a property of the DEPLOY, not the
+content: the public demo lets the visitor pick a skin (the Customize accordion),
+and a client build applies a fixed brand from its client record (`clients.ts`).
+`DemoApp.tsx` is the single renderer and owns all app state and behavior; it is
+identical across every preset. So a component change reaches every preset
+automatically, and a new build is a new data file, not a fork.
 
 - The demo is `demo.html`, which reads `?saas=<id>` to pick a preset.
-- `styleguide/src/presets/index.ts` holds the picker list, the default, and the
-  aliases. `analytics` is the flagship and default; the `heatmap` alias resolves
-  to it, so `?saas=heatmap` loads the analytics preset.
-- Adding a client or product (Loop OS, the next client) means adding one preset
-  file and registering it. Nothing else forks.
+- `styleguide/src/presets/index.ts` holds the picker list and the default;
+  `analytics` is the flagship and default. Client builds pin their preset through
+  a client record (`clients.ts`), not a `?saas=` alias.
+- Adding a client means one preset file (content, if new) + one client record +
+  one host line in `clients.ts`. Adding a product (Loop OS, the next SaaS) means
+  one preset file, registered in `index.ts`. Nothing else forks.
 
 ### listed vs unlisted
 
@@ -129,12 +133,36 @@ One repo, one primary Vercel project, host-based routing off the same build.
   webhook; see strategy.md 2026-07-17 and the future auth brief). NOT public. Do
   not attach this domain or ship it publicly until the gate is built. Until then,
   `index.html` is the styleguide for internal/dev use only.
-- Client domains -> serve `demo.html?saas=<client>`, but pinned to that client's
-  branch, not to `main` (see below).
+- Client domains -> serve `demo.html`, pinned to that client's branch, not to
+  `main`. The app locks to the client's preset by hostname, so the URL stays clean
+  (no `?saas=`). See below.
 
 `main` is always-latest and drives the public demo (and, once built, the gated
 system). Push to `main`, they redeploy. Do not push work to `main` that you do not
 want live on the public demo. Keep unfinished work on a branch.
+
+## How routing and the client gate work
+
+Host routing and the client password gate live in `middleware.ts` (Edge
+Middleware), not `vercel.json`. `vercel.json` rewrites run after the filesystem
+check, so a request for `/` is answered by the existing `index.html` (the
+styleguide) before any rewrite fires, and every host shows the styleguide.
+Middleware runs before the filesystem, so it serves `demo.html` at the clean root
+`/` for the demo and client hosts.
+
+- Client lock: the app resolves its deploy from `window.location` (`DemoApp`
+  `resolveBoot` -> `resolveClient` + the client records in `clients.ts`). A client
+  host forces its preset, applies the client's brand + logo + agent + real site
+  names, hides the SaaS picker, and hides the Customize accordion, so the URL stays
+  clean and reads as a bespoke product. Add a client record + a host line in
+  `clients.ts` (or preview locally with `?client=<id>`).
+- Vercel wiring: assign a client domain to its branch as a Preview environment
+  (Domains -> Edit -> Connect to an environment -> Preview -> the branch), not
+  Production.
+- In-progress gate: client links are password-protected by HTTP Basic Auth in
+  `middleware.ts` (`CLIENT_GATE`), because Vercel's own Password Protection is a
+  $150/mo add-on. Keep Vercel Authentication off so Basic Auth is the wall; delete
+  a host's `CLIENT_GATE` line to open its link to the public.
 
 ## Client lifecycle
 
@@ -157,21 +185,26 @@ Propagation still flows both ways because it is one codebase: system changes rea
 clients when you merge, and improvements made while building a client land in the
 system when you merge back to `main`. The merge is the intentional gate.
 
-## Current state (2026-07-17)
+## Current state (2026-07-18)
 
-- Heatmap: active, live client. Lives as the analytics preset. Runs on a
-  `client/heatmap` branch; `heatmap.onboardingloop.ai` points at that branch.
+- Heatmap: active, live client. Lives as the analytics preset on the primary
+  Vercel project, `client/heatmap` branch; `heatmap.onboardingloop.ai` points at
+  that branch and is password-gated while in progress (see the routing note above).
   Merge `main` into it to push the client an update.
 - Corebee: delivered, frozen, on the legacy static repo. Left as-is. Rebuild in
   this system if reopened.
-- `blueprint-deliverables/heatmap-agency-portal`: the old duplicated static build.
-  Superseded by the heatmap preset here. Retire its repo and Vercel project once
-  the new deploy is verified.
+- Old `heatmap-agency-portal`: retired 2026-07-18. Vercel project deleted, GitHub
+  repo archived, local folder moved to `~/Desktop/code/archive/`. The old
+  duplicate-and-sync flow is dead.
 
 ## Adding a new build (the recipe)
 
-1. Add `styleguide/src/presets/<name>.tsx` (copy an existing preset as the shape).
-2. Register it in `index.ts`. Showcase state: add to the picker list. Client
-   state: keep it unlisted, add an alias if the client link wants a natural name.
+1. Content: add `styleguide/src/presets/<name>.tsx` (copy an existing preset as the
+   shape), or reuse an existing preset if the client just re-skins one (Heatmap
+   reuses `analytics`). A preset carries NO branding.
+2. Showcase state: register the preset in `index.ts` picker list. Client state:
+   leave the preset off the picker list and add a client record + host line in
+   `clients.ts` (its brand color, tint, font, agent, logo, and — for analytics —
+   its real `sites`). The record pins the preset by host; no `?saas=` alias.
 3. Client work only: branch `client/<name>`, assign the domain to the branch,
    merge `main` in when ready.

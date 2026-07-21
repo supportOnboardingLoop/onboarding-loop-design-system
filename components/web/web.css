@@ -1,0 +1,1378 @@
+/* ============================================================
+   web.css — the marketing layer's own stylesheet.
+
+   The onboardingloop.ai landing page carries a display typeface and a slightly
+   warmer, editorial neutral ramp that the product UI does not. Rather than push
+   those literals into base components or clobber the design system's tokens,
+   the whole marketing layer lives under a single scope: `.ol-web`. Every custom
+   property the vanilla page declared on :root is re-declared here on .ol-web, so
+   inside the marketing page `var(--ink)`, `var(--line)`, `var(--muted)`, etc.
+   resolve to the site's values, while the design system's identically-named
+   tokens keep their meaning everywhere else. This is "the site's own layer".
+
+   Token divergences from the design system are catalogued in
+   components/web/TOKENS-DIVERGENCE.md (the input to a later promote/keep call).
+   Nothing here resolves those conflicts; it only carries the site's values.
+
+   Global resets (box-sizing, margin/padding 0) come from Tailwind preflight via
+   theme.css, matching the source's `*{box-sizing:border-box;margin:0;padding:0}`.
+   ============================================================ */
+
+/* Feijoa Display — the marketing display face (big hero headlines only). This
+   is the one typeface the product UI does not carry: a legitimate web-layer
+   token, not a token conflict to resolve. */
+@font-face {
+  font-family: 'Feijoa Display';
+  src: url('/assets/fonts/feijoa-display.woff2') format('woff2'),
+       url('/assets/fonts/Feijoa-Display.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+/* ------------------------------------------------------------
+   Web-layer tokens. Scoped to .ol-web so they never collide with the
+   design system's :root tokens. Values are verbatim from the vanilla
+   page's :root (a Tailwind-neutral ramp + a Feijoa display face); the
+   collisions with DS token names (--ink, --muted, --secondary, --radius*)
+   are intentional overrides, live only inside this scope.
+   ------------------------------------------------------------ */
+.ol-web {
+  /* pure monotone neutral ramp (R=G=B) — matches Figma #404040/#d4d4d4/#e5e5e5 */
+  --n-950: #0a0a0a; --n-900: #171717; --n-800: #262626; --n-700: #404040;
+  --n-600: #525252; --n-500: #737373; --n-400: #a3a3a3; --n-300: #d4d4d4;
+  --n-200: #e5e5e5; --n-100: #f5f5f5; --n-50: #fafafa;
+
+  --ink: #171717;          /* near-black text */
+  --ink-strong: #0a0a0a;   /* headline black */
+  --ink-soft: #262626;
+  --muted: #525252;        /* readable neutral gray */
+  --secondary: #404040;    /* Figma text-secondary (700) */
+  --faint: #a3a3a3;        /* light gray — eyebrows, captions */
+  --line: #e5e5e5;         /* hairline borders */
+  --line-strong: #d4d4d4;
+  --panel: #f5f5f5;        /* very light neutral panel */
+  --white: #ffffff;
+  --dot: #e4e4e4;          /* dot-grid texture (Figma, 8px grid) */
+  --btn: #404040;          /* primary button (Figma bg-brand-solid) */
+  --btn-fg: #ffffff;
+  --btn-border: #525252;
+  --green: #1f9d57;        /* deliberate semantic color */
+  --hl: #f4d77a;           /* deliberate highlight yellow */
+  --font-display: 'Feijoa Display', Georgia, serif;
+  --radius-lg: 18px; --radius: 12px;
+  --maxw: 1440px;          /* matches attio's container cap */
+  --page: 1280px;          /* header + hero design width */
+  --pad: 24px;             /* header/hero side padding (responsive) */
+  --paper: #fcfcfc;        /* blueprint-paper gray — unified bg below the hero */
+  --rail-bg: #fcfcfc;      /* very light gray zone below the hero */
+  --hatch: #e5e5e5;        /* diagonal hatch lines in the gutters */
+  --dash: #d4d4d4;         /* dashed frame lines */
+  --gutter: 96px;          /* hatch padding between rail and content */
+  interpolate-size: allow-keywords;   /* lets height:auto animate (accordions) */
+
+  /* Reuse of the design system's primary Button in the web layer picks up its
+     color from --primary; the marketing brand solid is #404040 (--btn), not the
+     product's #262626, so point --primary at it inside this scope only. #404040
+     is achromatic, so the DS neutral ramp (tint-derived) is unaffected. */
+  --primary: #404040;
+
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--white);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss01";
+}
+@media (min-width: 768px) { .ol-web { --pad: 64px } }
+@media (min-width: 1280px) { .ol-web { --pad: 124px } }
+
+/* the marketing layer squircles every corner (the vanilla page set this
+   globally via *{corner-shape:squircle}); scoped here so it never imposes
+   squircled circles on the product UI outside the web layer. */
+.ol-web *, .ol-web *::before, .ol-web *::after { corner-shape: squircle }
+/* …but true circles the design system draws inside the embedded DS agent stay
+   round: the global squircle above (specificity 0,1,0) otherwise re-squares the
+   DS user "ME" avatar, thinking dots, and the Choices reveal disc — all of which
+   the DS itself declares round. Re-assert with a winning specificity. (The web
+   layer's own `.ala-dot` circles are deliberately left squircled, matching the
+   live page, which also squircles globally.) */
+.ol-web .bp-msg__avatar,
+.ol-web .bp-dots i,
+.ol-web [data-slot="choices"] .rounded-full { corner-shape: round }
+
+html { scroll-behavior: smooth }
+/* Anchor reset in @layer base (not unlayered) so a reused design-system button
+   rendered as an <a> keeps its own utility text color (text-primary-foreground)
+   — an unlayered `a{color:inherit}` would beat the layered utility and force the
+   CTA text to --ink. Nav/menu links set their own color with higher-specificity
+   unlayered rules, so they still win over this. */
+@layer base {
+  .ol-web a { color: inherit; text-decoration: none }
+}
+
+/* anchor targets clear the sticky header so the section top lands flush under
+   it (the anchor-homing JS re-homes precisely). */
+.ol-web :is(#system, #stack, #shop, #about, #faq) { scroll-margin-top: 70px }
+
+.ol-web .kicker { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--faint) }
+.ol-web .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); text-align: center; margin-bottom: 14px }
+/* numbered prefix on section badges + nav links — muted so the label reads first */
+.ol-web .badge-num { opacity: .45; font-variant-numeric: tabular-nums }
+
+/* ============================================================
+   REVEAL ANIMATION — each piece rises + fades, quick & snappy
+   ============================================================ */
+@keyframes ol-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+@keyframes ol-markIn { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+.ol-web .reveal { opacity: 0; animation: ol-rise .5s cubic-bezier(.22, 1, .36, 1) both; animation-delay: var(--d, 0ms) }
+/* scroll-triggered reveal for below-the-fold sections */
+.ol-web .reveal-up { opacity: 0; transform: translateY(16px); transition: opacity .55s cubic-bezier(.22, 1, .36, 1) var(--d, 0ms), transform .55s cubic-bezier(.22, 1, .36, 1) var(--d, 0ms) }
+.ol-web .reveal-up.is-in { opacity: 1; transform: none }
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .reveal, .ol-web .reveal-up { opacity: 1; animation: none; transform: none; transition: none }
+}
+
+/* ============================================================
+   TOP BAR — logo · nav · CTA  (Figma header)
+   ============================================================ */
+.ol-web header.bar { position: sticky; top: 0; z-index: 50; background: var(--white); border-bottom: 1px solid var(--line) }
+.ol-web .bar-inner { max-width: var(--page); margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 72px }
+.ol-web .logo { display: flex; align-items: center; flex: none }
+.ol-web .logo img { height: 30px; width: auto; display: block }
+.ol-web .nav-desktop { display: flex; align-items: center; gap: 2px; margin-left: auto }
+.ol-web .nav-desktop a { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; color: var(--secondary); line-height: 20px; padding: 4px 8px; border-radius: 8px; transition: background .14s ease, color .14s ease }
+.ol-web .nav-desktop a:hover { background: var(--panel); color: var(--ink) }
+.ol-web .hamburger { display: none; width: 24px; height: 24px; background: none; border: 0; cursor: pointer; color: var(--ink); padding: 0; place-items: center }
+.ol-web .hamburger svg { width: 24px; height: 24px; display: block; overflow: visible }
+/* two-line hamburger that animates into an X */
+.ol-web .hamburger line { transform-box: view-box; transform-origin: 12px 12px; transition: transform .3s cubic-bezier(.4, 0, .2, 1) }
+.ol-web .hamburger .l1 { transform: translateY(-3px) }
+.ol-web .hamburger .l2 { transform: translateY(3px) }
+.ol-web.nav-open .hamburger .l1 { transform: rotate(45deg) }
+.ol-web.nav-open .hamburger .l2 { transform: rotate(-45deg) }
+.ol-web .mobile-menu { display: none }
+
+/* header adapts to the section behind it (JS toggles the class by sampling the
+   bg below the bar): light-gray fills tint the bar; dark fills invert. */
+.ol-web header.bar { transition: background-color .3s ease, border-color .3s ease }
+.ol-web header.bar.is-paper { background: var(--paper) }
+.ol-web header.bar.is-dark { background: #262626; border-bottom-color: #3f3f46 }
+.ol-web .logo .logo-dark { display: none }
+.ol-web header.bar.is-dark .logo .logo-light { display: none }
+.ol-web header.bar.is-dark .logo .logo-dark { display: block }
+.ol-web header.bar.is-dark .nav-desktop a { color: #e5e5e5 }
+.ol-web header.bar.is-dark .nav-desktop a:hover { background: rgba(255, 255, 255, .08); color: var(--white) }
+.ol-web header.bar.is-dark .hamburger { color: var(--white) }
+/* dark-section CTA (the reused DS Button, marked .ol-cta) flips to the light
+   inverse fill; covers both the desktop nav CTA and the mobile-menu CTA. */
+.ol-web header.bar.is-dark .ol-cta { color: #1a1a1a; border-color: transparent; background: linear-gradient(180deg, #ffffff, #ededed) }
+.ol-web header.bar.is-dark .ol-cta:hover { background: linear-gradient(180deg, #fafafa, #e2e2e2) }
+.ol-web header.bar.is-dark .mobile-menu a:not(.ol-cta) { color: #e5e5e5 }
+.ol-web.nav-open header.bar.is-dark .mobile-menu { border-top-color: #3f3f46 }
+
+/* mobile: swap nav for hamburger + inline dropdown menu */
+@media (max-width: 767px) {
+  .ol-web .nav-desktop, .ol-web .nav-cta { display: none }
+  .ol-web .hamburger { display: grid }
+  .ol-web .mobile-menu { display: block; max-width: var(--page); margin: 0 auto; padding: 0 var(--pad); max-height: 0; overflow: hidden; transition: max-height .28s ease }
+  .ol-web.nav-open .mobile-menu { max-height: 360px; border-top: 1px solid var(--line); padding-top: 8px; padding-bottom: 32px }
+  .ol-web .mobile-menu a:not(.ol-cta) { display: block; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500; color: var(--secondary); padding: 14px 4px }
+  .ol-web .mobile-menu .ol-cta { display: flex; width: 100%; margin-top: 16px }
+}
+
+.ol-web section { padding: 64px 0 }
+.ol-web .section-tight { padding: 40px 0 }
+
+/* ============================================================
+   SCROLL STACKING — section groups pin in place while the next group
+   scrolls up and overlaps the frozen one (like cards). The ScrollStage
+   engine sets each group's `top` (= 50vh − height, clamped to 0) and its
+   z-index (ascending, from live document order) imperatively; the CSS only
+   provides the sticky positioning and the solid backdrop that keeps the
+   overlap opaque. z-index is NOT hardcoded per group here (the old
+   .g-hero{z-index:1}….g-e2{z-index:9} ladder is gone) — remove or reorder a
+   section and the stage restacks the rest.
+   ============================================================ */
+.ol-web .ol-stage { position: relative }
+.ol-web .grp { position: sticky; background: var(--white) }
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .grp { position: relative !important; top: auto !important }
+}
+
+/* ============================================================
+   HERO — badge · headline · trusted · sub · CTA (Figma)
+   Static/settled composition; the load-in reveal + scroll drift are layered
+   on in ScrollStage/HeroSection + the animation block below.
+   ============================================================ */
+.ol-web .hero { position: relative; z-index: 0; overflow: hidden; background: linear-gradient(180deg, rgba(255, 255, 255, 0) 55%, #fff 100%) }
+.ol-web .logostrip { position: relative; z-index: 1 }
+/* dot-grid texture behind the hero, fading downward into white */
+.ol-web .hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 82%);
+          mask-image: linear-gradient(180deg, #000 0%, transparent 82%) }
+.ol-web .hero-inner { max-width: var(--page); margin: 0 auto; padding: 36px var(--pad);
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;
+  position: relative; z-index: 1 }   /* hero text paints above the shapes */
+
+.ol-web .badge { display: inline-flex; align-items: center; background: var(--white);
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 10px;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+  color: var(--secondary); box-shadow: 0 1px 1px rgba(0, 0, 0, .05) }
+.ol-web .badge .sep { margin: 0 6px; color: #d1d1d1 }
+
+.ol-web .hero h1 { font-family: var(--font-display); font-weight: 400; color: var(--ink-strong);
+  font-size: clamp(38px, calc(40px + 1.85vw), 64px); line-height: 1.24; letter-spacing: 0;
+  max-width: 836px; text-wrap: balance }
+/* yellow marker behind the emphasised word */
+.ol-web .hero .mark { position: relative; white-space: nowrap; z-index: 0 }
+.ol-web .hero .mark::before { content: ""; position: absolute; z-index: -1;
+  left: -.14em; right: -.16em; top: .16em; bottom: .04em;
+  background: url('/assets/Highlight_1.png') center/100% 100% no-repeat; opacity: .64 }
+
+.ol-web .hero .trusted { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; line-height: 20px; color: var(--secondary) }
+.ol-web .hero .sub { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px; letter-spacing: -.01em; color: var(--secondary) }
+
+/* hand-drawn blueprint shapes flanking the hero. --htw ~= the headline's
+   rendered width, so (100% - --htw)/4 is the centre of each side gutter.
+   --sx (slide) / --sr (tilt) / --so (fade) are scroll-driven by the section
+   effect; they rest at 0 / 0deg / 1 (the settled/no-JS look). */
+.ol-web .hero { --htw: 714px }
+.ol-web .hero-shape { position: absolute; z-index: 0; pointer-events: none; --sx: 0px; --sr: 0deg; --so: 1; opacity: var(--so); will-change: transform, opacity }
+.ol-web .hero-shape img { display: block; width: 100%; height: 100%; object-fit: contain }
+.ol-web .hs-1 { width: 322px; height: 208px; top: 11px; left: calc((100% - var(--htw)) / 4);
+  transform: translateX(calc(-50% + var(--sx))) rotate(var(--sr)) }
+.ol-web .hs-2 { width: 255px; height: 252px; bottom: 59px; left: calc(100% - (100% - var(--htw)) / 4);
+  transform: translateX(calc(-50% + var(--sx))) rotate(var(--sr)) }
+/* narrower screens: shapes tuck mostly off the side edges, just poking in */
+@media (max-width: 1023px) {
+  .ol-web .hs-1 { left: -223px; top: 11px; transform: translateX(var(--sx)) rotate(var(--sr)) }
+  .ol-web .hs-2 { left: auto; right: -160px; top: auto; bottom: 56px; transform: translateX(var(--sx)) rotate(var(--sr)) }
+}
+@media (min-width: 768px) { .ol-web .hero-inner { padding-block: 48px } }
+@media (min-width: 1280px) { .ol-web .hero-inner { padding-block: 62px } }
+
+/* ============================================================
+   LOGO STRIP — "Created from two decades…"
+   ============================================================ */
+.ol-web .logostrip { background: var(--paper); border-top: 1px solid var(--line); text-align: center; padding: 0 }
+.ol-web .logostrip .wrap-lg { max-width: var(--page); margin: 0 auto; padding: 104px var(--pad) 136px;
+  display: flex; flex-direction: column; align-items: center; gap: 34px }
+.ol-web .logostrip p { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 500; line-height: 28px;
+  letter-spacing: -.18px; color: var(--faint); margin: 0; padding-inline: 8px }
+.ol-web .logos { display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap }
+.ol-web .logos img { width: auto; display: block }
+.ol-web .logos .lg-item { position: relative; display: flex; align-items: center; justify-content: center }
+/* per-logo optical sizing — cropped SVGs, tuned so cap/x-heights read even */
+.ol-web .logos img[alt="Google"] { height: 24px }
+.ol-web .logos img[alt="Microsoft"] { height: 28px }
+.ol-web .logos img[alt="Intel"] { height: 24px }
+.ol-web .logos img[alt="Couchbase"] { height: 27px }
+.ol-web .logos img[alt="Heatmap"] { height: 28px }
+.ol-web .logos img[alt="Blue Ocean"] { height: 26px }
+/* hand-drawn blue circle around Google */
+.ol-web .logos .lg-google img[alt="Google"] { position: relative; z-index: 1 }
+/* max-width:none: Tailwind preflight sets img{max-width:100%}, which would clamp
+   this absolutely-positioned overlay to its small Google-logo parent (~72px)
+   instead of the intended 132px. The vanilla site has no such reset. */
+.ol-web .logos .lg-google .circle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, calc(-52% + 12px));
+  width: 132px; height: auto; max-width: none; pointer-events: none; z-index: 0 }
+@media (max-width: 767px) {
+  /* more breathing room between the intro line and the logo grid on mobile */
+  .ol-web .logostrip .wrap-lg { gap: 68px }
+  .ol-web .logostrip .logos { display: grid; grid-template-columns: 1fr 1fr; gap: 80px 24px; justify-items: center; max-width: 300px }
+}
+
+/* ============================================================
+   HERO — load-in motion (layered on the static composition above).
+
+   The two blueprint shapes slide + rotate + fade IN on load, mirroring the
+   scroll-out leave in reverse: the left shape swings in from the left, the
+   right from the right. The back-out easing overshoots the resting point then
+   settles (the little bounce). Fade runs on its own curve so opacity never
+   overshoots. Start offsets match the scroll leave (DIST 320 / ROT 30) so
+   entrance and exit read as the same motion reversed. The img's transform is
+   independent of the container's translateX (which carries the scroll drift).
+   The reduced-motion overrides live here, AFTER the animation rules, so source
+   order lets them win.
+   ============================================================ */
+@keyframes ol-heroShapeInL { from { transform: translateX(-320px) rotate(-30deg) } to { transform: translateX(0) rotate(0) } }
+@keyframes ol-heroShapeInR { from { transform: translateX(320px) rotate(30deg) } to { transform: translateX(0) rotate(0) } }
+@keyframes ol-heroShapeFade { from { opacity: 0 } to { opacity: 1 } }
+.ol-web .hs-1 img, .ol-web .hs-2 img { opacity: 0; animation-fill-mode: both; animation-delay: var(--d, 0ms) }
+.ol-web .hs-1 img { animation-name: ol-heroShapeInL, ol-heroShapeFade; animation-duration: .95s, .55s;
+  animation-timing-function: cubic-bezier(.34, 1.56, .64, 1), cubic-bezier(.22, 1, .36, 1) }
+.ol-web .hs-2 img { animation-name: ol-heroShapeInR, ol-heroShapeFade; animation-duration: .95s, .55s;
+  animation-timing-function: cubic-bezier(.34, 1.56, .64, 1), cubic-bezier(.22, 1, .36, 1) }
+/* the yellow marker wipes in left-to-right on load */
+.ol-web .hero .mark::before { animation: ol-markIn .5s cubic-bezier(.22, 1, .36, 1) both; animation-delay: var(--d, 0ms) }
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .hs-1 img, .ol-web .hs-2 img { opacity: 1; animation: none; transform: none }
+  .ol-web .hero .mark::before { animation: none; clip-path: none }
+}
+
+/* ============================================================
+   PILL — white bordered text pill (the section eyebrow badges). Same style as
+   the hero .badge; the source repeats it as .pill-white / .faq-badge etc.
+   ============================================================ */
+.ol-web .pill { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; white-space: nowrap }
+.ol-web .pill-white { background: #fff; border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 10px; color: var(--secondary); box-shadow: 0 1px 1px rgba(0, 0, 0, .05) }
+
+/* ============================================================
+   QA — the details/summary accordion (light default variant). A native
+   disclosure with a slide-open answer (::details-content block-size 0 -> auto,
+   needs interpolate-size:allow-keywords, set on .ol-web) and a ringed plus/minus
+   icon that pops on hover. Reused by the Problem, System (.qa-dark) and FAQ.
+   ============================================================ */
+.ol-web .qa { padding: 24px; border: 1px solid transparent; border-radius: 16px; background: transparent; transition: background .16s ease, border-color .16s ease }
+.ol-web .qa[open] { background: var(--n-50); border-color: #ededed }
+/* slide the answer open/closed instead of the native instant toggle */
+.ol-web .qa::details-content { block-size: 0; overflow: clip; opacity: 0;
+  transition: block-size .28s cubic-bezier(.4, 0, .2, 1), opacity .2s ease, content-visibility .28s allow-discrete }
+.ol-web .qa[open]::details-content { block-size: auto; opacity: 1 }
+/* padding matches the live page, where an unscoped global `summary{padding:14px 0 12px}`
+   (from the products .card) leaks onto every .qa summary — so all accordions
+   (Problem / System / FAQ / About) carry it. Reproduced here scoped to .qa. */
+.ol-web .qa summary { list-style: none; display: flex; gap: 16px; align-items: flex-start; cursor: pointer; text-transform: none; letter-spacing: 0; font-size: 16px; padding: 14px 0 12px }
+.ol-web .qa summary::-webkit-details-marker { display: none }
+.ol-web .qa .q { flex: 1 0 0; min-width: 0; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; letter-spacing: 0; color: var(--ink) }
+.ol-web .qa .icn { flex: none; width: 24px; height: 24px; color: var(--n-500) }
+.ol-web .qa .icn svg { display: block; width: 24px; height: 24px }
+.ol-web .qa .icn-minus { display: none }
+.ol-web .qa[open] .icn-plus { display: none }
+.ol-web .qa[open] .icn-minus { display: block }
+/* snappy hover pop: the ringed circle tucks in while the plus/minus glyph grows,
+   stroke width fixed (non-scaling-stroke), icon goes fully solid on hover */
+.ol-web .qa summary .icn svg circle, .ol-web .qa summary .icn svg path { transform-origin: center; vector-effect: non-scaling-stroke; transition: transform .14s cubic-bezier(.34, 1.56, .64, 1), opacity .14s ease }
+.ol-web .qa summary:hover .icn svg circle { transform: scale(.8); opacity: 1 }
+.ol-web .qa summary:hover .icn svg path { transform: scale(1.28) }
+.ol-web .qa:not(.qa-dark) summary:hover .icn { color: #000 }
+/* Answer: the box's 24px padding is the even frame on all four sides; the
+   answer adds only a top gap so the label reads as clearly separated from the
+   content (the source's 4px was swallowed by line leading and looked joined; it
+   also added 40px right + 14px bottom, which made the open box lopsided). */
+.ol-web .qa .a { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: #525252; padding: 16px 0 0 }
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .qa summary .icn svg circle, .ol-web .qa summary .icn svg path { transition: none }
+  .ol-web .qa summary:hover .icn svg circle, .ol-web .qa summary:hover .icn svg path { transform: none }
+}
+
+/* ============================================================
+   THE PROBLEM — paper band with a white framed content box: badge + display
+   headline + two-column body.
+   ============================================================ */
+.ol-web .problem { position: relative; z-index: 1; background: var(--paper); padding: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow-x: clip }
+.ol-web .problem-in { max-width: var(--page); margin: 0 auto; padding-inline: var(--pad) }
+.ol-web .problem-frame { position: relative; background: var(--white); border-left: 1px solid var(--line); border-right: 1px solid var(--line); padding: 72px 32px; display: flex; flex-direction: column; gap: 32px; align-items: flex-start }
+/* blueprint crop-mark ticks on the frame rails, level with the lead's baseline;
+   shown only at the >=1280 design width where the layout matches */
+.ol-web .problem-frame .cm { position: absolute; width: 1px; height: 15px; background: var(--line-strong); top: 420px; display: none }
+.ol-web .problem-frame .cm.pl-l { left: -1px }
+.ol-web .problem-frame .cm.pl-r { right: -1px }
+.ol-web .problem-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 48px; line-height: 1.12; letter-spacing: -.02em; color: #131316; margin: 0; width: 100% }
+.ol-web .problem-cols { display: flex; gap: 48px; align-items: flex-start; width: 100% }
+.ol-web .problem-left { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 32px }
+.ol-web .problem-lead { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 38px; letter-spacing: -.04em; color: #70707b; margin: 0 }
+.ol-web .problem-lead b { font-weight: 500; color: #131316 }
+.ol-web .problem-right { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 32px }
+/* the disclosure reuses .qa; restore paragraph rhythm the *{margin:0} reset kills, darken emphasis */
+.ol-web .problem .qa .a p { margin: 0 0 12px }
+.ol-web .problem .qa .a p:last-child { margin-bottom: 0 }
+.ol-web .problem .qa .a b { font-weight: 500; color: #131316 }
+@media (min-width: 1280px) { .ol-web .problem-frame .cm { display: block } }
+@media (max-width: 1199px) { .ol-web .problem-title { font-size: 40px } }
+@media (max-width: 899px) {
+  .ol-web .problem-cols { flex-direction: column; gap: 40px }
+  .ol-web .problem-lead { font-size: 26px; line-height: 34px }
+}
+@media (max-width: 767px) {
+  .ol-web .problem-frame { padding: 56px 20px; gap: 28px }
+  .ol-web .problem-title { font-size: 32px; line-height: 1.16 }
+  .ol-web .problem-lead { font-size: 24px; line-height: 32px }
+}
+
+/* ============================================================
+   THE SYSTEM — dark full-bleed band: pitch + dark accordions (left), the
+   stacked loop-levels graphic (right). The agent-led animation is a second
+   subsection of this band, built separately (step 5).
+   ============================================================ */
+.ol-web .system { position: relative; z-index: 1; background: #262626; border-bottom: 1px solid #3f3f46; padding: 0; overflow-x: clip }
+.ol-web .system-in { max-width: var(--page); margin: 0 auto; display: flex; align-items: stretch }
+.ol-web .system-main { flex: 1 1 auto; max-width: 823px; min-width: 0; padding: 72px var(--pad); display: flex; flex-direction: column; gap: 20px }
+.ol-web .system-hb { display: flex; flex-direction: column; gap: 12px; align-items: flex-start }
+/* +12 on the 12px flex gap = 24px badge->title */
+.ol-web .system-badge { display: inline-flex; align-items: center; padding: 4px 10px; background: var(--white); border: 1px solid var(--line-strong); border-radius: 999px; box-shadow: 0 1px 1px rgba(0, 0, 0, .05); font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; color: var(--secondary); margin-bottom: 12px }
+.ol-web .system-main h2 { font-family: var(--font-display); font-weight: 400; color: var(--white); font-size: 48px; line-height: 60px; letter-spacing: -.02em }
+.ol-web .system-sub { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 38px; letter-spacing: -.04em; color: #e4e4e7 }
+.ol-web .system-agent { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 20px; line-height: 30px; letter-spacing: -.01em; color: #a1a1aa; max-width: 640px }
+.ol-web .system-agent b { color: inherit; font-weight: inherit }
+
+/* dark accordion variant — same mechanic as .qa, black panel when open */
+.ol-web .qa-dark .q { color: var(--white) }
+.ol-web .qa-dark .icn { color: var(--n-400) }
+.ol-web .qa-dark[open] { background: #212121; border-color: #181818 }
+.ol-web .qa-dark .a { color: #fafafa; display: flex; flex-direction: column; gap: 12px }
+.ol-web .qa-dark .a p { margin: 0 }
+.ol-web .qa-dark summary:hover .icn { color: var(--white) }
+/* pull the second accordion up so the inter-item gap is ~half the 20px column gap */
+.ol-web .qa-dark + .qa-dark { margin-top: -10px }
+
+/* crosshair tick (a tiny 5px plus of 1px rules) */
+.ol-web .xplus { position: absolute; width: 5px; height: 5px; z-index: 6; pointer-events: none; transform: translate(-50%, -50%);
+  background: linear-gradient(var(--n-400), var(--n-400)) 50%/5px 1px no-repeat, linear-gradient(var(--n-400), var(--n-400)) 50%/1px 5px no-repeat }
+.ol-web .xplus.r { transform: translate(50%, -50%) }
+
+/* right cell — stacked-blocks graphic, divider rule to the left */
+.ol-web .system-visual { position: relative; flex: 1 1 0; min-width: 0; align-self: stretch; border-left: 1px solid #3f3f46; display: flex; align-items: center; justify-content: center; padding: 24px }
+/* dot grid bleeds off the right edge, flush to the browser width (section clips the 100vw overflow) */
+.ol-web .system-visual::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 100vw; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, .14) 0.5px, transparent 0.6px); background-size: 8px 8px }
+.ol-web .system-visual > * { position: relative; z-index: 1 }
+.ol-web .system-visual .sys-plus-b { position: absolute; left: -0.5px; top: 100%; z-index: 7 }
+/* loop-levels graphic: 4 cubes on the right + a colour-matched label glued to each cube, joined by a
+   dashed arrow. --spread (px, set by the section's scroll scrub) fans the cubes/labels/arrows out and
+   tightens them in lockstep via the identical (1.5 - --si)*--spread offset. --spread:0 = the settled
+   look (moderate overlap), the no-JS / reduced-motion default. -42px optically centres the visual mass. */
+.ol-web .sys-graphic { position: relative; flex: none; width: 320px; height: 314px; --spread: 0px; transform: translateX(-42px) }
+.ol-web .system-blocks { position: absolute; top: 0; right: 0; display: block; width: 149px; height: 314px; overflow: visible }
+.ol-web .sblk { transform: translateY(calc((1.5 - var(--si)) * var(--spread))); transition: transform .05s linear; will-change: transform }
+/* --cy = each label's base centre in the 314-tall space; --si = its cube index (0 bottom .. 3 top) */
+.ol-web .sys-label { position: absolute; right: 173px; top: var(--cy); white-space: nowrap; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 20px; line-height: 30px; letter-spacing: -.02em;
+  transform: translateY(calc(-50% + (1.5 - var(--si)) * var(--spread))); transition: transform .05s linear; will-change: transform }
+/* dashed connector + downward chevron from each label to the next; --ac = the source label's colour */
+.ol-web .sys-arrow { position: absolute; right: 178px; width: 1px; color: var(--ac); top: calc(var(--cy) + 19px); height: calc(30px + var(--spread));
+  transform: translateY(calc((1.5 - var(--si)) * var(--spread))); transition: transform .05s linear, height .05s linear; will-change: transform, height }
+.ol-web .sys-arrow::before { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 6px; background: repeating-linear-gradient(to bottom, currentColor 0 2px, transparent 2px 6px) }
+.ol-web .sys-arrow::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 6px; height: 6px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: translate(-50%, 0.5px) rotate(45deg) }
+/* stack to one column below 1200 (the labelled-cube graphic needs a wide right cell) */
+@media (max-width: 1199px) {
+  .ol-web .system-in { flex-direction: column }
+  .ol-web .system-main { max-width: none }
+  .ol-web .system-visual { border-left: none; border-top: 1px solid #3f3f46; padding: 56px 24px }
+  .ol-web .system-visual .sys-plus-b { display: none }
+}
+@media (max-width: 767px) {
+  .ol-web .system-main { padding: 72px var(--pad); gap: 16px }
+  .ol-web .system-main h2 { font-size: 36px; line-height: 44px }
+  .ol-web .system-sub { font-size: 24px; line-height: 32px }
+}
+
+/* ============================================================
+   AGENT-LED ANIMATION — the 2nd subsection of the dark system band: a two-panel
+   scene ("the agent does the work" | "the user gets the win"). The right panel
+   is the REAL design-system <Conversation> (Wilson); the left is the workspace
+   assembling from DS primitives. The frame is authored at a fixed reference size
+   (1280 wide) and scaled to fit via a transform (author-in-px, scale wrapper);
+   pointer-events:none so hovering it never captures page scroll.
+   ============================================================ */
+.ol-web .ala-section { position: relative; max-width: var(--page); margin: 0 auto; padding: 0; display: flex; flex-direction: column; align-items: stretch }
+.ol-web .ala-heading { padding: 32px var(--pad) 40px; text-align: center; display: flex; flex-direction: column; align-items: center }
+.ol-web .ala-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 30px; line-height: 38px; letter-spacing: -.04em; color: #131316 }
+.ol-web .ala-sub { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 38px; letter-spacing: -.04em; color: #70707b }
+/* the animation row: dotted left half + plain right half, split by a vertical rule; full-bleed rule at its top (below the heading) */
+.ol-web .ala-row { position: relative; width: 100% }
+.ol-web .ala-row::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 1px; background: var(--line) }
+.ol-web .ala-dots { position: absolute; top: 0; bottom: 0; left: 0; width: 50%; pointer-events: none; background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 8px 8px }
+.ol-web .ala-vline { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-.5px); background: var(--line); pointer-events: none }
+.ol-web .ala-row .xplus.ala-plus-t { top: 0; left: 50% }
+/* aspect-ratio reserves the height before JS scales (no layout shift); the scope is scaled to fit */
+.ol-web .ala-frame { position: relative; z-index: 1; overflow: hidden; width: 100%; margin: 0 auto; aspect-ratio: 1280/776; pointer-events: none }
+.ol-web .ala-scope { position: absolute; top: 0; left: 0; transform-origin: top left; will-change: transform; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif }
+
+/* dark variant — sits in the #262626 system band; only text colours invert */
+.ol-web .ala-section.ala-on-dark::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 1px; background: #3f3f46; pointer-events: none; z-index: 2 }
+.ol-web .ala-on-dark .ala-title { color: #fafafa }
+.ol-web .ala-on-dark .ala-sub { color: #a1a1aa }
+.ol-web .ala-on-dark .ala-scope .ala-panel-label { color: #a1a1aa }
+.ol-web .ala-on-dark .ala-row::before { background: #3f3f46 }
+.ol-web .ala-on-dark .ala-vline { background: #3f3f46 }
+.ol-web .ala-on-dark .ala-dots { background-image: radial-gradient(rgba(255, 255, 255, .14) 0.5px, transparent 0.6px); left: calc(50% - 50vw); width: 50vw }
+
+/* ------------------------------------------------------------------
+   Ported VERBATIM from protocol-stack/index.html (.ala-scope, lines 1773-2157),
+   scoped under .ol-web. The LEFT flowstack (step cards, connectors, card-outline
+   draws, per-step body states, ambient cues) and the RIGHT panel CHROME (dark
+   identity header + celebration morph + faux composer) do not exist in the DS —
+   they are the site's own animation, kept pixel-identical. The right panel's
+   MESSAGE list, however, is replaced by the real DS <Conversation>, so the
+   original .msglist/.msg/.bubble/.qmorph/.choices/.chatprogress/.ctas rules are
+   intentionally omitted (the DS chat.css owns those). The custom cursor is also
+   dropped (the DS Choices auto-picks). Constants/easings are unchanged; only the
+   selector scoping (`.ol-web ` prefix) and id->ref wiring differ.
+   ------------------------------------------------------------------ */
+.ol-web .ala-scope {
+  --gray-50: #FAFAF9; --gray-100: #F5F5F4; --gray-200: #E7E5E4; --gray-300: #D7D3D0;
+  --gray-400: #A9A29D; --gray-500: #79716B; --gray-600: #57534E; --gray-800: #292524;
+  --ink: #1C1917;
+  --green-25: #F6FEF9; --green-300: #75E0A7; --green-600: #079455;
+  --blue-600: #0068C9; --blue-300: #74AEFA; --blue-200: #A8CEFD;
+  --blue-100: #D1E6FF; --blue-50: #EBF3FF; --blue-25: #F5F9FF;
+  --badge-text: #414651; --icon-gray: #70707B;
+  --brand: #262626; --gray-700: #44403C; --track: #E9EAEB;
+  --t: var(--d-state, .4s) var(--e-standard, cubic-bezier(.4, 0, .2, 1));
+  --bounce: var(--e-bounce, cubic-bezier(.34, 1.56, .64, 1));
+}
+
+.ol-web .ala-scope .stage { width: 1280px; display: flex; align-items: center; justify-content: space-around; padding: 48px 24px }
+
+/* each panel is a column: a label on top, then the fixed-height animation lane */
+.ol-web .ala-scope .flowcol { width: 336px; flex: none; display: flex; flex-direction: column; align-items: center }
+.ol-web .ala-scope .flowlane { width: 336px; height: 664px; position: relative; flex: none }
+.ol-web .ala-scope .ala-panel-label { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 38px; letter-spacing: -.04em; color: #70707b; text-align: center; margin: 0 0 16px; flex: none; white-space: nowrap }
+.ol-web .ala-scope .flowstack { position: absolute; left: 1px; top: 0; width: 334px; display: flex; flex-direction: column; transform: translateY(0); transition: transform var(--d-stage, .5s) var(--bounce) }
+.ol-web .ala-scope .blk { height: 0; overflow: hidden; transition: height var(--d-stage, .5s) var(--bounce) }
+.ol-web .ala-scope.rewind .blk, .ol-web .ala-scope.rewind .flowstack { transition-timing-function: cubic-bezier(.4, 0, .2, 1) }
+.ol-web .ala-scope .blk.open { height: auto; overflow: visible }
+.ol-web .ala-scope .blk.conn { overflow: visible }
+
+.ol-web .ala-scope .bel { opacity: 0; transform: translateY(8px); transition: opacity var(--d-el, .32s) var(--e-standard, ease), transform var(--d-el, .32s) var(--bounce) }
+.ol-web .ala-scope .bel.slidex { transform: translateX(-12px) }
+.ol-web .ala-scope .bel.growx { transform: scaleX(0); transform-origin: left center }
+.ol-web .ala-scope .bel.in { opacity: 1; transform: none }
+
+.ol-web .ala-scope .step { width: 334px; display: flex; flex-direction: column; position: relative }
+.ol-web .ala-scope .tabrow { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2 }
+.ol-web .ala-scope .tab { background: var(--gray-100); border: 1px solid var(--gray-300); border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px 12px; display: flex; gap: 6px; align-items: center }
+.ol-web .ala-scope .tab .icon { width: 20px; height: 20px; color: var(--gray-500); flex: none }
+.ol-web .ala-scope .tab span.lbl { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--gray-600) }
+
+.ol-web .ala-scope .badges { position: relative; height: 32px }
+.ol-web .ala-scope .ala-badge { display: flex; gap: 4px; align-items: center; padding: 6px 10px; border-radius: 8px; font-size: 14px; line-height: 20px; font-weight: 500; white-space: nowrap; transition: opacity var(--t) }
+.ol-web .ala-scope .ala-badge .icon { width: 16px; height: 16px; flex: none }
+.ol-web .ala-scope .ala-badge.done { background: var(--green-25); border: 1px solid var(--green-300); color: var(--green-600); opacity: 0 }
+.ol-web .ala-scope .ala-badge.trig { position: absolute; top: 0; right: 0; background: var(--blue-50); border: 1px solid var(--blue-200); color: var(--blue-600); opacity: 0 }
+.ol-web .ala-scope .ala-badge.pend { position: absolute; top: 0; right: 0; background: #fff; border: 1px solid var(--gray-200); color: var(--gray-400); opacity: 1 }
+.ol-web .ala-scope .step.trig .ala-badge.pend { opacity: 0 }
+.ol-web .ala-scope .step.trig .ala-badge.trig { opacity: 1 }
+.ol-web .ala-scope .step.on .ala-badge.pend, .ol-web .ala-scope .step.on .ala-badge.trig { opacity: 0 }
+.ol-web .ala-scope .step.on .ala-badge.done { opacity: 1 }
+
+/* bottom padding evened up to 24px to match the left/right (Bal-directed deviation
+   from the live page's 16px 24px, whose bottom read tighter than the sides). */
+.ol-web .ala-scope .ala-card { background: #fff; border: 1px solid var(--gray-300); border-radius: 0 24px 24px 24px; padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 8px; transition: border-color var(--t), box-shadow var(--t); position: relative; z-index: 1 }
+.ol-web .ala-scope .step.trig .ala-card { border-color: var(--blue-600); box-shadow: 0 20px 24px rgba(10, 13, 18, .03), 0 8px 8px rgba(10, 13, 18, .03), 0 3px 3px rgba(10, 13, 18, .03) }
+.ol-web .ala-scope .step.on .ala-card { border-color: var(--green-600); box-shadow: 0 20px 24px rgba(10, 13, 18, .03), 0 8px 8px rgba(10, 13, 18, .03), 0 3px 3px rgba(10, 13, 18, .03) }
+.ol-web .ala-scope .titlerow { display: flex; justify-content: space-between; align-items: center; width: 286px }
+.ol-web .ala-scope .titleleft { display: flex; gap: 6px; align-items: center }
+.ol-web .ala-scope .titleleft .icon { width: 24px; height: 24px; flex: none; color: var(--icon-gray); transition: color var(--t) }
+.ol-web .ala-scope .step.trig .titleleft .icon { color: var(--ink) }
+.ol-web .ala-scope .step.on .titleleft .icon { color: var(--green-600) }
+.ol-web .ala-scope .titleleft h3 { font-size: 16px; line-height: 24px; font-weight: 600; color: var(--gray-500); transition: color var(--t); white-space: nowrap }
+.ol-web .ala-scope .step.trig .titleleft h3, .ol-web .ala-scope .step.on .titleleft h3 { color: #000 }
+.ol-web .ala-scope .typechip { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; padding: 4px 10px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--badge-text) }
+.ol-web .ala-scope .divider { height: 12px; display: flex; align-items: center; width: 286px }
+.ol-web .ala-scope .divider::before { content: ''; width: 100%; height: 1px; background: var(--gray-200) }
+.ol-web .ala-scope .ala-card p { font-size: 14px; line-height: 20px; color: var(--gray-500); transition: color var(--t); max-width: 286px }
+.ol-web .ala-scope .step.trig .ala-card p, .ol-web .ala-scope .step.on .ala-card p { color: #000 }
+
+.ol-web .ala-scope .bodyswap { position: relative; min-height: 20px }
+.ol-web .ala-scope .bstate { transition: opacity var(--d-swap, .3s) }
+.ol-web .ala-scope .bstate.hide { opacity: 0; position: absolute; inset: 0; pointer-events: none }
+.ol-web .ala-scope .progresswrap { display: flex; flex-direction: column; gap: 10px; width: 286px }
+.ol-web .ala-scope .progresstitle { display: flex; justify-content: space-between; align-items: baseline }
+.ol-web .ala-scope .progresstitle b { font-size: 14px; line-height: 20px; font-weight: 600; color: #000 }
+.ol-web .ala-scope .progresstitle span { font-size: 13px; line-height: 20px; font-weight: 500; color: var(--gray-500) }
+.ol-web .ala-scope .pbar { height: 12px; border-radius: 7px; background: var(--gray-200); overflow: hidden }
+.ol-web .ala-scope .pbar i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 7px }
+
+.ol-web .ala-scope .dotwrap { position: relative; height: 8px; z-index: 7 }
+.ol-web .ala-scope .ala-dot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid var(--gray-300); transition: border-color var(--t) }
+.ol-web .ala-scope .step.trig .ala-dot { border-color: var(--blue-600) }
+.ol-web .ala-scope .step.on .ala-dot { border-color: var(--green-600) }
+
+.ol-web .ala-scope .connrow { position: relative; height: 64px; width: 334px; flex: none; z-index: 0 }
+.ol-web .ala-scope .connrow svg { overflow: visible; display: block; margin: 0 auto }
+.ol-web .ala-scope path.gray-line { stroke: var(--gray-300); stroke-width: 2; fill: none; opacity: 0; transition: opacity .3s }
+.ol-web .ala-scope .blk.open path.gray-line { opacity: 1 }
+.ol-web .ala-scope path.draw { stroke-width: 2; fill: none; stroke-dasharray: 100; stroke-dashoffset: 100; stroke: var(--green-600) }
+.ol-web .ala-scope path.arrow { stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round }
+.ol-web .ala-scope path.arrow.gray { stroke: var(--gray-300); opacity: 0 }
+.ol-web .ala-scope path.arrow.green { stroke: var(--green-600); opacity: 0; transition: opacity .2s }
+.ol-web .ala-scope .connchip { position: absolute; left: 50%; top: 17px; transform: translate(-50%, 6px); opacity: 0; background: var(--green-25); border: 1px solid var(--green-300); border-radius: 8px; padding: 4px 10px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--green-600); white-space: nowrap; transition: opacity var(--d-el, .32s) ease, transform var(--d-el, .32s) var(--bounce) }
+.ol-web .ala-scope .connchip.show { opacity: 1; transform: translate(-50%, 0) }
+
+.ol-web .ala-scope .appcol { width: 376px; flex: none; display: flex; flex-direction: column; align-items: center }
+.ol-web .ala-scope .chatlane { position: relative; width: 376px; flex: none; display: flex; align-items: center; justify-content: center; min-height: 664px }
+/* hugs its content, capped at the lane height (like the vanilla panel, whose
+   JS-managed msglist grew to a chatCap): the DS <Conversation> grows the panel as
+   turns arrive, then the chat scrolls once the thread exceeds the lane. A definite
+   max-height on this flex parent is what lets the inner .bp-chat overflow-scroll. */
+.ol-web .ala-scope .panel { width: 356px; max-height: 664px; overflow: hidden; border-radius: 24px; box-shadow: 0 12px 16px rgba(10, 13, 18, .08), 0 4px 6px rgba(10, 13, 18, .03), 0 2px 2px rgba(10, 13, 18, .04); display: flex; flex-direction: column }
+.ol-web .ala-scope .phead { background: var(--brand); color: #fff; padding: 24px 16px; flex: none; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; gap: 12px; transition: height var(--d-stage, .5s) var(--bounce); overflow: hidden }
+.ol-web .ala-scope .pheadrow { display: flex; align-items: center; gap: 8px; padding-left: 8px; flex: none }
+.ol-web .ala-scope .ala-avatar { width: 48px; height: 48px; flex: none }
+.ol-web .ala-scope .ala-avatar img { width: 100%; height: 100%; display: block; border-radius: 50% }
+.ol-web .ala-scope .pheadrow .who { flex: 1; display: flex; gap: 4px; align-items: flex-start; font-size: 12px; line-height: 18px }
+.ol-web .ala-scope .pheadrow .who b { font-weight: 600 }
+.ol-web .ala-scope .pheadrow .who span { font-weight: 400; opacity: .64 }
+.ol-web .ala-scope .pclose { width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: #fff; opacity: .9 }
+.ol-web .ala-scope .pheadswap { position: relative; padding: 0 8px }
+.ol-web .ala-scope .phstate { transition: opacity var(--d-headswap, .4s), transform var(--d-headswap, .4s) var(--bounce) }
+.ol-web .ala-scope .phstate.hide { opacity: 0; position: absolute; top: 0; left: 8px; right: 8px; pointer-events: none; transform: translateY(8px) }
+.ol-web .ala-scope .phead h2 { font-size: 15px; line-height: 22px; font-weight: 600; white-space: nowrap }
+.ol-web .ala-scope .celebrate-sub { display: flex; gap: 4px; align-items: center; padding-right: 8px; margin-top: 10px }
+.ol-web .ala-scope .celebrate-sub .muscleslot { width: 64px; height: 64px; flex: none; mix-blend-mode: screen }
+.ol-web .ala-scope .celebrate-sub .muscleslot img, .ol-web .ala-scope .celebrate-sub .muscleslot svg { width: 100%; height: 100%; mix-blend-mode: screen }
+.ol-web .ala-scope .celebrate-sub span { font-size: 12px; line-height: 18px; font-weight: 500 }
+.ol-web .ala-scope .pbody { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--gray-300); border-top: none; border-radius: 0 0 24px 24px; overflow: hidden }
+/* the DS <Conversation> fills the body and owns its own scroll */
+.ol-web .ala-scope .pbody .bp-chat { min-height: 0; flex: 1; scrollbar-width: none }
+.ol-web .ala-scope .pbody .bp-chat::-webkit-scrollbar { display: none }
+
+.ol-web .ala-scope .inputbar { flex: none; border-top: 1px solid var(--gray-200); padding: 20px; display: flex; gap: 8px; align-items: center }
+.ol-web .ala-scope .inputbar .field { flex: 1; height: 40px; display: flex; align-items: center; background: #fff; border: 1px solid var(--gray-300); border-radius: 12px; padding: 8px 12px; font-size: 14px; line-height: 20px; color: var(--gray-400); box-shadow: inset 0 0 2px 1px rgba(0, 0, 0, .05), inset 0 1px 2px rgba(0, 0, 0, .05) }
+.ol-web .ala-scope .inputbar .send { height: 40px; padding: 8px 12px; border-radius: 12px; flex: none; background: linear-gradient(to bottom, var(--blue-25), var(--blue-100)); border: 1px solid var(--blue-300); display: flex; align-items: center; justify-content: center; color: var(--blue-600); box-shadow: 0 1px 3px rgba(10, 13, 18, .1), 0 1px 2px -1px rgba(10, 13, 18, .1) }
+.ol-web .ala-scope .inputbar .send svg { width: 20px; height: 20px; display: block }
+
+@keyframes ala-stepwiggle { 0% { transform: rotate(0) } 35% { transform: rotate(-1.3deg) } 100% { transform: rotate(0) } }
+.ol-web .ala-scope .step.wiggle { animation: ala-stepwiggle var(--d-stage, .52s) var(--bounce) }
+
+/* ---- "working" cues on the left ---- */
+@keyframes ala-breathe {
+  0%, 100% { box-shadow: 0 20px 24px rgba(10, 13, 18, .03), 0 8px 8px rgba(10, 13, 18, .03), 0 3px 3px rgba(10, 13, 18, .03), 0 0 0 0 rgba(0, 104, 201, 0) }
+  50% { box-shadow: 0 22px 30px rgba(10, 13, 18, .08), 0 10px 12px rgba(10, 13, 18, .05), 0 3px 4px rgba(10, 13, 18, .04), 0 0 0 4px rgba(0, 104, 201, .09) }
+}
+@keyframes ala-cogspin { to { transform: rotate(360deg) } }
+@keyframes ala-dotbounce { 0%, 70%, 100% { opacity: .3; transform: translateY(0) } 35% { opacity: 1; transform: translateY(-3px) } }
+@keyframes ala-write { 0%, 100% { transform: rotate(-11deg) } 50% { transform: rotate(7deg) } }
+
+.ol-web .ala-scope .procrow { display: flex; align-items: center; gap: 8px }
+.ol-web .ala-scope .procrow .cogs { position: relative; width: 22px; height: 20px; flex: none; color: var(--blue-600) }
+.ol-web .ala-scope .procrow .cogs svg { position: absolute; display: block }
+.ol-web .ala-scope .procrow .cog-a { left: 0; top: 1px; width: 15px; height: 15px; transform-origin: 50% 50% }
+.ol-web .ala-scope .procrow .cog-b { left: 10px; top: 6px; width: 12px; height: 12px; transform-origin: 50% 50% }
+.ol-web .ala-scope .procrow p { color: #000 }
+
+.ol-web .ala-scope .workrow { position: relative; min-height: 20px; margin-top: 2px; width: 286px }
+.ol-web .ala-scope .wk { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 7px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--blue-600); white-space: nowrap; transition: opacity .28s ease }
+.ol-web .ala-scope .wk.hide { opacity: 0; pointer-events: none }
+.ol-web .ala-scope .pencilslot { display: inline-flex; width: 16px; height: 16px; flex: none; color: var(--blue-600); transform-origin: 72% 82% }
+.ol-web .ala-scope .pencilslot svg { width: 16px; height: 16px; display: block }
+.ol-web .ala-scope .dots { display: inline-flex; gap: 4px; align-items: center }
+.ol-web .ala-scope .dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .3 }
+
+.ol-web .ala-scope .qbody { position: relative; height: 0; overflow: hidden; width: 286px; transition: height var(--d-grow, .45s) var(--e-standard, ease) }
+.ol-web .ala-scope .qstate { position: absolute; left: 0; top: 0; transition: opacity .28s ease }
+.ol-web .ala-scope .qstate.hide { opacity: 0; pointer-events: none }
+.ol-web .ala-scope .qstate.compose { display: flex; align-items: center; gap: 7px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--blue-600); white-space: nowrap }
+.ol-web .ala-scope .qstate.opts { display: flex; flex-direction: column; gap: 6px; width: 286px }
+.ol-web .ala-scope .qopt { display: flex; align-items: center; gap: 9px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--gray-500); transition: color var(--t) }
+.ol-web .ala-scope .qopt .ck { width: 18px; height: 18px; flex: none; position: relative; color: var(--gray-300); transition: color var(--t) }
+.ol-web .ala-scope .qopt .ck svg { width: 18px; height: 18px; display: block; position: absolute; inset: 0 }
+.ol-web .ala-scope .qopt .ckx { opacity: 0; transition: opacity var(--t) }
+.ol-web .ala-scope .qopt.picked { color: #000 }
+.ol-web .ala-scope .qopt.picked .ck { color: var(--green-600) }
+.ol-web .ala-scope .qopt.picked .cko { opacity: 0 }
+.ol-web .ala-scope .qopt.picked .ckx { opacity: 1 }
+.ol-web .ala-scope .bel2 { opacity: 0; transform: translateY(6px); transition: opacity .3s ease, transform .3s var(--bounce) }
+.ol-web .ala-scope .bel2.in { opacity: 1; transform: none }
+
+.ol-web .ala-scope .cardline { position: absolute; overflow: visible; pointer-events: none; z-index: 5; opacity: 0; transition: opacity .35s ease }
+.ol-web .ala-scope .cardline.show { opacity: 1 }
+.ol-web .ala-scope .cardline path { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100 }
+.ol-web .ala-scope .cardline .cl-b { stroke: var(--blue-600) }
+.ol-web .ala-scope .cardline .cl-g { stroke: var(--green-600) }
+.ol-web .ala-scope .cardline .cl-head { opacity: 0 }
+.ol-web .ala-scope .cardline .cl-head.on { opacity: 1 }
+.ol-web .ala-scope .cardline .cl-head.b { fill: var(--blue-600); filter: drop-shadow(0 0 3px rgba(0, 104, 201, .75)) }
+.ol-web .ala-scope .cardline .cl-head.g { fill: var(--green-600); filter: drop-shadow(0 0 3px rgba(7, 148, 85, .75)) }
+
+.ol-web .ala-scope .step--terminal .ala-dot { display: none }   /* step 3 is terminal — no node, nothing exits it */
+
+@media (prefers-reduced-motion: no-preference) {
+  .ol-web .ala-scope .step.working .ala-card { animation: ala-breathe 2.6s ease-in-out infinite }
+  .ol-web .ala-scope .procrow .cog-a { animation: ala-cogspin 2.8s linear infinite }
+  .ol-web .ala-scope .procrow .cog-b { animation: ala-cogspin 2.2s linear infinite reverse }
+  .ol-web .ala-scope .qstate.compose .pencilslot { animation: ala-write 1s ease-in-out infinite }
+  .ol-web .ala-scope .wk.await .dots i:nth-child(1) { animation: ala-dotbounce 1.3s ease-in-out infinite }
+  .ol-web .ala-scope .wk.await .dots i:nth-child(2) { animation: ala-dotbounce 1.3s ease-in-out .16s infinite }
+  .ol-web .ala-scope .wk.await .dots i:nth-child(3) { animation: ala-dotbounce 1.3s ease-in-out .32s infinite }
+}
+
+.ol-web .ala-scope.ala-notrans, .ol-web .ala-scope.ala-notrans * { transition: none !important; animation-duration: 0s !important }
+
+/* dark variant — the card header lighter than the #262626 band fill */
+.ol-web .ala-on-dark .ala-scope .phead { background: #4a4a4a }
+
+@media (max-width: 767px) {
+  .ol-web .ala-title, .ol-web .ala-sub { font-size: 22px; line-height: 30px }
+  .ol-web .ala-heading { padding: 36px var(--pad) 28px }
+  .ol-web .ala-dots, .ol-web .ala-vline, .ol-web .ala-row .xplus { display: none }
+  .ol-web .ala-row { padding-inline: 16px }
+  .ol-web .ala-scope .stage { flex-direction: column; width: max-content; gap: 44px; padding: 32px 16px; justify-content: flex-start }
+  .ol-web .ala-scope .ala-panel-label { font-size: 24px; line-height: 30px; margin-bottom: 12px }
+}
+
+/* ============================================================
+   THE STACK (step 6) — ported from protocol-stack/index.html (the winning, later
+   `.stack*`/`.pcard*`/`.hiw*`/`.cta-cubes` definitions), scoped `.ol-web`. The
+   word-highlight title scrub, the cardgrid `is-scrub` cascade, and the pinned
+   `.hiw` step-reveal are motion (step 6b): this static pass renders the title
+   words dark, the cards fully visible, and the "how it works" band unpinned (its
+   own reduced-motion/mobile fallback). `.pill`/`.pill-white`/`.badge-num`/
+   `.reveal-up`/`.xplus`/`--page`/`--pad`/`--dot` already exist from earlier steps.
+   ============================================================ */
+.ol-web .stack { position: relative; z-index: 1; background: var(--white); --scpad: 48px; padding: 0; border-top: 1px solid var(--line); overflow-x: clip }
+.ol-web .stack-in { max-width: var(--page); margin: 0 auto }
+
+/* title zone: dot-grid gutters flank the content, solid inner frame lines */
+.ol-web .stack-head { display: flex; align-items: stretch; gap: 48px; padding-inline: var(--pad) }
+.ol-web .stack-gutter { position: relative; flex: none; width: 112px; align-self: stretch; background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 8px 8px }
+.ol-web .stack-gutter::before, .ol-web .stack-gutter::after { content: ""; position: absolute; top: 0; bottom: -14px; width: 1px; background: var(--line) }
+.ol-web .stack-gutter.l::before { left: -1px }
+.ol-web .stack-gutter.l::after { right: -1px }
+.ol-web .stack-gutter.r::before { left: -1px }
+.ol-web .stack-gutter.r::after { right: -1px }
+.ol-web .stack-gutter .xplus { top: calc(100% + 0.5px) }
+.ol-web .stack-gutter .xplus.a { left: -0.5px }
+.ol-web .stack-gutter .xplus.b { left: 112.5px }
+.ol-web .stack-head-in { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 24px; align-items: flex-start; padding-block: 72px }
+.ol-web .stack-badges { display: flex; gap: 10px }
+.ol-web .pill-green { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 999px; padding: 4px 12px; color: #15803d }
+.ol-web .stack-title { display: flex; flex-direction: column; font-family: 'Inter', sans-serif; font-size: 30px; line-height: 38px; letter-spacing: -.04em }
+.ol-web .stack-title b { font-weight: 700; color: #131313 }
+.ol-web .stack-title .s1, .ol-web .stack-title .s2 { font-weight: 500; color: #d4d4d4 }
+.ol-web .stack-title .s1 .w, .ol-web .stack-title .s2 .w { color: #d4d4d4; transition: color .35s ease }
+.ol-web .stack-title .s1 .w.on, .ol-web .stack-title .s2 .w.on { color: #131313 }
+/* no scrub under reduced motion (the stage is inert) — rest the words dark.
+   Matches the base `.s1 .w`/`.s2 .w` specificity (0,3,0) and wins by source order. */
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .stack-title .s1 .w, .ol-web .stack-title .s2 .w { color: #131313 }
+}
+
+/* cards zone */
+.ol-web .stack-cards { position: relative; padding: 56px 0 12px }
+.ol-web .stack-cards::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 1px; background: var(--line) }
+.ol-web .stack-cardgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: var(--page); margin: 0 auto; align-items: start; padding-inline: var(--pad) }
+.ol-web .stack-cardgrid .pcard { position: relative; overflow: visible; border-radius: 24px }
+.ol-web .stack-cardgrid .pcard-inside { border-radius: 0 0 24px 24px; corner-shape: squircle }
+/* scroll-scrubbed cascade (step 6b): only applied once JS adds .is-scrub */
+.ol-web .stack-cardgrid.is-scrub .pcard { opacity: var(--p, 0); transform: translateX(calc((1 - var(--p, 0)) * 80px)); will-change: opacity, transform }
+@media (prefers-reduced-motion: reduce) { .ol-web .stack-cardgrid.is-scrub .pcard { opacity: 1; transform: none } }
+.ol-web .pcard-badge { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); z-index: 3; display: inline-flex; align-items: center; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 999px; corner-shape: squircle; padding: 4px 12px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; color: #15803d; white-space: nowrap }
+.ol-web .stack-cardgrid .pcard:has(.pcard-badge) { background: #f0fdf4; border-color: #bbf7d0 }
+.ol-web .stack-cardgrid .pcard:has(.pcard-badge) .pcard-head { border-bottom-color: #bbf7d0 }
+.ol-web .stack-cardgrid .pcard:has(.pcard-badge) .pcard-inside { background: #f0fdf4 }
+
+/* pcard base (shared with the products grid) */
+.ol-web .pcard { background: #fff; border: 1px solid rgba(0, 0, 0, .1); border-radius: 16px; corner-shape: squircle; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(10, 13, 18, .08), 0 2px 4px -2px rgba(10, 13, 18, .05) }
+.ol-web .pcard-head { border-bottom: 1px solid var(--line); padding: 24px; display: flex; flex-direction: column; gap: 24px }
+.ol-web .pcard-thumb { width: 100%; height: auto; display: block; border-radius: 18px; filter: drop-shadow(0 2px 3px rgba(10, 13, 18, .08)) }
+.ol-web .pcard-titles { display: flex; flex-direction: column; gap: 2px }
+.ol-web .pcard-titles h3 { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 600; line-height: 28px; color: #525252 }
+.ol-web .pcard-titles p { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: #525252 }
+.ol-web .pcard-inside { background: var(--paper); padding: 24px }
+.ol-web .pcard-sum { width: 100%; background: none; border: 0; cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; color: var(--ink) }
+.ol-web .pcard-sum .pc { flex: none; width: 24px; height: 24px; color: var(--secondary) }
+.ol-web .pcard-sum .pc svg { display: block; width: 24px; height: 24px }
+.ol-web .pcard-sum .pc .v { transform-origin: center; transition: opacity .22s ease, transform .14s cubic-bezier(.34, 1.56, .64, 1) }
+.ol-web .pcard-inside.open .pc .v { opacity: 0; transform: scaleY(0) }
+.ol-web .pcard-sum .pc svg circle, .ol-web .pcard-sum .pc svg path { transform-origin: center; vector-effect: non-scaling-stroke; transition: transform .14s cubic-bezier(.34, 1.56, .64, 1), opacity .14s ease }
+.ol-web .pcard-sum:hover .pc { color: #000 }
+.ol-web .pcard-sum:hover .pc svg circle { transform: scale(.8); opacity: 1 }
+.ol-web .pcard-sum:hover .pc svg path { transform: scale(1.28) }
+@media (prefers-reduced-motion: reduce) { .ol-web .pcard-sum .pc svg circle, .ol-web .pcard-sum .pc svg path { transition: none } .ol-web .pcard-sum:hover .pc svg circle, .ol-web .pcard-sum:hover .pc svg path { transform: none } }
+.ol-web .pcard-reveal { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .26s cubic-bezier(.4, 0, .2, 1) }
+.ol-web .pcard-inside.open .pcard-reveal { grid-template-rows: 1fr }
+.ol-web .pcard-reveal-in { overflow: hidden; min-height: 0 }
+.ol-web .pcard-checks { list-style: none; margin: 0; padding: 24px 0 0; display: flex; flex-direction: column; gap: 16px }
+.ol-web .pcard-checks li { display: flex; gap: 12px; align-items: flex-start }
+.ol-web .pcard-checks .ic { flex: none; width: 24px; height: 24px; color: #15803d }
+.ol-web .pcard-checks .ic svg { display: block; width: 24px; height: 24px }
+.ol-web .pcard-checks p { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: #525252; margin: 0 }
+
+/* how it works — STATIC form (step 6a). The pinned desktop scrub (tall wrapper +
+   sticky pin + per-step --sp) is layered on in 6b via an `is-pinned` class. */
+.ol-web .hiw { position: relative; background: var(--white) }
+.ol-web .hiw-pin { position: static; padding-block: 72px; background: var(--white) }
+.ol-web .hiw-inner { max-width: var(--page); width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 48px }
+.ol-web .hiw-head { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; padding-inline: var(--pad) }
+.ol-web .hiw-title { font-family: 'Inter', sans-serif; font-size: 30px; font-weight: 600; line-height: 38px; letter-spacing: -.04em; color: #131316 }
+.ol-web .hiw-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; position: relative }
+.ol-web .hiw-steps::before, .ol-web .hiw-step::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 100vw; height: 1px; background: var(--line); pointer-events: none }
+.ol-web .hiw-steps::before { top: 0 }
+.ol-web .hiw-step::after { bottom: 0 }
+.ol-web .hiw-step { display: flex; align-items: stretch; padding-inline: var(--pad); position: relative; opacity: 1; transform: none }
+.ol-web .hiw-num { flex: none; width: 80px; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 400; font-size: 48px; line-height: 60px; color: #70707b; transform: translateY(var(--num-nudge, -5px)) }
+.ol-web .hiw-sep { flex: none; width: 1px; align-self: stretch; background: var(--line); position: relative }
+.ol-web .hiw-sep::before, .ol-web .hiw-step:last-child .hiw-sep::after { content: ""; position: absolute; left: 50%; width: 5px; height: 5px; transform: translateX(-50%); z-index: 2; background: linear-gradient(var(--n-400), var(--n-400)) 50%/5px 1px no-repeat, linear-gradient(var(--n-400), var(--n-400)) 50%/1px 5px no-repeat }
+.ol-web .hiw-sep::before { top: -3px }
+.ol-web .hiw-step:first-child .hiw-sep::before { top: -2px }
+.ol-web .hiw-step:last-child .hiw-sep::after { bottom: -2px }
+.ol-web .hiw-label { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; padding: 10px 24px; font-family: var(--font-display); font-weight: 400; color: #131316; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.18 }
+/* "how it works" PINNED step-reveal — DEFERRED (renders static: steps visible).
+   Both the vanilla nested position:sticky AND a transform-driven "fake pin"
+   (reserve tall wrapper height + translateY to hold at viewport centre) were
+   built and measured: neither works inside the ScrollStage's pin-and-stack model,
+   because later sections slide OVER this one, so the HIW never gets the solo
+   scroll space a centre-pin needs (the steps never reach viewport centre — the
+   next section covers the reserved height). Doing it properly means promoting the
+   HIW to its OWN registered <Section> so the stage allots it pin space — a
+   composition change to weigh separately. Static is the source's own mobile/
+   reduced-motion fallback. */
+
+/* foot: centered note + cubes + price/CTA */
+.ol-web .stack-foot { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; padding: 12px var(--pad) 84px; max-width: var(--page); margin: 0 auto }
+.ol-web .stack-note { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px; letter-spacing: -.01em; color: var(--faint) }
+.ol-web .stack-foot .stack-price { flex: 0 0 auto; align-items: center; display: flex; flex-direction: column; gap: 16px }
+.ol-web .stack-price .amt { display: flex; gap: 12px; align-items: center }
+.ol-web .stack-price .amt .pill-green { align-self: center }
+.ol-web .stack-price .was { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 38px; letter-spacing: -.04em; color: #d4d4d4; text-decoration: line-through }
+.ol-web .stack-price .now { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 48px; line-height: 56px; letter-spacing: -.06em; color: var(--ink) }
+.ol-web .stack-price .stack-updates { margin: 0 0 -6px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: -.01em; color: var(--faint) }
+
+/* four-cube tile strip (static: --s spread 0 = flush; the spring is step 6b) */
+.ol-web .cta-boxes { width: 100%; max-width: 568px }
+.ol-web .cta-cubes { display: flex; justify-content: center; align-items: center }
+.ol-web .cta-cubes .cube { flex: 0 0 25%; aspect-ratio: 1/1; background: url('/assets/stripe-thumbnail.svg') no-repeat; background-size: 400% 100%; transform: translateX(calc(var(--o, 0) * var(--s, 0) * 100%)); will-change: transform }
+.ol-web .cta-cubes .cube:nth-child(1) { background-position: 0% 50%; --o: -1.5 }
+.ol-web .cta-cubes .cube:nth-child(2) { background-position: 33.333% 50%; --o: -.5 }
+.ol-web .cta-cubes .cube:nth-child(3) { background-position: 66.667% 50%; --o: .5 }
+.ol-web .cta-cubes .cube:nth-child(4) { background-position: 100% 50%; --o: 1.5 }
+@media (prefers-reduced-motion: reduce) { .ol-web .cta-cubes .cube { transform: none } }
+.ol-web .stack-cubes .cube { background-image: url('/assets/stripe-thumbnail-light.svg') }
+.ol-web .stack-cubes { margin-block: 6px }
+
+/* responsive */
+@media (min-width: 1280px) { .ol-web .stack-cardgrid { padding-inline: 70px } }
+@media (max-width: 1279px) { .ol-web .stack-vline { display: none } }
+@media (max-width: 1100px) { .ol-web .stack-cardgrid { grid-template-columns: repeat(2, 1fr); max-width: 640px; gap: 24px } }
+@media (max-width: 1023px) { .ol-web .stack-gutter { display: none } }
+@media (max-width: 767px) {
+  .ol-web .stack-head-in { padding-block: 72px }
+  .ol-web .hiw-num { width: 52px; font-size: 34px; line-height: 44px }
+  .ol-web .hiw-label { padding: 10px 16px; font-size: clamp(24px, 7vw, 34px) }
+  .ol-web .hiw-inner { gap: 32px }
+  .ol-web .stack-foot { padding-bottom: 72px }
+  .ol-web .cta-boxes { max-width: 420px }
+}
+@media (max-width: 560px) { .ol-web .stack-cardgrid { grid-template-columns: 1fr; max-width: 360px } }
+
+/* ============================================================
+   THE SOURCE / ABOUT (step 7) — ported from protocol-stack/index.html (`#about`,
+   markup 3500-3543, CSS 1122-1174 + the qa-about variant 495-498), scoped `.ol-web`.
+   Text + photo + a single `qa-about` disclosure (reuses the DS-side Qa component,
+   variant "about") + the press-logo row. Reuses existing `.pill`/`.badge-num`/
+   `.reveal-up` primitives.
+   ============================================================ */
+.ol-web .about { position: relative; z-index: 1; background: var(--paper); border-top: 1px solid var(--line); padding: 0 }
+.ol-web .about-in { max-width: var(--page); margin: 0 auto; padding: 72px var(--pad); display: flex; flex-direction: column; gap: 48px; align-items: center }
+.ol-web .about-main { display: flex; gap: 32px; align-items: flex-start; width: 100% }
+.ol-web .about-text { flex: 1 0 0; min-width: 0; padding-right: 32px; display: flex; flex-direction: column; gap: 24px; max-width: 768px }
+.ol-web .about-hb { display: flex; flex-direction: column; gap: 16px; align-items: flex-start }
+.ol-web .about-text h2 { font-family: 'Inter', sans-serif; font-size: 48px; font-weight: 600; line-height: 60px; letter-spacing: -.02em; color: var(--ink) }
+.ol-web .about-body { max-width: 480px; display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 400; line-height: 30px; color: #525252 }
+.ol-web .about-body p { margin: 0 }
+.ol-web .about-media { flex: none; display: flex; flex-direction: column; gap: 16px }
+.ol-web .about-photo { width: 478px; height: 479px; border-radius: 24px; corner-shape: squircle; object-fit: cover; display: block; max-width: none }
+.ol-web .about-cap { display: flex; gap: 10px; align-items: center; justify-content: flex-start; text-decoration: none; width: fit-content }
+.ol-web .about-cap span { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: #a3a3a3 }
+.ol-web .about-cap:hover span { color: #525252 }
+.ol-web .about-cap img { width: 20px; height: 20px; display: block }
+
+/* the about disclosure — a slightly darker fill, tighter padding than the base .qa */
+.ol-web .qa-about { padding: 14px 20px; border-radius: 14px; corner-shape: squircle }
+.ol-web .qa-about[open] { background: #f7f7f7; border-color: #ebebeb }
+.ol-web .qa-about .a { display: flex; flex-direction: column; gap: 16px }
+.ol-web .qa-about .a p { margin: 0 }
+
+/* press row */
+.ol-web .about-press { display: flex; flex-direction: column; gap: 16px; align-items: center }
+.ol-web .about-press .featured { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px; color: #404040 }
+.ol-web .press-logos { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; justify-content: center }
+.ol-web .press-logos .plogo { position: relative; height: 44px; display: flex; align-items: center; justify-content: center }
+.ol-web .press-logos img { display: block; width: auto; max-width: none }
+/* optically matched so each wordmark reads at the same visual size as Forbes */
+.ol-web .press-logos img[alt="Forbes"] { height: 29px }
+.ol-web .press-logos img[alt="Entrepreneur"] { height: 30px }
+.ol-web .press-logos img[alt="Wired"] { height: 33px }
+.ol-web .press-logos img[alt="Fast Company"] { height: 37px }
+.ol-web .press-logos img[alt="FWA"] { height: 28px }
+.ol-web .press-logos img[alt="Awwwards"] { height: 15px }
+.ol-web .press-logos .forbes .underline { position: absolute; left: 50%; bottom: -9px; width: 92px; height: auto; transform: translateX(-52%) rotate(-2deg); pointer-events: none }
+
+@media (max-width: 900px) {
+  .ol-web .about-main { flex-direction: column; align-items: stretch }
+  .ol-web .about-text { padding-right: 0; max-width: none }
+  .ol-web .about-body { max-width: none }
+  .ol-web .about-media { width: 100% }
+  .ol-web .about-photo { width: 100%; height: auto; aspect-ratio: 1/1; max-width: 520px }
+  .ol-web .about-cap { justify-content: flex-start }
+}
+@media (max-width: 767px) {
+  .ol-web .about-text h2 { font-size: 34px; line-height: 42px }
+  .ol-web .about-body { font-size: 18px; line-height: 28px }
+  .ol-web .about-press { gap: 28px }
+  .ol-web .press-logos { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 24px; justify-items: center; max-width: 300px; margin: 0 auto }
+  .ol-web .press-logos .forbes .underline { width: 92px; bottom: -7px }
+}
+
+/* ============================================================
+   Step 8 — QUOTE + TESTIMONIALS (the proof group, .g-d2).
+   Ported verbatim from protocol-stack/index.html (quote 1176-1215,
+   testimonials 1217-1302); scoped .ol-web, flat selectors. Reuses the shared
+   --page/--pad/--dot/--line/--line-strong/--paper/--white/--ink/--font-display
+   tokens and the generic .xplus crosshair (transform-anchored, defined earlier).
+   ============================================================ */
+
+/* QUOTE — blueprint-framed testimonial (Figma 2443-240) */
+.ol-web .quote { background: var(--white); padding: 0; border-top: 1px solid var(--line) }
+.ol-web .quote-outer { max-width: var(--page); margin: 0 auto; padding-inline: var(--pad) }
+.ol-web .quote-frame { position: relative; border: 1px solid var(--line); border-top: 0; border-bottom: 0;
+  padding: 72px 24px; display: flex; flex-direction: column; align-items: center;
+  background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 8px 8px }
+/* corner crop-marks (blueprint ticks poking past the corners) */
+.ol-web .quote-frame .cm { position: absolute; background: var(--line-strong) }
+.ol-web .quote-frame .cm.v { width: 1px; height: 15px }
+/* top rails run flush through the divider and extend up into the section above — one
+   continuous line (border color), no gap; the horizontal corner ticks are dropped */
+.ol-web .quote-frame .cm.tl-v, .ol-web .quote-frame .cm.tr-v { top: -40px; height: 40px; background: var(--line) }
+.ol-web .quote-frame .tl-v { left: -1px }   .ol-web .quote-frame .tr-v { right: -1px }
+.ol-web .quote-frame .bl-v { bottom: -15px; left: -1px }  .ol-web .quote-frame .br-v { bottom: -15px; right: -1px }
+/* crosshairs where the proof section opens: the two frame rails cross the top divider */
+.ol-web .quote-frame .xplus { top: -0.5px }
+.ol-web .quote-frame .xplus.l { left: -0.5px }
+.ol-web .quote-frame .xplus.r { right: -0.5px }
+
+.ol-web .quote-content { display: flex; flex-direction: column; align-items: center; gap: 32px; max-width: 1024px; width: 100% }
+.ol-web .quote-logo { height: 34px; width: auto; display: block }
+.ol-web .quote-text { font-family: var(--font-display); font-weight: 400; font-size: 48px; line-height: 60px;
+  color: #131313; text-align: center; max-width: 928px }
+/* the font renders both quotes as closing marks — flip the opener horizontally */
+.ol-web .quote-text .oq { display: inline-block; transform: scaleX(-1) }
+.ol-web .quote-attr { display: flex; flex-direction: column; align-items: center; gap: 12px }
+.ol-web .quote-avatar { width: 156px; height: auto; display: block; max-width: none }
+.ol-web .quote-who { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center }
+.ol-web .quote-who .name { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px; color: var(--ink) }
+.ol-web .quote-who .name b { font-weight: 600 }
+.ol-web .quote-who .stat { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 400; line-height: 18px; color: #525252 }
+.ol-web .quote-who .stat .dot { color: #a0a0ab; margin: 0 4px }
+
+@media (max-width: 767px) {
+  .ol-web .quote-frame { padding: 72px 20px }
+  .ol-web .quote-text { font-size: clamp(26px, 7vw, 34px); line-height: 1.3; max-width: none }
+  .ol-web .quote-avatar { width: 168px }
+}
+
+/* TESTIMONIALS — interactive 3-panel carousel (Figma 2448-6103…) */
+/* no border-bottom: the FAQ below supplies the divider (border-top), so it stays 1px — not
+   doubled with this section's own bottom border before they overlap on scroll */
+.ol-web .tst { background: var(--paper); border-top: 1px solid var(--line); padding: 0 }
+.ol-web .tst-outer { max-width: var(--page); margin: 0 auto; padding-inline: var(--pad); position: relative }
+/* flexbox, not grid: grid-template-columns can't interpolate between fr and px tracks
+   (Chrome jumps instantly), whereas flex-grow / flex-basis animate — a real slide */
+/* fixed height so all three panels are exactly equal — no vertical jitter and the
+   dashed stat line stays aligned whichever card is open */
+.ol-web .tgrid { position: relative; display: flex; min-height: 452px; border-right: 1px solid var(--line) }
+.ol-web .tpanel { position: relative; overflow: hidden; background: var(--paper); border: 0; border-left: 1px solid var(--line);
+  flex: 0 0 164px; min-width: 0; text-align: left; cursor: pointer; font: inherit; padding: 0;
+  display: flex; flex-direction: column;
+  transition: flex-basis .3s cubic-bezier(.4, 0, .2, 1), flex-grow .3s cubic-bezier(.4, 0, .2, 1), background .3s ease }
+.ol-web .tpanel.active { flex: 1 1 0; cursor: default; background: var(--white) }
+.ol-web .tp-face { display: none }   /* no separate collapsed layer — the clipped tp-full IS the mask */
+/* collapsed: fixed 700 width so the quote lays out normally (not squeezed to ~0px) — the panel
+   clips it to show the avatar; active: in flow, fluid width so the quote wraps to fit and never
+   clips, and it drives the panel height (stat pins to the bottom, growing past 452 when tall) */
+.ol-web .tp-full { position: absolute; inset: 0; width: 700px; display: flex; flex-direction: column }
+.ol-web .tpanel.active .tp-full { position: relative; inset: auto; width: auto; flex: 1 0 auto }
+.ol-web .tpanel.active .tp-row { flex-shrink: 0 }
+/* lockup vertically centered with generous breathing room; stat locked at the bottom */
+.ol-web .tp-row { flex: 1 1 auto; display: flex; gap: 28px; align-items: center; padding: 32px 20px }
+.ol-web .tp-avatar { flex: none; width: 140px; height: auto; display: block; max-width: none }
+.ol-web .tp-detail { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 32px }
+.ol-web .tp-logo { width: auto; display: block; max-width: none }
+.ol-web .tp-quote { font-family: var(--font-display); font-weight: 400; font-size: 24px; line-height: 1.24; color: #000 }
+.ol-web .tp-attr { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 24px; color: var(--ink) }
+.ol-web .tp-attr b { font-weight: 600 }
+.ol-web .tp-attr span { font-weight: 400 }
+.ol-web .tp-stat { border-top: 1px dashed var(--line); padding: 18px 20px 18px 188px;
+  font-family: 'Inter', sans-serif; font-size: 12px; line-height: 18px; color: #525252 }
+.ol-web .tp-stat .sep { color: #a3a3a3; margin: 0 4px }
+/* line-by-line reveal when a testimonial opens: each line fades + slides up, staggered
+   (JS splits the quote into word spans and sets per-line transition-delay) */
+.ol-web .tp-quote .w { display: inline-block }
+.ol-web .tp-anim { opacity: 0; transform: translateY(10px);
+  transition: opacity .28s ease, transform .34s cubic-bezier(.22, 1, .36, 1) }
+.ol-web .tp-anim.tp-anim-in { opacity: 1; transform: none }
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .tp-anim, .ol-web .tp-anim.tp-anim-in { opacity: 1 !important; transform: none !important; transition: none !important }
+}
+/* bottom crop-mark ticks */
+.ol-web .tgrid .cm { position: absolute; background: var(--line-strong); width: 1px; height: 15px; bottom: -15px }
+.ol-web .tgrid .cm.l { left: -1px } .ol-web .tgrid .cm.r { right: -1px }
+/* crosshairs where the big quote meets the testimonials: the two outer rails cross the divider */
+.ol-web .tgrid .xplus { top: -0.5px }
+.ol-web .tgrid .xplus.l { left: 0.5px }
+.ol-web .tgrid .xplus.r { right: -0.5px }
+
+/* mobile: vertical accordion — one connected, stroked box; collapsed rows show just the
+   avatar, the active row expands its detail (max-height). Tapping switches (.active). */
+@media (max-width: 900px) {
+  .ol-web .tgrid { display: flex; flex-direction: column; height: auto; min-height: 0;
+    border-left: 1px solid var(--line); border-right: 1px solid var(--line) }
+  .ol-web .tpanel { border: 0; border-top: 1px solid var(--line); display: block; overflow: hidden; flex: 0 0 auto;
+    background: var(--paper); cursor: pointer; transition: background .3s ease }
+  .ol-web .tpanel:first-child { border-top: 0 }
+  .ol-web .tpanel.active { flex: 0 0 auto; background: var(--white) }   /* size to content (override desktop flex:1 1 0) */
+  .ol-web .tp-face { display: flex; align-items: center; padding: 22px 24px }
+  .ol-web .tp-face img { width: auto; display: block }   /* height comes from each logo's inline style */
+  .ol-web .tp-full { position: static; width: 100%; display: block; max-height: 0; overflow: hidden;
+    transition: max-height .4s cubic-bezier(.4, 0, .2, 1) }
+  .ol-web .tpanel.active .tp-full { max-height: 960px; position: static }
+  .ol-web .tp-detail .tp-logo { display: none }
+  .ol-web .tp-row { flex-direction: column; align-items: flex-start; gap: 22px; padding: 0 24px 24px }
+  .ol-web .tp-avatar { display: block; width: 168px; height: auto; align-self: flex-start }
+  .ol-web .tp-detail { gap: 18px; align-items: flex-start; width: 100% }
+  .ol-web .tp-stat { padding: 16px 24px; border-top: 1px dashed var(--line) }
+  .ol-web .tgrid .cm { display: none }
+}
+
+/* ============================================================
+   Step 9 — FAQ (the answers group, .g-e, #faq).
+   Ported from protocol-stack/index.html (markup 3620-3688, CSS 431-506); scoped
+   .ol-web. The base .qa accordion (summary/answer/icon/open-fill) is already
+   defined above (steps 3-7) — this adds only the FAQ layout + the tighter rows.
+   The source's .faq-sketch is CSS-only leftover (no markup element), so dropped.
+   ============================================================ */
+/* FAQ — two-column: heading (left), accordion (right) [Figma 2448-5854] */
+.ol-web .faq { position: relative; z-index: 1; padding: 0; background: var(--white); border-top: 1px solid var(--line) }
+.ol-web .faq-in { max-width: var(--page); margin: 0 auto; padding: 72px var(--pad);
+  display: flex; flex-wrap: wrap; gap: 64px; align-items: flex-start }
+.ol-web .faq-head { position: relative; flex: 1 0 0; min-width: min(480px, 100%); max-width: 768px;
+  display: flex; flex-direction: column; gap: 20px }
+.ol-web .faq-hb { display: flex; flex-direction: column; gap: 12px; align-items: flex-start }
+.ol-web .faq-badge { display: inline-flex; align-items: center; padding: 4px 10px; background: var(--white);
+  border: 1px solid var(--line-strong); border-radius: 999px; corner-shape: squircle;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; color: var(--secondary) }
+.ol-web .faq-head h2 { font-family: 'Inter', sans-serif; font-size: 48px; font-weight: 600; line-height: 60px;
+  letter-spacing: -.02em; color: var(--ink) }
+.ol-web .faq-head .sub { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px; color: #525252 }
+
+.ol-web .faq-list { flex: 1 0 0; min-width: min(480px, 100%); display: flex; flex-direction: column; gap: 8px }
+/* tighter closed rows in the FAQ list; same block padding open/closed so the
+   question never shifts when it expands (only the answer grows below it) */
+.ol-web .faq .qa { padding-block: 14px }
+/* multi-paragraph FAQ answers: preflight's p{margin:0} kills default gaps, so
+   restore a read-comfortable rhythm (12px, matching the dark System accordions) */
+.ol-web .faq .qa .a p { margin: 0 0 12px }
+.ol-web .faq .qa .a p:last-child { margin-bottom: 0 }
+
+@media (max-width: 1023px) {
+  .ol-web .faq-head { max-width: none }
+}
+@media (max-width: 767px) {
+  .ol-web .faq-in { padding: 72px var(--pad); gap: 40px }
+  .ol-web .faq-head h2 { font-size: 36px; line-height: 44px }
+}
+
+/* ============================================================
+   Step 10 — CLOSING CTA + FOOTER (the closing group, .g-e2, the floor).
+   Ported from protocol-stack/index.html (CTA CSS 587-642, footer 644-676); scoped
+   .ol-web. The .cta-boxes/.cta-cubes/.cube strip is already defined above (step 6);
+   its --s spring is driven by useCubeSpring. The button reuses the DS <Cta> flipped
+   via .ol-cta--inv (mirrors the header-dark flip; == the vanilla .btn.btn-lg.btn-inv).
+   ============================================================ */
+/* closing CTA — dark full-bleed band [Figma 2474-6488] */
+.ol-web .cta { background: #262626; border-bottom: 1px solid #3f3f46; overflow-x: clip }
+/* vertical padding mirrors the hero (36 / 48 / 62 across breakpoints) */
+.ol-web .cta-in { max-width: var(--page); margin: 0 auto; padding: 36px var(--pad); position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 24px }
+@media (min-width: 768px) { .ol-web .cta-in { padding-block: 48px } }
+@media (min-width: 1280px) { .ol-web .cta-in { padding-block: 62px } }
+.ol-web .cta h2 { font-family: var(--font-display); font-weight: 400; color: var(--white); text-align: center;
+  font-size: clamp(40px, calc(36px + 2.2vw), 64px); line-height: 1.24; letter-spacing: 0;
+  max-width: 836px; text-wrap: balance }
+/* gold marker behind "complete" */
+.ol-web .cta .mark { position: relative; white-space: nowrap; z-index: 0 }
+.ol-web .cta .mark::before { content: ""; position: absolute; z-index: -1;
+  left: -.1em; right: -.12em; top: .12em; bottom: .06em; transform: scale(1.2);
+  background: url('/assets/cta-highlight.png') center/100% 100% no-repeat; opacity: .64 }
+.ol-web .cta-sub { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px;
+  letter-spacing: -.01em; color: #e4e4e7; text-align: center; max-width: 836px }
+.ol-web .cta-price { display: flex; align-items: center; justify-content: center; gap: 12px }
+.ol-web .cta-price .was { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 38px;
+  letter-spacing: -.04em; color: #70707b; text-decoration: line-through }
+.ol-web .cta-price .now { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 48px; line-height: 60px;
+  letter-spacing: -.02em; color: var(--white) }
+/* inverted for the dark band: translucent light-green fill + light text (Figma 2474-6597) */
+.ol-web .cta-price .save { display: inline-flex; align-items: center; background: rgba(240, 253, 244, .12); border: 1px solid rgba(187, 247, 208, .12);
+  color: #f0fdf4; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+  padding: 4px 12px; border-radius: 9999px }
+/* the DS Cta (lg tier) flipped to the inverted white button for the dark band —
+   same palette as the vanilla .btn-inv / the header-dark CTA flip above */
+.ol-web .ol-cta--inv { color: #1a1a1a; border-color: transparent; background: linear-gradient(180deg, #ffffff, #ededed) }
+.ol-web .ol-cta--inv:hover { background: linear-gradient(180deg, #fafafa, #e2e2e2) }
+.ol-web .ol-cta--inv:active { background: linear-gradient(180deg, #ededed, #dcdcdc) }
+@media (max-width: 767px) {
+  .ol-web .cta-in { padding: 36px var(--pad); gap: 20px }
+}
+
+/* footer — dark band, continuous with the CTA [Figma 2443-11452] */
+.ol-web footer { background: #262626; padding: 64px 0 48px; overflow-x: clip }
+.ol-web .foot-in { max-width: var(--page); margin: 0 auto; padding: 0 var(--pad);
+  display: flex; flex-direction: column; gap: 64px }
+.ol-web .foot-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 48px }
+.ol-web .foot-brand { display: flex; flex-direction: column; gap: 32px; align-items: flex-start; min-width: min(560px, 100%) }
+.ol-web .foot-brand .logo img { height: 30px; width: auto; display: block; max-width: none }
+.ol-web .foot-nav { display: flex; gap: 32px; align-items: center }
+.ol-web .foot-nav a { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; line-height: 20px;
+  color: #e5e5e5; transition: color .14s ease }
+.ol-web .foot-nav a:hover { color: var(--white) }
+.ol-web .foot-social { display: inline-flex; color: #a3a3a3; transition: color .14s ease }
+.ol-web .foot-social:hover { color: var(--white) }
+.ol-web .foot-social svg { display: block; width: 32px; height: 32px }
+/* "by Bal Sieber" sits just before the LinkedIn icon, vertically centred with it */
+.ol-web .foot-by { display: flex; align-items: center; gap: 12px }
+.ol-web .foot-byline { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400; line-height: 20px; color: #d4d4d4; white-space: nowrap }
+/* copyright + legal — the quietest line in the footer: a medium gray, clearly
+   legible on the dark band but a step below the nav (#e5e5e5) and byline (#d4d4d4).
+   (#737373 was too dim / invisible; #d4d4d4 was too bright — #a3a3a3 sits between.) */
+.ol-web .foot-bottom { position: relative; padding-top: 32px;
+  display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400; line-height: 20px; color: #a3a3a3 }
+/* divider runs flush to the footer's left/right edges */
+.ol-web .foot-bottom::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100vw; height: 1px; background: #3f3f46 }
+.ol-web .foot-bottom .legal { display: flex; gap: 12px }
+.ol-web .foot-bottom a { color: #a3a3a3; transition: color .14s ease }
+.ol-web .foot-bottom a:hover { color: var(--white) }
+@media (max-width: 767px) {
+  .ol-web footer { padding: 48px 0 40px }
+  .ol-web .foot-in { gap: 40px }
+}
+/* extra bottom room (verbatim from the source, applied after the media query so it
+   wins on every breakpoint). It reserves space for the persistent chat dock (the
+   Loop agent, rebuilt separately) AND — load-bearing — keeps the footer's legal
+   row reachable: the ScrollStage pin-and-stack leaves ~100px of the floor section
+   below the fold at max scroll, so a smaller bottom padding would clip the
+   copyright/legal row off the bottom of the page (measured). */
+.ol-web footer { padding-bottom: 150px }
+
+/* ============================================================
+   LEGAL PAGE — hero · dashed rule · sticky tab nav + prose.
+   The shared template for Terms / Privacy (and any prose page), ported verbatim
+   from protocol-stack/terms-of-service.html (CSS 119-172); scoped .ol-web. Used by
+   the LegalPage component inside PageShell. Reuses the hero .badge pill + tokens.
+   ============================================================ */
+/* padding:0 resets the base `.ol-web section{padding:64px 0}` fallback (which every
+   section overrides) — the hero's own padding lives on .lp-hero-in, the prose
+   sections space via the .lp-content gap */
+.ol-web .lp-hero { position: relative; z-index: 0; overflow: hidden; padding: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 55%, #fff 100%) }
+.ol-web .lp-hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background-image: radial-gradient(var(--dot) .5px, transparent .6px); background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 82%);
+          mask-image: linear-gradient(180deg, #000 0%, transparent 82%) }
+.ol-web .lp-hero-in { max-width: var(--page); margin: 0 auto; padding: 64px var(--pad);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 24px }
+.ol-web .lp-hero h1 { font-family: var(--font-display); font-weight: 400; color: var(--ink-strong);
+  font-size: clamp(40px, calc(34px + 2.2vw), 64px); line-height: 1.24; letter-spacing: 0 }
+.ol-web .lp-updated { font-size: 16px; font-weight: 500; line-height: 24px; color: var(--n-500) }
+.ol-web .lp-lead { font-size: clamp(20px, calc(17px + .7vw), 24px); font-weight: 500; line-height: 32px;
+  letter-spacing: -.02em; color: var(--ink); max-width: 52ch }
+.ol-web .lp-lead a { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: from-font }
+
+/* dashed rule, aligned with the content padding */
+.ol-web .lp-rule { max-width: var(--page); margin: 0 auto; padding: 0 var(--pad) }
+.ol-web .lp-rule::before { content: ""; display: block; border-top: 1px dashed var(--dash) }
+
+.ol-web .lp-body { max-width: var(--page); margin: 0 auto; padding: 64px var(--pad) 192px }
+.ol-web .lp-body-in { display: flex; gap: 48px; align-items: flex-start }
+
+/* left rail — sticky vertical tabs (Untitled UI vertical tabs) */
+.ol-web .lp-nav { flex: none; width: 288px; position: sticky; top: 88px; align-self: flex-start;
+  background: var(--n-50); border: 1px solid var(--n-200); border-radius: 16px; corner-shape: squircle;
+  padding: 4px; display: flex; flex-direction: column; gap: 4px }
+.ol-web .lp-nav a { display: block; padding: 8px 10px; border-radius: 12px; corner-shape: squircle;
+  font-size: 14px; font-weight: 600; line-height: 20px; color: var(--n-500);
+  transition: background .14s ease, color .14s ease }
+.ol-web .lp-nav a:hover { color: var(--secondary) }
+.ol-web .lp-nav a.is-active { background: var(--white); color: var(--secondary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .1), 0 1px 2px -1px rgba(0, 0, 0, .1) }
+
+/* right column — prose sections */
+.ol-web .lp-content { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 48px }
+.ol-web .lp-section { display: flex; flex-direction: column; gap: 24px; padding: 0; scroll-margin-top: 96px }
+.ol-web .lp-section h2 { font-size: 20px; font-weight: 600; line-height: 30px; letter-spacing: -.02em; color: var(--ink) }
+.ol-web .lp-prose { color: var(--muted); font-size: 16px; line-height: 24px }
+.ol-web .lp-prose > * + * { margin-top: 16px }
+.ol-web .lp-prose strong { font-weight: 600; color: var(--ink-soft) }
+.ol-web .lp-prose a { color: var(--secondary); text-decoration: underline; text-underline-offset: 2px;
+  text-decoration-thickness: from-font }
+.ol-web .lp-prose a:hover { color: var(--ink) }
+.ol-web .lp-prose ul { padding-left: 22px }
+.ol-web .lp-prose li { list-style: disc; margin-top: 4px }
+.ol-web .lp-prose li::marker { color: var(--n-400) }
+
+@media (max-width: 859px) {
+  .ol-web .lp-body-in { flex-direction: column; gap: 32px }
+  .ol-web .lp-nav { position: static; width: 100%; top: auto }
+}
+
+/* ============================================================
+   CASE STUDY — the /case-study-corebee template (hero + before/after slider,
+   story rail + body, blueprint quote [brand variant], redesign + live demo).
+   Ported verbatim from protocol-stack/case-study-corebee.html, scoped .ol-web,
+   token names already carried above. The closing CTA + footer reuse the landing's
+   .cta / footer styles (steps 6 + 10); the framed .quote base reuses step 8's, this
+   only adds the case-study deltas (client brand lockup + full bottom rails).
+   Composed by the Web components: BeforeAfter, CaseStudyHero/Story/Demo, BlueprintQuote.
+   ============================================================ */
+/* shared layout — a page container (named .cs-container so it never collides with
+   Tailwind's .container utility) + the 18px editorial sub + the fading dot grid */
+.ol-web .cs-container { max-width: var(--page); margin: 0 auto; padding: 0 var(--pad) }
+.ol-web .cs-sub { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 28px; letter-spacing: -.01em; color: var(--secondary) }
+.ol-web .dots { position: relative; z-index: 0 }
+.ol-web .dots::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(var(--dot) .5px, transparent .6px); background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%) }
+
+/* HERO */
+.ol-web .cs-hero { padding: 44px 0 104px; overflow: hidden }
+.ol-web .crumb { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; color: var(--faint); margin-bottom: 18px }
+.ol-web .crumb a { color: var(--faint); transition: color .14s ease }
+.ol-web .crumb a:hover { color: var(--secondary) }
+.ol-web .crumb .sep { margin: 0 8px; color: var(--line-strong) }
+.ol-web .cs-hero h1 { font-family: var(--font-display); font-weight: 400; color: var(--ink-strong);
+  font-size: clamp(38px, calc(30px + 3vw), 60px); line-height: 1.16; letter-spacing: 0; max-width: 900px; text-wrap: balance; margin-bottom: 22px }
+.ol-web .cs-hero .cs-sub { max-width: 880px }
+
+/* before / after comparison slider. The After image sizes the frame in-flow, so the
+   frame is always the image's exact aspect ratio (whole image, never cropped). The
+   handle lives OUTSIDE the clip so it rides on top; badges sit inside the reveal masks. */
+.ol-web .ba { position: relative; margin-top: 68px; margin-bottom: 12px; width: 100%;
+  touch-action: pan-y; user-select: none; -webkit-user-select: none }
+.ol-web .ba-media { position: relative; overflow: hidden; aspect-ratio: 3024/1722;
+  border: 1px solid var(--line-strong); border-radius: 24px; corner-shape: squircle; background: var(--panel) }
+.ol-web .ba img { display: block; pointer-events: none }
+.ol-web .ba-after-img { position: relative; z-index: 1; width: 100%; height: auto }
+.ol-web .ba-before { position: absolute; inset: 0; z-index: 3; clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0); will-change: clip-path }
+.ol-web .ba-before img { position: absolute; inset: 0; width: 100%; height: 100% }
+/* dim the BEFORE image slightly (8% black), under its badge */
+.ol-web .ba-before::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, .08); pointer-events: none; z-index: 1 }
+.ol-web .ba-tag { position: absolute; top: 16px; display: inline-flex; align-items: center;
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; line-height: 1; color: #fff; letter-spacing: .01em;
+  background: rgba(10, 10, 10, .82); border-radius: 999px; padding: 6px 12px; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); pointer-events: none }
+.ol-web .ba-tag.before { left: 16px; z-index: 2 }
+.ol-web .ba-tag.after { right: 16px; z-index: 2 }
+/* 1px divider in the border colour; lives OUTSIDE .ba-media so it overshoots the
+   top/bottom edges. A plus-mark sits on each crossing. All three track --pos. */
+.ol-web .ba-divide { position: absolute; top: -40px; bottom: -40px; left: var(--pos, 50%); width: 0; z-index: 4;
+  border-left: 1px dashed var(--dash); transform: translateX(-.5px); pointer-events: none }
+.ol-web .ba-plus { position: absolute; left: var(--pos, 50%); z-index: 6; width: 5px; height: 5px; pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(var(--n-400), var(--n-400)) 50%/5px 1px no-repeat,
+             linear-gradient(var(--n-400), var(--n-400)) 50%/1px 5px no-repeat }
+.ol-web .ba-plus.t { top: 0 }
+.ol-web .ba-plus.b { top: 100% }
+/* squircle handle: equal padding all four sides == the gap between the two arrows */
+.ol-web .ba-handle { position: absolute; top: 50%; left: var(--pos, 50%); z-index: 5;
+  transform: translate(calc(-50% + var(--mx, 0px)), calc(-50% + var(--my, 0px))); border-radius: 17px; corner-shape: squircle; border: 0; padding: 9px; cursor: ew-resize;
+  background: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; gap: 9px; touch-action: none;
+  box-shadow: 0 6px 14px rgba(10, 13, 18, .28), 0 0 0 4px rgba(255, 255, 255, .85);
+  transition: transform .22s cubic-bezier(.33, 1, .68, 1), box-shadow .16s ease }
+.ol-web .ba-handle:hover { box-shadow: 0 8px 18px rgba(10, 13, 18, .34), 0 0 0 4px #fff }
+.ol-web .ba-handle:active { transform: translate(calc(-50% + var(--mx, 0px)), calc(-50% + var(--my, 0px))) scale(.96) }
+.ol-web .ba-handle:focus-visible { outline: none; box-shadow: 0 8px 18px rgba(10, 13, 18, .34), 0 0 0 4px #fff, 0 0 0 7px rgba(31, 157, 87, .55) }
+.ol-web .ba-handle svg { width: 11px; height: 15px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round }
+
+/* STORY — sticky meta rail + challenge/solution/results/deliverables + what went wrong */
+/* padding:0 resets the base `.ol-web section{padding:64px 0}` fallback so the paper
+   rail + body sit flush against the section dividers (their own 80px lives inside). */
+.ol-web .story { background: var(--white); border-top: 1px solid var(--line); overflow-x: clip; padding: 0 }
+.ol-web .story-grid { max-width: var(--page); margin: 0 auto; display: grid; grid-template-columns: 440px 1fr }
+/* isolation:isolate makes .story-meta its own stacking context so the z-index:-1 paper
+   ::before paints above the white fill (not behind it) — that lets the rail bleed left */
+.ol-web .story-meta { position: relative; isolation: isolate; background: var(--paper); border-right: 1px solid var(--line); padding: 80px 48px 80px var(--pad) }
+.ol-web .story-meta::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; right: 0; width: 100vw; background: var(--paper) }
+/* the rail freezes when the story's top divider docks under the sticky header:
+   header 72 + 1 border + 80 rail padding = 153 */
+.ol-web .story-meta-in { position: sticky; top: 153px }
+.ol-web .cb-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 44px }
+.ol-web .cb-logo img { height: 26px; width: auto; display: block }
+.ol-web .cb-logo span { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 600; color: var(--ink-strong); letter-spacing: -.01em }
+.ol-web .meta-row { margin-bottom: 28px }
+.ol-web .meta-row:last-child { margin-bottom: 0 }
+.ol-web .meta-k { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 600; line-height: 28px; color: var(--ink-strong); margin-bottom: 4px }
+.ol-web .meta-v { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: var(--muted) }
+.ol-web .story-body { padding: 80px var(--pad) 80px 48px; display: flex; flex-direction: column }
+.ol-web .sb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 88px }
+.ol-web .sb-row + .sb-row { border-top: 1px dashed var(--dash); margin-top: 44px; padding-top: 44px }
+.ol-web .block-k { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 600; line-height: 28px; color: var(--ink-strong); margin-bottom: 8px }
+.ol-web .block-v { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: var(--muted) }
+.ol-web .ww { border-top: 1px dashed var(--dash); margin-top: 44px; padding-top: 44px }
+.ol-web .ww-title { font-family: 'Inter', sans-serif; font-size: clamp(22px, 2.4vw, 26px); font-weight: 600; line-height: 1.2; letter-spacing: -.02em; color: var(--ink-strong); margin-bottom: 12px }
+.ol-web .ww-lead { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: var(--muted); margin-bottom: 24px; max-width: 680px }
+.ol-web .ww-item { margin-top: 20px; max-width: 680px }
+.ol-web .ww-item .k { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; color: var(--secondary); margin-bottom: 2px }
+.ol-web .ww-item .v { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: var(--muted) }
+/* deliverables — green duotone check bullets (same icon as the landing) */
+.ol-web .deliv-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-top: 2px }
+.ol-web .deliv-list li { display: flex; gap: 10px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 24px; color: var(--muted) }
+.ol-web .deliv-list .ic { flex: none; width: 22px; height: 22px; color: #15803d; margin-top: 1px }
+.ol-web .deliv-list .ic svg { display: block; width: 22px; height: 22px }
+/* embedded Figma board (interactive; controls handled by Figma's embed player) */
+.ol-web .fig-embed { margin-top: 40px }
+.ol-web .fig-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px }
+.ol-web .fig-lbl { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink-strong) }
+.ol-web .fig-open { display: inline-flex; align-items: center; gap: 7px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink-soft); transition: color .14s ease }
+.ol-web .fig-open:hover { color: var(--ink-strong) }
+.ol-web .fig-open svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.ol-web .fig-box { position: relative; aspect-ratio: 16/11; border: 1px solid var(--line-strong); border-radius: 16px; corner-shape: squircle; overflow: hidden; background: var(--panel) }
+.ol-web .fig-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block }
+@media (max-width: 600px) { .ol-web .fig-box { aspect-ratio: 4/5 } }
+@media (max-width: 900px) {
+  .ol-web .story-grid { grid-template-columns: 1fr }
+  .ol-web .story-meta { border-right: 0; border-bottom: 1px solid var(--line); padding: 56px var(--pad) }
+  .ol-web .story-meta-in { position: static }
+  .ol-web .story-body { padding: 56px var(--pad) }
+  .ol-web .cb-logo { margin-bottom: 32px }
+}
+@media (max-width: 600px) {
+  .ol-web .sb-row { grid-template-columns: 1fr; gap: 28px }
+}
+
+/* QUOTE — case-study deltas over the shared framed quote (step 8). The client brand
+   lockup (mark + wordmark) replaces the plain logo; the bottom frame rails run 40px
+   DOWN into the next section (matching the top) with crosshairs, via .quote--cs. */
+.ol-web .quote-brand { display: inline-flex; align-items: center; gap: 11px }
+.ol-web .quote-brand img { height: 30px; width: auto; display: block }
+.ol-web .quote-brand span { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 600; color: var(--ink-strong); letter-spacing: -.01em }
+.ol-web .quote--cs .quote-frame .cm.bl-v, .ol-web .quote--cs .quote-frame .cm.br-v { bottom: -40px; height: 40px; background: var(--line) }
+.ol-web .quote--cs .quote-frame .xplus.bl { top: auto; bottom: -0.5px; left: -0.5px; transform: translate(-50%, 50%) }
+.ol-web .quote--cs .quote-frame .xplus.br { top: auto; bottom: -0.5px; right: -0.5px; transform: translate(50%, 50%) }
+
+/* REDESIGN + LIVE DEMO — light paper band, split 50/50 head, then a wide header-less
+   demo box (live embed with a recorded-video fallback on mobile / un-renderable embed) */
+.ol-web .redesign { background: var(--paper); border-top: 1px solid var(--line); padding: 80px 0 96px }
+.ol-web .redesign-head { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; margin-bottom: 48px }
+.ol-web .redesign h2 { font-family: var(--font-display); font-weight: 400; color: var(--ink-strong);
+  font-size: clamp(32px, calc(26px + 1.5vw), 46px); line-height: 1.14; letter-spacing: 0; margin: 0; text-wrap: balance }
+.ol-web .redesign-head .cs-sub { margin: 0; max-width: 560px }
+@media (max-width: 860px) { .ol-web .redesign-head { grid-template-columns: 1fr; gap: 18px; margin-bottom: 36px } }
+.ol-web .demo-wrap { max-width: 1800px; margin: 0 auto; padding: 0 24px }
+.ol-web .demo-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding: 0 6px }
+.ol-web .demo-lbl { display: inline-flex; align-items: center; gap: 9px; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; color: var(--ink-strong) }
+.ol-web .demo-lbl .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--green); box-shadow: 0 0 0 3px rgba(31, 157, 87, .16) }
+.ol-web .demo-open { display: inline-flex; align-items: center; gap: 7px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink-soft); transition: color .14s ease }
+.ol-web .demo-open:hover { color: var(--ink-strong) }
+.ol-web .demo-open svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.ol-web .demo { position: relative; width: 100%; aspect-ratio: 16/10;
+  border: 1px solid var(--line-strong); border-radius: 32px; corner-shape: squircle; overflow: hidden; background: var(--panel) }
+.ol-web .demo-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; z-index: 2 }
+.ol-web .demo-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 1; background: var(--panel) }
+@media (max-width: 860px) {
+  .ol-web .demo-frame { display: none }
+  .ol-web .demo-video { display: block }
+}
+.ol-web .demo.demo--fallback .demo-frame { display: none }
+.ol-web .demo.demo--fallback .demo-video { display: block }
+
+/* The marketing CTA geometry — decoupled from the DS Button's `lg` tier so the web
+   layer owns its button size and the DS `lg` can evolve independently. The primary
+   gradient / border / control-shadow / focus ring still come from the reused DS
+   Button (variant primary); this only restyles the box: 48px tall, 24px side pad,
+   15px/600, 24px radius (squircle via the global .ol-web * rule). Was `.btn-lg`. */
+.ol-web .ol-cta { height: 48px; padding: 0 24px; font-size: 15px; border-radius: 24px }

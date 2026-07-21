@@ -1,0 +1,16 @@
+{
+  "name": "@onboarding-loop/web",
+  "private": true,
+  "type": "module",
+  "description": "onboardingloop.ai marketing site — Astro + React, composed from the design system's own components (imported via the @ alias to the repo root). Its build toolchain (astro + its vite) lives here in site/node_modules so it does not disturb the repo's own vite 6 (used by the styleguide); React and the component runtime deps still resolve up to the repo root, so a component edit reaches both apps.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "devDependencies": {
+    "@astrojs/react": "^6.0.1",
+    "@tailwindcss/vite": "^4.0.0",
+    "astro": "^7.1.1"
+  }
+}

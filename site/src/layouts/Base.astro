@@ -1,0 +1,55 @@
+---
+/*
+ * Base document shell for the marketing site. Loads the design system's Tailwind
+ * layer (theme.css -> tailwindcss + tokens + kit component CSS) first, then the
+ * web layer (web.css) so the marketing scope's tokens override the collisions.
+ * The <body> carries `.ol-web` so BOTH islands (TopBar and the ScrollStage tree)
+ * inherit the web-layer tokens, since they are separate islands under one body.
+ */
+import "./../styles/global.css"
+
+interface Props {
+  title?: string
+  description?: string
+  /** extra class(es) appended to <body> after `ol-web` (e.g. a page that needs a
+   *  fixed bottom bar clears space with `has-buybar`). */
+  bodyClass?: string
+}
+
+const {
+  title = "The Onboarding Loop Protocols, by Bal Sieber",
+  description = "Three protocols and one toolkit, yours to keep. Feed them to your favorite LLM and build the onboarding your product should've shipped with.",
+  bodyClass,
+} = Astro.props
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href="https://onboardingloop.ai/" />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/assets/Favicon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/assets/fonts/feijoa-display.woff2"
+      crossorigin
+    />
+  </head>
+  <body class:list={["ol-web", bodyClass]}>
+    <slot />
+  </body>
+</html>

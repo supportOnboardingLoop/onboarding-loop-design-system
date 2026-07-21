@@ -12,6 +12,7 @@ function AccountCard({
   avatarSrc,
   online = true,
   collapsed = false,
+  trailing,
   className,
   ...props
 }: React.ComponentProps<"div"> & {
@@ -21,6 +22,9 @@ function AccountCard({
   avatarSrc?: string
   online?: boolean
   collapsed?: boolean
+  /** optional element pinned to the right of the row (e.g. a status icon or link);
+      hidden when collapsed. The text column flexes so this sits at the far edge. */
+  trailing?: React.ReactNode
 }) {
   return (
     <div
@@ -43,11 +47,12 @@ function AccountCard({
         )}
       </span>
       {!collapsed && (
-        <span className="flex min-w-0 flex-col leading-tight">
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
           <span className="truncate text-sm font-semibold">{name}</span>
           {email && <span className="truncate text-[13px] text-muted-foreground">{email}</span>}
         </span>
       )}
+      {!collapsed && trailing}
     </div>
   )
 }

@@ -1,0 +1,16 @@
+---
+/*
+ * /privacy-policy — the legal-page template (LegalPage) inside the shared PageShell
+ * chrome (header + footer). Content in the React island; client:load hydrates the
+ * hero reveal + the sticky-tab scroll-spy.
+ */
+import PageShell from "../layouts/PageShell.astro"
+import PrivacyPage from "../PrivacyPage"
+---
+
+<PageShell
+  title="Privacy Policy · The Onboarding Loop Protocols"
+  description="What personal information Onboarding Loop collects, how we use it, and the choices you have."
+>
+  <PrivacyPage client:load />
+</PageShell>

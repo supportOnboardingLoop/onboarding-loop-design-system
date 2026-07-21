@@ -1,0 +1,131 @@
+/* /demo — the live demo, framed. The content area holds a .dv-stack (centered,
+   sized) of two parts: a toolbar of customize controls hugging the top of the demo
+   but OUTSIDE the surface (in the page content area), and the SURFACE — a bordered,
+   squircled box that frames only the demo iframe. A gutter of whitespace surrounds
+   the stack on the page.
+
+   The CHROME (this page + the marketing header) is the INVERSE of the demo: light
+   demo -> dark chrome (the default, so the demo pops), dark demo -> light chrome.
+   `.dark` on .dv-page re-skins the toolbar controls; `[data-bar="dark"]` darks the
+   page background (DemoPage also toggles the header's `is-dark`).
+
+   Classes are prefixed `dv-` (demo viewer), NOT `demo-`: the case-study band in
+   web.css already owns the `.demo-*` namespace. Reference values are the demo's own
+   panels: nav-panel radius 24px + a bit -> 28px; border --neutral-100; content
+   inset ~16px -> ~2x -> a 32px gutter. */
+
+.ol-web .dv-page {
+  --demo-bar-h: 72px; /* fallback; DemoPage measures the real header and overrides */
+  --dv-gutter: 32px; /* ~2x the demo's internal content padding — around the stack */
+  height: calc(100dvh - var(--demo-bar-h));
+  padding: var(--dv-gutter);
+  background: var(--white);
+  display: flex;
+  justify-content: center; /* centre the stack when it shrinks (tablet / mobile) */
+  align-items: stretch; /* stack fills the gutter-inset height */
+}
+/* dark chrome (the default: light demo on a dark website) */
+.ol-web .dv-page[data-bar="dark"] {
+  background: var(--background);
+}
+
+/* pre-hydration placeholder (the island is client:only) so the footer doesn't jump */
+.ol-web .dv-page-fallback {
+  height: calc(100dvh - 72px);
+  background: var(--white);
+}
+
+/* toolbar + surface as one unit; shrinks + centres on tablet/mobile so the controls
+   stay aligned above the demo. The width ANIMATES so the resize is visible. */
+.ol-web .dv-stack {
+  flex: none;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* the controls hug the demo */
+  transition: width 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.ol-web .dv-stack[data-device="tablet"] {
+  width: 834px;
+}
+.ol-web .dv-stack[data-device="mobile"] {
+  width: 390px;
+}
+
+/* ---- toolbar (outside the surface, on the page content area) ------------- */
+.ol-web .dv-tb {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px; /* hold the row height as controls hide, so the demo doesn't jump */
+}
+/* the skin controls (agent · color · font) as one group; `contents` keeps them in
+   the toolbar's own flex row (same gaps) until hidden per-device */
+.ol-web .dv-tb__custom {
+  display: contents;
+}
+.ol-web .dv-tb__cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* device size · load-a-SaaS · open — grouped on the right */
+.ol-web .dv-tb__right {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ol-web .dv-tb__saas {
+  display: flex;
+  align-items: center;
+}
+
+/* per-device visibility:
+   - tablet: hide the skin controls (agent/color/font) + the SaaS picker; keep
+     appearance, device, open
+   - mobile: hide everything except the device toggle + open */
+.ol-web .dv-stack[data-device="tablet"] .dv-tb__custom,
+.ol-web .dv-stack[data-device="mobile"] .dv-tb__custom,
+.ol-web .dv-stack[data-device="tablet"] .dv-tb__saas,
+.ol-web .dv-stack[data-device="mobile"] .dv-tb__saas,
+.ol-web .dv-stack[data-device="mobile"] .dv-tb__appearance {
+  display: none;
+}
+
+/* ---- the surface: a bordered, squircled box framing only the demo -------- */
+.ol-web .dv-surface {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden; /* clip the demo to the radius */
+  background: var(--white);
+  border: 1px solid var(--neutral-100);
+  border-radius: 28px;
+  corner-shape: squircle;
+}
+.ol-web .dv-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ol-web .dv-stack {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ol-web .dv-page {
+    --dv-gutter: 14px;
+  }
+  .ol-web .dv-tb {
+    gap: 8px;
+  }
+}

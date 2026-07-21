@@ -2,12 +2,16 @@ import type * as React from "react"
 import type { IconName } from "@/components/base/icon"
 import type { ConversationHandle } from "@/components/product/conversation"
 import type { LauncherApi } from "@/components/product/launcher-engine"
-import type { Skin } from "../skins"
 import type { CardActionsValue } from "./analytics-ui"
+import type { Dashboard, DashboardHandlers } from "./analytics-dashboard"
 
 // ============================================================================
 // DemoPreset — one "type of SaaS" the demo can load (Analytics, Project Mgmt,
-// Health, Finance, CRM). A preset is CONTENT + a Skin; it never owns behavior.
+// Health, Finance, CRM). A preset is CONTENT only; it never owns behavior, and
+// it never owns branding. Branding is a property of the DEPLOY, not the content:
+// the visitor's Customize choices skin the public demo, and a client record
+// (clients.ts) skins a client build. So loading a preset changes the content,
+// never the skin.
 //
 // The Demo renderer (DemoApp.tsx) owns all app STATE + behavior (chats,
 // collection rows, launcher, travelling avatar, every handler) and is identical
@@ -24,8 +28,11 @@ export type NavBadge = { text: string; variant?: "new" | "default" }
 export type NavItemDef = { id: string; icon: IconName; label: string; badge?: NavBadge }
 export type NavSection = { label: string; count?: number; items: NavItemDef[] }
 
-// A row in the sub-nav's savable collection (analytics: a dashboard).
-export type CollectionSeed = { id: string; name: string; count: number }
+// A row in the sub-nav's savable collection (analytics: a dashboard). The row's
+// display name is either a literal `name`, or, when it should track the deploy's
+// client sites, a `siteIndex` the renderer resolves against the DemoIdentity (so
+// no client site name is baked into a content file).
+export type CollectionSeed = { id: string; name?: string; siteIndex?: number; count: number }
 // A seeded conversation in Saved / Recent chats.
 export type ChatSeed = { id: string; title: string; firstText: string; saved?: boolean }
 // A row in the Context Engine footer group.
@@ -47,6 +54,14 @@ export type DemoContext = {
   navSelected: string
   /** a generated report open in the content area (overrides the nav view) */
   activeReport: { id: string; name: string } | null
+  /** the dashboard currently open in the content area (overrides nav + report) */
+  selectedDash: Dashboard | null
+  /** mutations the open dashboard's grid / banners / comments call */
+  dashboardHandlers: DashboardHandlers
+  /** the dashboard banner composer, opened from the content header's "Create banner" */
+  bannerComposerOpen: boolean
+  openBannerComposer: () => void
+  closeBannerComposer: () => void
   /** open the launcher's save-to-collection modal (the content-header CTA) */
   openSaveModal: () => void
   /** the launcher's imperative API (morph states, relayout) */
@@ -71,18 +86,21 @@ export type DemoPreset = {
   tagline: string // picker one-liner
   pickerIcon: IconName
   status?: "ready" | "soon" // "soon" = a scaffolded stub
-  skin: Skin
 
   // ---- column 1: primary nav ----
   brand: { mark: string; name: string; sub?: string }
   nav: NavSection[]
 
   // ---- column 2: agent home / sub-nav ----
-  // (the agent identity comes from skin.agent)
+  // (the agent identity is resolved by the deploy: the visitor's Customize choice
+  //  in the public demo, or a client record in a client build)
   collection: {
     label: string // group label, e.g. "Dashboards"
     itemIcon: IconName // row icon, e.g. "layout-dashboard"
     seed: CollectionSeed[]
+    // fully-formed starting dashboards (analytics: one populated board). When
+    // present it wins over `seed`; other presets fall back to empty-tile seeds.
+    seedDashboards?: () => Dashboard[]
     saveVerb: string // content-header CTA + launcher modal, e.g. "Save as Dashboard"
     saveNoun: string // notification noun, e.g. "Dashboard"
   }

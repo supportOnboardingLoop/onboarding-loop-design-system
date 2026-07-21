@@ -8,7 +8,7 @@ import { Icon } from "./icon"
 import { maskStyle } from "./checkmark"
 
 // Ported to the kit dropdown (kit/menu.css .bp-dropdown + .bp-menu). The trigger
-// reads like a secondary button (white gradient, #dcdcdc border, control
+// reads like a secondary button (the --ctl-face gradient + edge, control
 // shadow); open = accent border + 3px accent-tint, chevron flips. The popup is a
 // shadow-pop menu; each row carries the reveal check that RESTS as a hollow
 // outline ring (revealed on highlight) and fills to an accent disc on select.
@@ -39,8 +39,8 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "group/trigger bp-chev-host flex w-full items-center gap-2 rounded-lg border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] font-medium whitespace-nowrap text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background]",
-        "hover:border-[#cfcfcf] hover:bg-[linear-gradient(180deg,#ffffff,#f1f1f1)]",
+        "group/trigger bp-chev-host flex w-full items-center gap-2 rounded-lg border border-[var(--ctl-line)] bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-2))] font-medium whitespace-nowrap text-[var(--ctl-ink)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background]",
+        "hover:border-[var(--ctl-line-hover)] hover:bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-hover))]",
         "data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]",
         "disabled:pointer-events-none disabled:opacity-45",
         size === "sm" ? "h-8 px-2.5 text-sm" : "h-[34px] px-3.5 text-base",

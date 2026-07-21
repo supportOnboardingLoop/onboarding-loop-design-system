@@ -63,10 +63,10 @@ function ChatPanel({ agent, title, saved, onClose, onSend, onOption, attachments
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      <ColumnHeader className="gap-2.5 pr-2 pl-5">
+      <ColumnHeader className="gap-2.5 pr-3 pl-5">
         <ColumnTitle as="h2">{title}</ColumnTitle>
         <Dropdown>
-          <DropdownTrigger className="bp-chev-host inline-flex h-8 shrink-0 items-center gap-1 rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-border-strong bg-[linear-gradient(180deg,#fff,#f7f7f7)] pr-2 pl-2.5 text-sm font-medium text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-colors hover:border-[#cfcfcf] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
+          <DropdownTrigger className="bp-chev-host inline-flex h-8 shrink-0 items-center gap-1 rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-border-strong bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-2))] pr-2 pl-2.5 text-sm font-medium text-[var(--ctl-ink)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-colors hover:border-[var(--ctl-line-hover)] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
             Options
             <Icon name="chevron-down" size={16} className="bp-chev text-muted-foreground" />
           </DropdownTrigger>

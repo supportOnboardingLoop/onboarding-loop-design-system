@@ -2,6 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 import { Icon, type IconName } from "@/components/base/icon"
+import type { TileDescriptor } from "./analytics-tiles"
 
 // ============================================================================
 // Shared analytics content UI — used by the Overview (Insights), Portfolio and
@@ -51,8 +52,8 @@ export function CardAction({
 // ---- pin / attach state, shared across every card in the content area --------
 
 /** a content card that can be pinned / attached: a stable id + a headline for the
- *  attach chip. */
-export type CardRef = { id: string; title: string; accent?: string }
+ *  attach chip, plus (for pin) a serializable `tile` the dashboard re-renders. */
+export type CardRef = { id: string; title: string; accent?: string; tile?: TileDescriptor }
 
 export type CardActionsValue = {
   isPinned: (id: string) => boolean

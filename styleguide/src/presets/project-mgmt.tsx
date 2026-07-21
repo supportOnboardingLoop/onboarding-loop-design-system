@@ -1,4 +1,3 @@
-import { AGENTS } from "../skins"
 import { choiceConversation } from "./_shared"
 import type { DemoPreset } from "./types"
 
@@ -10,7 +9,6 @@ export const projectMgmtPreset: DemoPreset = {
   tagline: "Boards, sprints, and delivery",
   pickerIcon: "layout-dashboard",
   status: "soon",
-  skin: { theme: "Stripe", font: "DM Sans", agent: { name: "Ada", role: "Delivery lead", src: AGENTS.Jaimie.src } },
 
   brand: { mark: "P", name: "Projects" },
   nav: [

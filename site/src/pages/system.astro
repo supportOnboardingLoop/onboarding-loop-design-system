@@ -1,0 +1,22 @@
+---
+/*
+ * /system — the system page: the rebuilt onboardingloop.ai landing, now on the
+ * GLOBAL chrome. The header is the global variant (System · Product · Service ·
+ * View Demo · Get Started), with System current and Get Started routing to the
+ * home fork; the landing's own CTAs and closing footer are repointed to match
+ * (see Landing.tsx / CtaSection). No page-anchor nav here anymore, so the
+ * landing's section-homing is retired — nothing links in-page. The ScrollStage
+ * content itself is left alone (a move, not a redesign); the new day-in-the-life
+ * section is still a later addition.
+ */
+import Base from "../layouts/Base.astro"
+import { TopBar } from "@/components/web/TopBar"
+import Landing from "../Landing"
+---
+
+<Base title="The System · Onboarding Loop">
+  <TopBar client:load variant="global" active="system" getStartedHref="/#fork" />
+  <main id="top">
+    <Landing client:load />
+  </main>
+</Base>
