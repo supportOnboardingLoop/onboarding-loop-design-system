@@ -211,19 +211,23 @@ export const analyticsPreset: DemoPreset = {
   },
 
   accessOptions: ACCESS_OPTS,
+  // Coach-marks temporarily disabled (Bal, 2026-07-21). The spotlight/tooltip
+  // machinery is untouched; re-enable by uncommenting the two entries below.
+  // (target "collection" = Dashboards sub-nav, arrow left; "actions" =
+  // content-header actions, arrow top.)
   coaches: [
-    {
-      target: "collection",
-      side: "left",
-      title: "Create Dashboards",
-      desc: "Create dashboards out of pinned data for yourself or to share with others.",
-    },
-    {
-      target: "actions",
-      side: "top",
-      title: "Filter, then save your view",
-      desc: "Filter by client and date range, then save the current view as a dashboard.",
-    },
+    // {
+    //   target: "collection",
+    //   side: "left",
+    //   title: "Create Dashboards",
+    //   desc: "Create dashboards out of pinned data for yourself or to share with others.",
+    // },
+    // {
+    //   target: "actions",
+    //   side: "top",
+    //   title: "Filter, then save your view",
+    //   desc: "Filter by client and date range, then save the current view as a dashboard.",
+    // },
   ],
 
   // The agent offers the A/B/C choice, then BUILDS the picked report: a "building"
