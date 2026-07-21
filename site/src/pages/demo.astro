@@ -1,0 +1,22 @@
+---
+/*
+ * /demo — the live demo inside the shared marketing chrome (TopBar + Footer via
+ * PageShell). The content area is the demo, framed full-width/height, with the
+ * demo's Customize controls lifted into a top toolbar plus a device toggle.
+ *
+ * The island is `client:only` (it's an interactive iframe app that reads
+ * window.location for the demo origin — nothing to server-render), so a fallback
+ * reserves the content height until it hydrates and the footer doesn't jump.
+ */
+import PageShell from "../layouts/PageShell.astro"
+import DemoPage from "../DemoPage"
+---
+
+<PageShell
+  title="Live Demo · Onboarding Loop"
+  description="The Onboarding Loop, running. Re-skin it live — pick the agent, color, typeface, and appearance — and preview it at desktop, tablet, and mobile widths."
+>
+  <DemoPage client:only="react">
+    <div slot="fallback" class="dv-page-fallback"></div>
+  </DemoPage>
+</PageShell>

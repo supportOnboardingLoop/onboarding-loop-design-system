@@ -9,20 +9,25 @@ import {
   ColumnFooter,
   NavList,
 } from "@/components/product/layout-column"
-import { BrandMark } from "@/components/product/brand-mark"
 import { HamburgerButton, AgentDrawerButton } from "@/components/product/compact-bar"
 import { IconButton } from "@/components/base/icon-button"
 import { NavItem } from "@/components/product/nav-item"
 import { CollapsibleSection } from "@/components/product/section"
 import { AccountCard } from "@/components/product/account-card"
-import { LauncherPill } from "@/components/product/launcher"
+import { SearchLauncher } from "./search/SearchLauncher"
 import { TravellingAgentAvatar, type TravellingAvatarHandle } from "@/components/product/travelling-avatar"
 import { Icon } from "@/components/base/icon"
-import { Label } from "@/components/base/label"
-import { Input } from "@/components/base/input"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/base/select"
 import { NAV } from "./showcases"
-import { FONTS, THEMES, AGENTS, applyTheme, blankDiscWithLogo } from "./skins"
+import { useSkinState, NEUTRAL_SKIN, CustomizePanel } from "./customize"
+
+// Build-time timestamp injected by Vite (see vite.config.ts). On Vercel every
+// deploy is a fresh build, so this is the last time the site went live.
+declare const __BUILD_DATE__: string
+const LAST_UPDATED = new Date(__BUILD_DATE__).toLocaleDateString("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+})
 
 // The styleguide home, built ON the design system — the SAME <WorkspaceShell> +
 // column primitives (LayoutColumn / ColumnHeader / ColumnTitle / ColumnBody /
@@ -33,31 +38,36 @@ import { FONTS, THEMES, AGENTS, applyTheme, blankDiscWithLogo } from "./skins"
 // avatar / client-logo) + the grey docs canvas with a docked launcher pill.
 
 export default function App() {
-  const flat = NAV.flatMap((g) => g.items)
-  const [selected, setSelected] = useState(flat[0]?.id)
+  const flat = NAV.flatMap((e) => (e.kind === "group" ? e.pages : [e.page]))
+  const [selected, setSelected] = useState(() => flat.find((p) => p.id === "introduction")?.id ?? flat[0]?.id)
   const [navCollapsed, setNavCollapsed] = useState(false)
   const [subCollapsed, setSubCollapsed] = useState(false)
   const [navOpen, setNavOpen] = useState(false) // compact primary-nav sheet
   const [agentOpen, setAgentOpen] = useState(false) // compact re-skin drawer
-  const [dark, setDark] = useState(false)
-  const [font, setFont] = useState("Inter")
-  const [theme, setTheme] = useState("Neutral")
-  const [hex, setHex] = useState("")
-  const [tintHex, setTintHex] = useState("")
-  const [agentKey, setAgentKey] = useState("Wilson")
-  const [logoSrc, setLogoSrc] = useState<string | null>(null)
+  // the live re-skin state (theme / font / agent / light-dark), shared with the
+  // demo via the same hook + panel. Ephemeral here (no persistKey): the
+  // styleguide always boots to the neutral default, exactly as before.
+  const skin = useSkinState(NEUTRAL_SKIN)
 
   // sub-nav "on this page": the anchorable sections rendered on the current page
   // (each GroupHeader carries [data-section-anchor]); clicking one scrolls the
   // content pane to it, and a light scroll-spy marks the section you're in.
   const contentBodyRef = useRef<HTMLDivElement>(null)
   const contentWrapRef = useRef<HTMLDivElement>(null)
-  const [sections, setSections] = useState<{ id: string; title: string }[]>([])
+  // the "on this page" rail is now a TWO-TIER tree: tier-1 subsections
+  // (data-section-anchor="group") become accordions, each holding its tier-2
+  // sub-subsections (data-section-anchor="item") as links. `flatAnchors` is the
+  // flattened order used by the scroll-spy + tail spacer.
+  const [subGroups, setSubGroups] = useState<{ id: string; title: string; items: { id: string; title: string }[] }[]>([])
+  const [flatAnchors, setFlatAnchors] = useState<{ id: string; title: string }[]>([])
   const [activeSection, setActiveSection] = useState<string | null>(null)
   // a trailing spacer so EVERY section (even the last) can scroll its title to the
   // top of the pane, and a lock so the scroll-spy doesn't fight a click mid-animation.
   const [tailSpacer, setTailSpacer] = useState(0)
   const spyLock = useRef(false)
+  // a section to scroll to once the NEXT page has rendered its anchors (search jumps
+  // that cross pages set this; the anchor effect below reads + clears it).
+  const pendingSectionRef = useRef<string | null>(null)
 
   // the shared travelling agent avatar (same wiring as the Demo): rides the sub-nav
   // header slot while open, slides to the content-header slot on collapse, wiggles on
@@ -67,47 +77,7 @@ export default function App() {
   const avRef = useRef<TravellingAvatarHandle | null>(null)
   const firstShift = useRef(true)
 
-  // Client-side only: read the picked image, downscale to 256px (keeps the data
-  // URL small + strips metadata), then composite it into the blank disc. Nothing
-  // is ever uploaded to a server; safe for a public, playable styleguide.
-  function handleLogoFile(file: File) {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = new Image()
-      img.onload = () => {
-        const max = 256
-        const scale = Math.min(1, max / Math.max(img.width, img.height))
-        const w = Math.max(1, Math.round(img.width * scale))
-        const h = Math.max(1, Math.round(img.height * scale))
-        const canvas = document.createElement("canvas")
-        canvas.width = w
-        canvas.height = h
-        const ctx = canvas.getContext("2d")
-        if (!ctx) return
-        ctx.drawImage(img, 0, 0, w, h)
-        setLogoSrc(blankDiscWithLogo(canvas.toDataURL("image/png")))
-      }
-      img.src = reader.result as string
-    }
-    reader.readAsDataURL(file)
-  }
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark)
-  }, [dark])
-  useEffect(() => {
-    document.documentElement.style.setProperty("--font-family", FONTS[font])
-  }, [font])
-  useEffect(() => {
-    applyTheme(theme, hex)
-  }, [theme, hex])
-  useEffect(() => {
-    // optional override: steer the neutral tint somewhere other than the brand
-    // (e.g. a warm complement to a cool brand). Empty → greys follow --primary.
-    const s = document.documentElement.style
-    if (/^#([0-9a-f]{6})$/i.test(tintHex)) s.setProperty("--tint", tintHex)
-    else s.removeProperty("--tint")
-  }, [tintHex])
+  // (skin state + its :root effects + the logo compositor now live in useSkinState)
 
   // the avatar travels on sub-collapse itself (handled inside <TravellingAgentAvatar>);
   // here we only ask it to FOLLOW its slot when the primary nav collapses — that grid
@@ -127,12 +97,27 @@ export default function App() {
     if (!root) return
     const raf = requestAnimationFrame(() => {
       const nodes = Array.from(root.querySelectorAll<HTMLElement>("[data-section-anchor]"))
-      // prefer the top-level GroupHeaders; fall back to titled Blocks on pages that
-      // have none (so nested Blocks under a GroupHeader don't clutter the rail).
-      const groups = nodes.filter((n) => n.dataset.sectionAnchor === "group")
-      const picked = groups.length ? groups : nodes
-      setSections(picked.map((n) => ({ id: n.id, title: n.dataset.sectionTitle ?? n.textContent ?? "" })))
-      root.scrollTop = 0 // land at the top of each newly-opened page
+      // build the tier tree: each "group" opens a subsection accordion; each "item"
+      // (or a loose "block") nests under the most recent group. A group with no items
+      // renders as a plain link; a page with no groups falls back to a flat list.
+      const groups: { id: string; title: string; items: { id: string; title: string }[] }[] = []
+      const flatA: { id: string; title: string }[] = []
+      for (const n of nodes) {
+        const entry = { id: n.id, title: n.dataset.sectionTitle ?? n.textContent ?? "" }
+        flatA.push(entry)
+        if (n.dataset.sectionAnchor === "group") {
+          groups.push({ ...entry, items: [] })
+        } else {
+          const g = groups[groups.length - 1]
+          if (g) g.items.push(entry)
+          else groups.push({ ...entry, items: [] }) // loose item before any group → its own plain link
+        }
+      }
+      setSubGroups(groups)
+      setFlatAnchors(flatA)
+      // land at the top of each newly-opened page — UNLESS a search jump asked for a
+      // specific section (the pending-scroll effect below handles that after commit).
+      if (!pendingSectionRef.current) root.scrollTop = 0
     })
     return () => cancelAnimationFrame(raf)
   }, [selected])
@@ -142,12 +127,12 @@ export default function App() {
   // stays selected instead of flickering to whatever passes under the top mid-scroll.
   useEffect(() => {
     const root = contentBodyRef.current
-    if (!root || sections.length === 0) { setActiveSection(null); return }
+    if (!root || flatAnchors.length === 0) { setActiveSection(null); return }
     const compute = () => {
       if (spyLock.current) return
       const rootTop = root.getBoundingClientRect().top
-      let cur = sections[0]?.id ?? null
-      for (const s of sections) {
+      let cur = flatAnchors[0]?.id ?? null
+      for (const s of flatAnchors) {
         const el = root.querySelector<HTMLElement>("#" + CSS.escape(s.id))
         if (el && el.getBoundingClientRect().top - rootTop <= 24) cur = s.id
       }
@@ -156,7 +141,7 @@ export default function App() {
     compute()
     root.addEventListener("scroll", compute, { passive: true })
     return () => root.removeEventListener("scroll", compute)
-  }, [sections])
+  }, [flatAnchors])
 
   // size the trailing spacer so the LAST section's title can still reach the top of
   // the pane (with a little blank space below). Measured against the natural content
@@ -166,8 +151,8 @@ export default function App() {
     const wrap = contentWrapRef.current
     if (!root || !wrap) return
     const recompute = () => {
-      if (sections.length === 0) { setTailSpacer(0); return }
-      const lastEl = root.querySelector<HTMLElement>("#" + CSS.escape(sections[sections.length - 1].id))
+      if (flatAnchors.length === 0) { setTailSpacer(0); return }
+      const lastEl = root.querySelector<HTMLElement>("#" + CSS.escape(flatAnchors[flatAnchors.length - 1].id))
       if (!lastEl) { setTailSpacer(0); return }
       const anchorPos = lastEl.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
       const needed = Math.max(0, Math.ceil(anchorPos - 12 + root.clientHeight - wrap.offsetHeight))
@@ -176,7 +161,7 @@ export default function App() {
     const raf = requestAnimationFrame(recompute)
     window.addEventListener("resize", recompute)
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", recompute) }
-  }, [sections])
+  }, [flatAnchors])
 
   // scroll the content pane so a section's TITLE lands at the top (rect-based, robust
   // to offsetParent). Selecting is immediate — whatever you click is marked active,
@@ -193,10 +178,33 @@ export default function App() {
     window.setTimeout(() => { spyLock.current = false }, 650)
   }
 
+  // a search result was chosen: switch page (if needed) + scroll to its section. When
+  // the target is on the current page we scroll now; otherwise we stash the section and
+  // the pending-scroll effect fires once the new page's anchors exist.
+  const navigateTo = (pageId: string, secId?: string) => {
+    if (pageId === selected) {
+      if (secId) scrollToSection(secId)
+      return
+    }
+    pendingSectionRef.current = secId ?? null
+    setSelected(pageId)
+  }
+
+  // scroll to a cross-page search target once its anchors are in the DOM
+  useEffect(() => {
+    const secId = pendingSectionRef.current
+    if (!secId) return
+    pendingSectionRef.current = null
+    scrollToSection(secId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flatAnchors])
+
   const current = flat.find((i) => i.id === selected)
-  const agent = AGENTS[agentKey]
-  // the Blank agent shows the uploaded-logo disc once a logo is loaded
-  const agentSrc = agentKey === "Blank" && logoSrc ? logoSrc : agent.src
+  // the resolved agent identity + avatar (name/role, and the Blank agent's logo
+  // disc) come from the shared skin state; the header, launcher pill and avatar
+  // alt all read the same values.
+  const agent = skin.agent
+  const agentSrc = skin.agentSrc
 
   return (
     <>
@@ -212,7 +220,13 @@ export default function App() {
       primaryNav={
         <LayoutColumn as="aside" variant="card">
           <ColumnHeader className={cn("gap-2.5", navCollapsed ? "justify-center" : "pr-3 pl-5")}>
-            {!navCollapsed && <BrandMark mark="L">Loop DS</BrandMark>}
+            {!navCollapsed && (
+              // the Onboarding Loop wordmark (light/dark variants swap with the theme)
+              <div className="flex min-w-0 items-center">
+                <img src="/brand/onboarding-loop.png" alt="Onboarding Loop" className="h-[22px] w-auto shrink-0 dark:hidden" />
+                <img src="/brand/onboarding-loop-dark.png" alt="Onboarding Loop" className="hidden h-[22px] w-auto shrink-0 dark:block" />
+              </div>
+            )}
             <IconButton
               icon={navCollapsed ? "chevrons-right" : "chevrons-left"}
               motion={navCollapsed ? "arrow-right" : "arrow-left"}
@@ -223,36 +237,39 @@ export default function App() {
           </ColumnHeader>
 
           <ColumnBody>
-            {/* jump to the full-viewport DEMO (the design system + agent in action) */}
-            <div className={cn("pb-2", navCollapsed && "flex justify-center")}>
-              <NavItem
-                icon="layout-dashboard"
-                collapsed={navCollapsed}
-                title="Demo"
-                onClick={() => window.location.assign("/demo.html")}
-              >
-                Demo
-              </NavItem>
-            </div>
-            {NAV.map((grp, gi) =>
-              navCollapsed ? (
-                <div key={grp.label}>
-                  {gi > 0 && <div className="mx-auto my-3.5 h-px w-9 bg-border" />}
-                  <div className="flex flex-col items-center gap-0.5">
-                    {grp.items.map((item) => (
-                      <NavItem key={item.id} icon={item.icon} collapsed current={selected === item.id} title={item.label} onClick={() => setSelected(item.id)}>
-                        {item.label}
-                      </NavItem>
-                    ))}
+            {NAV.map((entry, gi) => {
+              // top-level nav is a mix of standalone pages (Links, Downloads, Style
+              // Guide) and one "Components" accordion group.
+              const pages = entry.kind === "group" ? entry.pages : [entry.page]
+              const key = entry.kind === "group" ? entry.label : entry.page.id
+              if (navCollapsed) {
+                return (
+                  <div key={key}>
+                    {entry.kind === "group" && gi > 0 && <div className="mx-auto my-3.5 h-px w-9 bg-border" />}
+                    <div className="flex flex-col items-center gap-0.5">
+                      {pages.map((item) => (
+                        <NavItem key={item.id} icon={item.icon} collapsed current={selected === item.id} title={item.label} onClick={() => setSelected(item.id)}>
+                          {item.label}
+                        </NavItem>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <CollapsibleSection key={grp.label} label={grp.label} count={grp.items.length} defaultCollapsed className={gi > 0 ? "mt-2" : undefined}>
+                )
+              }
+              if (entry.kind === "page") {
+                return (
+                  <NavItem key={key} icon={entry.page.icon} current={selected === entry.page.id} onClick={() => setSelected(entry.page.id)}>
+                    {entry.page.label}
+                  </NavItem>
+                )
+              }
+              return (
+                <CollapsibleSection key={key} label={entry.label} count={entry.pages.length} className={gi > 0 ? "mt-2" : undefined}>
                   <NavList>
-                    {grp.items.length === 0 ? (
-                      <div className="px-2.5 pb-2 text-[11px] leading-snug text-muted-foreground/60">{grp.empty}</div>
+                    {entry.pages.length === 0 ? (
+                      <div className="px-2.5 pb-2 text-[11px] leading-snug text-muted-foreground/60">{entry.empty}</div>
                     ) : (
-                      grp.items.map((item) => (
+                      entry.pages.map((item) => (
                         <NavItem key={item.id} icon={item.icon} current={selected === item.id} onClick={() => setSelected(item.id)}>
                           {item.label}
                         </NavItem>
@@ -261,13 +278,43 @@ export default function App() {
                   </NavList>
                 </CollapsibleSection>
               )
-            )}
+            })}
           </ColumnBody>
 
-          {/* the account is its own area: a full-width divider on top (flush L/R like the
-              header) and even padding above + below it (py-3, and the card's own mt-0). */}
-          <ColumnFooter divider className={cn("flex flex-col gap-0.5 py-3", navCollapsed ? "items-center px-3" : "px-4")}>
-            <AccountCard name="Bal Sieber" email="bal@onboardingloop.ai" initials="BS" online collapsed={navCollapsed} className="mt-0" />
+          {/* the "created by" credit, styled as the demo's account card (components/product/
+              account-card): the real profile photo (online dot off), "Created by Bal Sieber",
+              and a smaller "Last updated {date}" line, with the LinkedIn glyph trailing. The
+              WHOLE card is one link to Bal's LinkedIn, so the account-card hover reads as a real
+              affordance (glyph darkens with it). Collapsed nav shows just the avatar, centered. */}
+          <ColumnFooter divider className={cn(navCollapsed ? "px-3 py-3" : "px-2.5 py-2.5")}>
+            <a
+              href="https://www.linkedin.com/in/balsieber/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Bal Sieber on LinkedIn"
+              className="group block"
+            >
+              <AccountCard
+                className="mt-0"
+                avatarSrc="/brand/profile-bal.png"
+                online={false}
+                collapsed={navCollapsed}
+                name="Created by Bal Sieber"
+                email={<span className="text-[11px]">Last updated {LAST_UPDATED}</span>}
+                trailing={
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden
+                    className="shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+                  >
+                    <path d="M18.5195 0H1.47656C0.660156 0 0 0.644531 0 1.44141V18.5547C0 19.3516 0.660156 20 1.47656 20H18.5195C19.3359 20 20 19.3516 20 18.5586V1.44141C20 0.644531 19.3359 0 18.5195 0ZM5.93359 17.043H2.96484V7.49609H5.93359V17.043ZM4.44922 6.19531C3.49609 6.19531 2.72656 5.42578 2.72656 4.47656C2.72656 3.52734 3.49609 2.75781 4.44922 2.75781C5.39844 2.75781 6.16797 3.52734 6.16797 4.47656C6.16797 5.42188 5.39844 6.19531 4.44922 6.19531ZM17.043 17.043H14.0781V12.4023C14.0781 11.2969 14.0586 9.87109 12.5352 9.87109C10.9922 9.87109 10.7578 11.0781 10.7578 12.3242V17.043H7.79688V7.49609H10.6406V8.80078H10.6797C11.0742 8.05078 12.043 7.25781 13.4844 7.25781C16.4883 7.25781 17.043 9.23438 17.043 11.8047V17.043Z" />
+                  </svg>
+                }
+              />
+            </a>
           </ColumnFooter>
         </LayoutColumn>
       }
@@ -282,17 +329,19 @@ export default function App() {
               accordion opens and, on a short viewport, scrolls internally so no control
               is ever clipped. The bottom border is the dividing line, always below it. */}
           <header className="relative flex max-h-full shrink-0 flex-col overflow-y-auto border-b border-border">
-            {/* agent identity — the disc + name/role + collapse toggle. Height trimmed so
-                the gap below the avatar to the Customize button matches the gap below that
-                button to the divider (symmetric ~17px). */}
-            <div className="relative h-[99px] shrink-0">
+            {/* agent identity — the disc + name/role + collapse toggle. Height matches
+                the shared AgentHomeHeader idrow (102px) so the gap below the identity to
+                the Customize accordion equals the accordion's 16px left/right padding. */}
+            <div className="relative h-[102px] shrink-0">
               {/* the shared travelling avatar rides into this slot on desktop; a static
                   <img> takes its place inside the compact drawer (workspace.css .ws-agent-hdr*) */}
               <span className="ws-agent-hdr__slot" ref={subSlotRef} />
               <img className="ws-agent-hdr__av" src={agentSrc} alt="" />
-              <div className="absolute top-[53.5px] left-[100px] flex -translate-y-1/2 flex-col items-start gap-px whitespace-nowrap">
-                <b className="text-[15px] leading-[1.35] font-bold">{agent.name}</b>
-                <span className="text-[13px] leading-[1.35] text-muted-foreground">{agent.role}</span>
+              {/* right-[48px] clears the collapse toggle; a long custom name/role is
+                  clipped with an ellipsis rather than spilling off the header edge */}
+              <div className="absolute top-[53.5px] right-[48px] left-[100px] flex -translate-y-1/2 flex-col items-start gap-px whitespace-nowrap">
+                <b className="max-w-full truncate text-[15px] leading-[1.35] font-bold">{agent.name}</b>
+                <span className="max-w-full truncate text-[13px] leading-[1.35] text-muted-foreground">{agent.role}</span>
               </div>
               <IconButton
                 icon="chevrons-left"
@@ -309,117 +358,13 @@ export default function App() {
                 divider (below) rides down with it. De-facto rule: anything living in the
                 header uses the SAME left/right padding as the content area below (px-4), so
                 the trigger + controls line up flush with the "On this page" rail. */}
-            <div className="px-4 pb-2.5">
-              <CollapsibleSection label="Customize" defaultCollapsed>
-                <div className="space-y-5 px-2.5 pt-1.5 pb-1">
-                  <div className="space-y-1.5">
-                    <Label>Brand</Label>
-                    <Select value={theme} onValueChange={(v) => { setHex(""); setTheme(String(v)); setTintHex(THEMES[String(v)]?.neutralTint ?? "") }}>
-                      <SelectTrigger><SelectValue placeholder="Neutral" /></SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(THEMES).map((t) => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input value={hex} onChange={(e) => setHex(e.target.value)} placeholder="#hex (preview)" className="font-normal" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label>Neutral tint</Label>
-                    <Input value={tintHex} onChange={(e) => setTintHex(e.target.value)} placeholder="auto — follows brand" className="font-normal" />
-                    <p className="text-[11px] leading-relaxed text-muted-foreground/70">
-                      The color the greys borrow. Empty = they follow the brand. Some presets prefill their own (Anthropic uses warm Manila); edit or clear it to taste.
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label>Typeface</Label>
-                    <Select value={font} onValueChange={(v) => setFont(String(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(FONTS).map((f) => (
-                          <SelectItem key={f} value={f}>{f}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Agent</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(AGENTS).map(([key, a]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setAgentKey(key)}
-                          className={cn(
-                            "flex flex-col items-center gap-1 rounded-xl [corner-shape:squircle] border p-2 transition-[border-color,background]",
-                            agentKey === key ? "border-primary bg-accent-tint" : "border-border-strong bg-card hover:bg-fill"
-                          )}
-                        >
-                          <img src={key === "Blank" && logoSrc ? logoSrc : a.src} alt="" className="h-12 w-12 object-contain" />
-                          <span className="text-xs font-semibold">{a.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {agentKey === "Blank" && (
-                    <div className="space-y-1.5">
-                      <Label>Logo</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <label className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg [corner-shape:squircle] border border-border-strong bg-card text-sm font-semibold transition-[border-color,background] hover:bg-fill">
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            className="sr-only"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoFile(f); e.currentTarget.value = "" }}
-                          />
-                          <Icon name="upload" size={16} stroke={1.5} />
-                          {logoSrc ? "Replace" : "Upload"}
-                        </label>
-                        <button
-                          type="button"
-                          disabled={!logoSrc}
-                          onClick={() => setLogoSrc(null)}
-                          className="flex h-9 items-center justify-center gap-1.5 rounded-lg [corner-shape:squircle] border border-border-strong bg-card text-sm font-semibold transition-[border-color,background] hover:bg-fill disabled:pointer-events-none disabled:opacity-40"
-                        >
-                          <Icon name="trash" size={16} stroke={1.5} />
-                          Remove
-                        </button>
-                      </div>
-                      <p className="text-[11px] leading-relaxed text-muted-foreground/70">
-                        Drops a PNG or JPG into the disc to preview a client's brand. Stays in your browser; nothing is uploaded.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>Appearance</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {([["Light", false], ["Dark", true]] as const).map(([lbl, val]) => (
-                        <button
-                          key={lbl}
-                          type="button"
-                          onClick={() => setDark(val)}
-                          className={cn(
-                            "flex h-9 items-center justify-center gap-1.5 rounded-lg [corner-shape:squircle] border text-sm font-semibold transition-[border-color,background]",
-                            dark === val ? "border-primary bg-accent-tint" : "border-border-strong bg-card hover:bg-fill"
-                          )}
-                        >
-                          <Icon name={val ? "cloud" : "bulb"} size={16} stroke={1.5} />
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] leading-relaxed text-muted-foreground/70">
-                    These controls re-skin the styleguide live. A brand hue is preview-only — the system's own brand is the neutral gray.
-                  </p>
-                </div>
-              </CollapsibleSection>
+            {/* pb-4 = 16px below the accordion to the divider (matches its 16px L/R). The
+                -mt-1.5 nudges the whole accordion up 6px: the avatar sits in a disc, whose
+                curved bottom optically reads higher than a flat edge, so a geometrically
+                equal gap looks top-heavy. Measured so the space above the "Customize" row
+                reads even with the space below it. */}
+            <div className="-mt-1.5 px-4 pb-4">
+              <CustomizePanel skin={skin} />
             </div>
           </header>
 
@@ -427,18 +372,29 @@ export default function App() {
               click one to slide the content pane to that card (scroll-spy marks the
               section you're in). This is the per-page contents rail for longer pages. */}
           <ColumnBody>
-            {sections.length > 0 ? (
+            {subGroups.length > 0 ? (
               <>
-                {/* the card inset (--ws-card-inset) already sets the gap below the divider;
-                    the label just insets its text to align with the rows (px-2.5). */}
-                <div className="px-2.5 pb-2 text-xs leading-[1.4] font-medium text-icon">On this page</div>
-                <NavList>
-                  {sections.map((s) => (
-                    <NavItem key={s.id} current={activeSection === s.id} onClick={() => scrollToSection(s.id)}>
-                      {s.title}
-                    </NavItem>
-                  ))}
-                </NavList>
+                <div className="flex flex-col gap-1">
+                  {subGroups.map((g) =>
+                    g.items.length > 0 ? (
+                      // a subsection with sub-subsections → an accordion of anchor links
+                      <CollapsibleSection key={g.id} label={g.title} count={g.items.length}>
+                        <NavList>
+                          {g.items.map((s) => (
+                            <NavItem key={s.id} current={activeSection === s.id} onClick={() => scrollToSection(s.id)}>
+                              {s.title}
+                            </NavItem>
+                          ))}
+                        </NavList>
+                      </CollapsibleSection>
+                    ) : (
+                      // a leaf subsection (e.g. a foundation) → a plain jump link
+                      <NavItem key={g.id} current={activeSection === g.id} onClick={() => scrollToSection(g.id)}>
+                        {g.title}
+                      </NavItem>
+                    )
+                  )}
+                </div>
               </>
             ) : (
               <p className="px-2.5 text-[11px] leading-relaxed text-muted-foreground/60">
@@ -468,20 +424,18 @@ export default function App() {
             <HamburgerButton onClick={() => { setNavOpen((o) => !o); setAgentOpen(false) }} />
           </ColumnHeader>
 
-          <ColumnBody ref={contentBodyRef}>
-            <div ref={contentWrapRef} className="mx-auto max-w-3xl px-10 pt-8 pb-28">{current?.render()}</div>
+          <ColumnBody ref={contentBodyRef} className="[scrollbar-gutter:stable]">
+            {/* full-width docs column, flush with the content header. The scroll
+                gutter is reserved (scrollbar-gutter: stable) so the 8px DS scrollbar
+                doesn't inset the content; the right padding is then 4px (= the
+                header's 12px minus that 8px gutter) so the content's right edge lands
+                on the header's right edge. Left stays 14px (pl-3.5) to match the icon. */}
+            <div ref={contentWrapRef} className="pt-8 pb-28 pr-1 pl-3.5">{current?.render()}</div>
             {/* trailing room so the last section can scroll to the top (see tailSpacer) */}
             <div aria-hidden style={{ height: tailSpacer }} />
           </ColumnBody>
-
-          {/* docked resting pill — the entry point to the agent layer. The Launcher /
-              Coach mark pages render the full <Launcher> morph machine themselves, so
-              suppress this static pill there to avoid a duplicate. */}
-          {selected !== "launcher" && selected !== "coach-mark" && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
-              <LauncherPill agentName={agent.name} avatarSrc={agentSrc} className="pointer-events-auto" />
-            </div>
-          )}
+          {/* the docked launcher (now a global SEARCH command-palette) is a fixed sibling
+              of the shell — see <SearchLauncher> below, docked to this content body. */}
         </LayoutColumn>
       }
     />
@@ -498,6 +452,22 @@ export default function App() {
       collapsedSlotRef={contentSlotRef}
       onReopen={() => setSubCollapsed(false)}
     />
+
+    {/* the docked launcher, run as the styleguide's global SEARCH command-palette: hover
+        (or ⌘K) opens it into a search field, typing filters the whole design system, and
+        a result jumps to the page / section anchor. It's the launcher-agent with a search
+        capability — same component the demo agent uses. Suppressed on the Product page,
+        which renders its own <Launcher> showcase. */}
+    {selected !== "product" && (
+      <SearchLauncher
+        agentName={agent.name}
+        avatarSrc={agentSrc}
+        dockRef={contentBodyRef}
+        regionRef={contentBodyRef}
+        scrollRef={contentBodyRef}
+        onNavigate={navigateTo}
+      />
+    )}
     </>
   )
 }

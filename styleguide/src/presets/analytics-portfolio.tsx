@@ -1,4 +1,5 @@
 import * as React from "react"
+import { SectionHeader } from "@/components/product/section-header"
 
 import { cn } from "@/lib/utils"
 import { Card, CardSurface, CardHeader, CardFooter, CardTitle } from "@/components/base/card"
@@ -6,6 +7,7 @@ import { Badge } from "@/components/base/badge"
 import { Icon } from "@/components/base/icon"
 import { CardAction, PinAction, AttachAction, Sparkline } from "./analytics-ui"
 import { useDrag } from "../drag"
+import { useDemoIdentity } from "../identity"
 
 // ============================================================================
 // ANALYTICS · Portfolio view — the benchmark-aware Scorecard (health gauge + KPI
@@ -48,11 +50,16 @@ function DeltaLine({ delta }: { delta: Delta }) {
 
 function KpiCard({ kpi }: { kpi: Kpi }) {
   const { startDrag } = useDrag()
-  const card = { id: kpi.name, title: kpi.name, accent: kpi.value }
+  const card = {
+    id: kpi.name,
+    title: kpi.name,
+    accent: kpi.value,
+    tile: { type: "kpi" as const, name: kpi.name, value: kpi.value, bench: kpi.bench, status: kpi.status, sparkTone: kpi.spark, delta: kpi.delta },
+  }
   return (
     <Card
       className="cursor-grab select-none active:cursor-grabbing"
-      onPointerDown={(e) => startDrag({ title: card.title, accent: card.accent, sourceId: card.id }, e)}
+      onPointerDown={(e) => startDrag({ title: card.title, accent: card.accent, sourceId: card.id, tile: card.tile }, e)}
     >
       <CardHeader
         title={kpi.name}
@@ -122,9 +129,10 @@ function HealthGauge() {
 // ---- the client table ------------------------------------------------------
 
 type Platform = "Shopify Plus" | "Shopify + H" | "Shopify"
+// `siteIndex` points into the resolved DemoIdentity sites (name + initials); no
+// client site name is baked here.
 type Row = {
-  initials: string
-  name: string
+  siteIndex: number
   joined: string
   platform: Platform
   sessions: string
@@ -136,18 +144,19 @@ type Row = {
 }
 
 const ROWS: Row[] = [
-  { initials: "LL", name: "laticoleathers.com", joined: "Mar 2025", platform: "Shopify Plus", sessions: "503,164", revenue: "$1.2M", cvr: "1.5%", cvrDelta: { text: "-0.18pp", up: false }, rps: "$2.46", status: { label: "Needs Attention", variant: "warning" } },
-  { initials: "GR", name: "gearrush.com", joined: "Jan 2025", platform: "Shopify + H", sessions: "218,440", revenue: "$987K", cvr: "3.21%", cvrDelta: { text: "+1.2pp", up: true }, rps: "$4.52", status: { label: "Healthy", variant: "success" } },
-  { initials: "PL", name: "plushlair.com", joined: "Feb 2025", platform: "Shopify Plus", sessions: "144,820", revenue: "$612K", cvr: "2.87%", cvrDelta: { text: "+0.9pp", up: true }, rps: "$4.23", status: { label: "Healthy", variant: "success" } },
-  { initials: "BW", name: "blanketwaves.com", joined: "Apr 2025", platform: "Shopify", sessions: "98,210", revenue: "$342K", cvr: "1.92%", cvrDelta: { text: "-0.3pp", up: false }, rps: "$3.48", status: { label: "At risk", variant: "error" } },
-  { initials: "VL", name: "vaultleather.com", joined: "May 2025", platform: "Shopify", sessions: "74,330", revenue: "$289K", cvr: "2.41%", cvrDelta: { text: "+0.4pp", up: true }, rps: "$3.89", status: { label: "Onboarding", variant: "neutral" } },
-  { initials: "CT", name: "crateandtimber.com", joined: "Jan 2025", platform: "Shopify + H", sessions: "61,880", revenue: "$218K", cvr: "2.18%", cvrDelta: { text: "+0.7pp", up: true }, rps: "$3.53", status: { label: "Healthy", variant: "success" } },
-  { initials: "FK", name: "fieldkraft.com", joined: "Jun 2025", platform: "Shopify", sessions: "51,200", revenue: "$187K", cvr: "2.22%", cvrDelta: { text: "+0.2pp", up: true }, rps: "$3.66", status: { label: "Healthy", variant: "success" } },
-  { initials: "NW", name: "northwoodco.com", joined: "Jul 2025", platform: "Shopify Plus", sessions: "44,100", revenue: "$143K", cvr: "1.98%", cvrDelta: { text: "+0.1pp", up: true }, rps: "$3.25", status: { label: "Onboarding", variant: "neutral" } },
+  { siteIndex: 0, joined: "Mar 2025", platform: "Shopify Plus", sessions: "503,164", revenue: "$1.2M", cvr: "1.5%", cvrDelta: { text: "-0.18pp", up: false }, rps: "$2.46", status: { label: "Needs Attention", variant: "warning" } },
+  { siteIndex: 1, joined: "Jan 2025", platform: "Shopify + H", sessions: "218,440", revenue: "$987K", cvr: "3.21%", cvrDelta: { text: "+1.2pp", up: true }, rps: "$4.52", status: { label: "Healthy", variant: "success" } },
+  { siteIndex: 2, joined: "Feb 2025", platform: "Shopify Plus", sessions: "144,820", revenue: "$612K", cvr: "2.87%", cvrDelta: { text: "+0.9pp", up: true }, rps: "$4.23", status: { label: "Healthy", variant: "success" } },
+  { siteIndex: 3, joined: "Apr 2025", platform: "Shopify", sessions: "98,210", revenue: "$342K", cvr: "1.92%", cvrDelta: { text: "-0.3pp", up: false }, rps: "$3.48", status: { label: "At risk", variant: "error" } },
+  { siteIndex: 4, joined: "May 2025", platform: "Shopify", sessions: "74,330", revenue: "$289K", cvr: "2.41%", cvrDelta: { text: "+0.4pp", up: true }, rps: "$3.89", status: { label: "Onboarding", variant: "neutral" } },
+  { siteIndex: 5, joined: "Jan 2025", platform: "Shopify + H", sessions: "61,880", revenue: "$218K", cvr: "2.18%", cvrDelta: { text: "+0.7pp", up: true }, rps: "$3.53", status: { label: "Healthy", variant: "success" } },
+  { siteIndex: 6, joined: "Jun 2025", platform: "Shopify", sessions: "51,200", revenue: "$187K", cvr: "2.22%", cvrDelta: { text: "+0.2pp", up: true }, rps: "$3.66", status: { label: "Healthy", variant: "success" } },
+  { siteIndex: 7, joined: "Jul 2025", platform: "Shopify Plus", sessions: "44,100", revenue: "$143K", cvr: "1.98%", cvrDelta: { text: "+0.1pp", up: true }, rps: "$3.25", status: { label: "Onboarding", variant: "neutral" } },
 ]
 
 function PortfolioTable() {
   const { startDrag } = useDrag()
+  const { sites } = useDemoIdentity()
   const th = "px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap"
   const td = "px-3 py-3 text-base text-foreground whitespace-nowrap align-middle"
   return (
@@ -168,19 +177,29 @@ function PortfolioTable() {
               </tr>
             </thead>
             <tbody>
-              {ROWS.map((r) => (
+              {ROWS.map((r) => {
+                const site = sites[r.siteIndex]
+                const name = site?.name ?? ""
+                const initials = site?.initials ?? ""
+                const rowCard = {
+                  id: name,
+                  title: name,
+                  accent: r.revenue,
+                  tile: { type: "chart" as const, title: name, note: `${r.platform} · ${r.status.label}`, spec: { kind: "stat" as const, label: "Revenue", value: r.revenue } },
+                }
+                return (
                 <tr
-                  key={r.name}
+                  key={name}
                   className="cursor-grab border-b border-border transition-colors select-none last:border-0 hover:bg-[var(--ctl-hover)] active:cursor-grabbing"
-                  onPointerDown={(e) => startDrag({ title: r.name, accent: r.revenue, sourceId: r.name }, e)}
+                  onPointerDown={(e) => startDrag({ title: name, accent: r.revenue, sourceId: name, tile: rowCard.tile }, e)}
                 >
                   <td className={cn(td, "pl-5")}>
                     <div className="flex items-center gap-2.5">
                       <span className="grid size-9 shrink-0 place-items-center rounded-full [corner-shape:round] bg-subtle text-xs font-semibold text-muted-foreground">
-                        {r.initials}
+                        {initials}
                       </span>
                       <span className="flex flex-col leading-tight">
-                        <span className="font-medium text-foreground">{r.name}</span>
+                        <span className="font-medium text-foreground">{name}</span>
                         <span className="text-xs text-muted-foreground">{r.joined}</span>
                       </span>
                     </div>
@@ -204,13 +223,14 @@ function PortfolioTable() {
                   </td>
                   <td className={cn(td, "pr-4")}>
                     <div className="flex items-center justify-end gap-0.5">
-                      <PinAction card={{ id: r.name, title: r.name, accent: r.revenue }} />
-                      <AttachAction card={{ id: r.name, title: r.name, accent: r.revenue }} />
+                      <PinAction card={rowCard} />
+                      <AttachAction card={rowCard} />
                       <CardAction icon="dots-vertical" label="More actions" />
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -224,10 +244,7 @@ export function PortfolioView() {
     <>
       {/* Scorecard */}
       <section className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between gap-6 border-b border-border px-1 pb-3">
-          <h2 className="shrink-0 text-md font-semibold tracking-[-0.01em] text-foreground">Scorecard</h2>
-          <p className="truncate text-sm text-muted-foreground">Benchmark-aware portfolio health</p>
-        </div>
+        <SectionHeader title="Scorecard" description="Benchmark-aware portfolio health" placement="inline" divider />
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
           <HealthGauge />
           {KPIS.map((k) => (
@@ -238,10 +255,7 @@ export function PortfolioView() {
 
       {/* Portfolio table */}
       <section className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between gap-6 border-b border-border px-1 pb-3">
-          <h2 className="shrink-0 text-md font-semibold tracking-[-0.01em] text-foreground">Portfolio</h2>
-          <p className="truncate text-sm text-muted-foreground">Every client, health-first</p>
-        </div>
+        <SectionHeader title="Portfolio" description="Every client, health-first" placement="inline" divider />
         <PortfolioTable />
       </section>
     </>

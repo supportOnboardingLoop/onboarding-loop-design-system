@@ -1,0 +1,18 @@
+<!-- PLACEHOLDER Heatmap logomark. Drop the real square brand mark in at this same
+     path (styleguide/public/brand/heatmap.svg) to replace it; the client build
+     renders whatever lives here in the top-left mark slot (in place of the letter),
+     with the brand name "Heatmap" beside it. A green squircle with a heatmap grid. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <rect width="40" height="40" rx="11" fill="#10b068"/>
+  <g fill="#fff">
+    <rect x="9"  y="9"  width="6" height="6" rx="1.5" opacity="0.92"/>
+    <rect x="17" y="9"  width="6" height="6" rx="1.5" opacity="0.50"/>
+    <rect x="25" y="9"  width="6" height="6" rx="1.5" opacity="0.35"/>
+    <rect x="9"  y="17" width="6" height="6" rx="1.5" opacity="0.55"/>
+    <rect x="17" y="17" width="6" height="6" rx="1.5" opacity="0.95"/>
+    <rect x="25" y="17" width="6" height="6" rx="1.5" opacity="0.62"/>
+    <rect x="9"  y="25" width="6" height="6" rx="1.5" opacity="0.35"/>
+    <rect x="17" y="25" width="6" height="6" rx="1.5" opacity="0.70"/>
+    <rect x="25" y="25" width="6" height="6" rx="1.5" opacity="0.88"/>
+  </g>
+</svg>

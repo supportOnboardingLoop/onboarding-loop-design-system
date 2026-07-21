@@ -12,27 +12,57 @@ import {
   DropdownEmpty,
 } from "@/components/product/dropdown"
 import { Choices } from "@/components/product/choices"
-import { AGENTS } from "../skins"
+import { useDemoIdentity } from "../identity"
 import { AnalyticsBody } from "./analytics-content"
 import { REPORTS, ReportBuild } from "./analytics-reports"
+import { makeSeedDashboard } from "./analytics-dashboard"
 import type { DemoPreset, SlotProps } from "./types"
 
 // ============================================================================
-// ANALYTICS — the Heatmap CRO-analytics portal. This is the flagship preset:
-// green Heatmap skin + Wilson + the money-ranked insight / portfolio content.
-// Deployed (locked) to the Heatmap client link via ?saas=analytics&lock=1.
-// The rich content BODY (Insights cards, Portfolio scorecard, generated
-// reports) is migrated onto the Card system in the content pass; for now the
-// body is empty (the launcher docks into it), matching the ported demo.
+// ANALYTICS — a CRO-analytics portal. This is the flagship preset: the
+// money-ranked insight / portfolio / generated-report content on the Card
+// system. It is CONTENT only; it carries no brand and no real client data. The
+// public demo shows it in the visitor's chosen skin with invented, generic site
+// names (identity.ts DEFAULT_SITES); the Heatmap client build overrides both the
+// skin (clients.ts) and the sites, so it reads as the real Heatmap portal.
 // ============================================================================
-
-const CLIENTS = ["laticoleathers.com", "gearrush.com", "plushlair.com"]
 
 const CHOICE_OPTS = [
   { value: "a", label: "Pull the full revenue-leak report" },
   { value: "b", label: "Compare it against last quarter" },
   { value: "c", label: "Just summarise the top 3 issues" },
 ]
+
+// who a saved view / dashboard is shared with — used both by the create-dashboard
+// modal (accessOptions below) and the dashboard header's Access dropdown.
+const ACCESS_OPTS = ["Only myself", "My team", "Everyone at the agency"]
+
+/* the dashboard header's Access control: the SAME multi-select checklist dropdown
+   as the create-dashboard modal (checkbox rows, no search), in the header control
+   style so it sits alongside the date-range picker. Display-only in the demo. */
+function AccessFilter() {
+  const [access, setAccess] = React.useState<string[]>(["Only myself"])
+  const toggle = (o: string) => setAccess((v) => (v.includes(o) ? v.filter((x) => x !== o) : [...v, o]))
+  return (
+    <Dropdown>
+      <DropdownTrigger className="group/trigger bp-chev-host flex h-[34px] shrink-0 items-center gap-2 rounded-lg [corner-shape:squircle] border border-[var(--ctl-line)] bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-2))] pr-2.5 pl-3.5 text-base font-medium text-[var(--ctl-ink)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-[border-color,box-shadow,background] hover:border-[var(--ctl-line-hover)] hover:bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-hover))] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
+        <span className="whitespace-nowrap">Access</span>
+        <Icon
+          name="chevron-down"
+          size={18}
+          className="bp-chev text-muted-foreground transition-transform duration-200 group-data-[popup-open]/trigger:rotate-180"
+        />
+      </DropdownTrigger>
+      <DropdownContent align="end" className="min-w-[200px]">
+        {ACCESS_OPTS.map((o) => (
+          <DropdownCheckItem key={o} checked={access.includes(o)} onCheckedChange={() => toggle(o)}>
+            {o}
+          </DropdownCheckItem>
+        ))}
+      </DropdownContent>
+    </Dropdown>
+  )
+}
 
 /* the content-header Clients filter: the ONE dropdown (a search field + checkbox
    rows) — a searchable multi-select, same surface / rows / placement as every other
@@ -81,14 +111,34 @@ function ClientsFilter({
   )
 }
 
-/* the content-header actions cluster: Clients filter + date range + the primary
+/* the content-header actions cluster. In a DASHBOARD it is just the date range +
+   a "Create banner" CTA (the clients filter + "Save as Dashboard" don't apply to a
+   saved board). Everywhere else it's the Clients filter + date range + the primary
    "Save as Dashboard" CTA (its dashboard-grid glyph draws itself on hover). The
    clients selection is display-only, so it lives here rather than in the shell. */
 function AnalyticsHeaderActions({ ctx }: SlotProps) {
-  const [clients, setClients] = React.useState<string[]>([...CLIENTS])
+  // the filterable clients are the first few sites of the resolved identity
+  // (generic in the public demo, the real portfolio in a client build)
+  const { sites } = useDemoIdentity()
+  const clientOptions = React.useMemo(() => sites.slice(0, 3).map((s) => s.name), [sites])
+  const [clients, setClients] = React.useState<string[]>(() => [...clientOptions])
+
+  if (ctx.selectedDash) {
+    return (
+      <>
+        <DateRangePicker placeholder="30 days" className="!w-auto min-w-[120px]" />
+        <AccessFilter />
+        <Button variant="secondary" onClick={ctx.openBannerComposer}>
+          <Icon name="plus" size={16} />
+          Create banner
+        </Button>
+      </>
+    )
+  }
+
   return (
     <>
-      <ClientsFilter options={CLIENTS} value={clients} onChange={setClients} />
+      <ClientsFilter options={clientOptions} value={clients} onChange={setClients} />
       <DateRangePicker placeholder="30 days" className="!w-auto min-w-[120px]" />
       <Button variant="primary" className="st-content__save" onClick={ctx.openSaveModal}>
         Save as Dashboard
@@ -108,19 +158,17 @@ function AnalyticsHeaderActions({ ctx }: SlotProps) {
 export const analyticsPreset: DemoPreset = {
   id: "analytics",
   label: "Analytics",
-  tagline: "A CRO analytics portal (Heatmap)",
+  tagline: "A CRO analytics portal",
   pickerIcon: "chart-bar",
   status: "ready",
-  skin: { theme: "Heatmap", font: "Inter", agent: { ...AGENTS.Wilson, role: "CRO expert" } },
 
   brand: { mark: "C", name: "Company" },
   nav: [
     {
       label: "Workspace",
-      count: 2,
+      count: 1,
       items: [
         { id: "Overview", icon: "sparkles", label: "Overview", badge: { text: "4", variant: "new" } },
-        { id: "Portfolio", icon: "chart-bar", label: "Portfolio", badge: { text: "Healthy", variant: "new" } },
       ],
     },
     {
@@ -136,11 +184,11 @@ export const analyticsPreset: DemoPreset = {
   collection: {
     label: "Dashboards",
     itemIcon: "layout-dashboard",
-    seed: [
-      { id: "d1", name: "laticoleathers.com", count: 3 },
-      { id: "d2", name: "gearrush.com", count: 5 },
-      { id: "d3", name: "plushlair.com", count: 2 },
-    ],
+    // boot with ONE populated dashboard (a store-performance board, two tiles
+    // already carrying a comment thread). New dashboards start empty; the user
+    // fills them by pinning cards. See makeSeedDashboard.
+    seed: [],
+    seedDashboards: () => [makeSeedDashboard()],
     saveVerb: "Save as Dashboard",
     saveNoun: "Dashboard",
   },
@@ -162,7 +210,7 @@ export const analyticsPreset: DemoPreset = {
     Body: AnalyticsBody,
   },
 
-  accessOptions: ["Only myself", "My team", ...CLIENTS],
+  accessOptions: ACCESS_OPTS,
   coaches: [
     {
       target: "collection",
@@ -178,7 +226,7 @@ export const analyticsPreset: DemoPreset = {
     },
   ],
 
-  // Wilson offers the A/B/C choice, then BUILDS the picked report: a "building"
+  // The agent offers the A/B/C choice, then BUILDS the picked report: a "building"
   // message + progress, then a "ready" CTA that opens the report in the content area.
   conversation: {
     respond: (api, _text, actions) => {

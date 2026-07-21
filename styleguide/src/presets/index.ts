@@ -5,8 +5,10 @@ import { healthPreset } from "./health"
 import { financePreset } from "./finance"
 import { crmPreset } from "./crm"
 
-// The demo's SaaS presets, ordered for the picker. Analytics (Heatmap) leads and
-// is the default — it's the flagship, and the Heatmap client link deploys it.
+// The demo's SaaS presets, ordered for the picker. Analytics leads and is the
+// default; it's the flagship, and the client links (e.g. Heatmap) load it as
+// their content. A preset is CONTENT only — branding is resolved by the deploy
+// (the visitor's Customize choices, or a client record in clients.ts).
 export const PRESET_LIST: DemoPreset[] = [
   analyticsPreset,
   projectMgmtPreset,
@@ -21,32 +23,12 @@ export const PRESETS: Record<string, DemoPreset> = Object.fromEntries(
 
 export const DEFAULT_PRESET_ID = analyticsPreset.id
 
-// Friendly aliases for the ?saas= param. The Heatmap client link can use the
-// natural ?saas=heatmap and it resolves to the Analytics preset.
-const ALIASES: Record<string, string> = { heatmap: "analytics" }
-
-// Resolve a raw ?saas= value (or alias) to a known preset id, falling back to
-// the default when it's missing or unrecognized.
+// Resolve a raw ?saas= value to a known preset id, falling back to the default
+// when it's missing or unrecognized. (Host-based client pinning lives in
+// clients.ts, resolved before this in DemoApp.)
 export function resolvePresetId(raw: string | null | undefined): string {
-  const key = (raw ?? "").trim().toLowerCase()
-  const id = ALIASES[key] ?? key
+  const id = (raw ?? "").trim().toLowerCase()
   return PRESETS[id] ? id : DEFAULT_PRESET_ID
-}
-
-// Client deploys: a custom domain pins the demo to one preset AND locks the
-// picker, so the client link reads as a bespoke product, not the multi-SaaS demo.
-// To onboard a new client domain, add one line here; no new code, no build fork.
-// (Vercel rewrites the host to /demo.html; the lock is decided here, by host.)
-const CLIENT_HOSTS: Record<string, string> = {
-  "heatmap.onboardingloop.ai": "analytics",
-}
-
-// If the current host is a pinned client domain, return its preset id; else null.
-// A non-null result means: force this preset and lock the picker, ignoring the URL.
-export function resolveHostPresetId(hostname: string | null | undefined): string | null {
-  const host = (hostname ?? "").trim().toLowerCase()
-  const id = CLIENT_HOSTS[host]
-  return id && PRESETS[id] ? id : null
 }
 
 export type { DemoPreset } from "./types"

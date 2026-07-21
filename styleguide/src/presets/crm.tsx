@@ -1,4 +1,3 @@
-import { AGENTS } from "../skins"
 import { choiceConversation } from "./_shared"
 import type { DemoPreset } from "./types"
 
@@ -9,7 +8,6 @@ export const crmPreset: DemoPreset = {
   tagline: "Pipeline, deals, and accounts",
   pickerIcon: "users",
   status: "soon",
-  skin: { theme: "HubSpot", font: "Poppins", agent: { name: "Casey", role: "Sales copilot", src: AGENTS.Bal.src } },
 
   brand: { mark: "R", name: "Relate" },
   nav: [

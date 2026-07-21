@@ -16,6 +16,7 @@
 @import "../../../components/web/home.css";
 @import "../../../components/web/pricing.css";
 @import "../../../components/web/faq.css";
+@import "../../../components/web/demo-page.css";
 
 @source "../../../components";
 @source "../../../lib";

@@ -45,6 +45,15 @@ export type LauncherOptions = {
   onNewChat?: (text: string) => void
   onSaveDashboard?: (name: string) => void
   onState?: (s: LauncherState) => void
+  /** SEARCH capability (opt-in): fired on every composer keystroke with the live
+   *  value. When omitted the composer behaves exactly as the agent composer. */
+  onQuery?: (value: string) => void
+  /** SEARCH: move the host's result highlight (ArrowDown = +1 / ArrowUp = -1). Only
+   *  wired when provided, so a plain composer keeps native arrow-key caret motion. */
+  onNav?: (dir: 1 | -1) => void
+  /** SEARCH: commit the highlighted result on Enter. Return true if the host fully
+   *  handled it (the engine then skips its default submit / onNewChat). */
+  onCommit?: () => boolean
 }
 
 export type LauncherApi = ReturnType<typeof createLauncher>
@@ -68,6 +77,7 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
   const savingProg = root.querySelector<HTMLElement>(".launcher__saving .launcher__progress")
   const notifTitleEl = root.querySelector<HTMLElement>(".notif__title")
   const notifDescEl = root.querySelector<HTMLElement>(".notif__desc")
+  const notifActionEl = root.querySelector<HTMLButtonElement>(".notif__action")
   const coachTitleEl = root.querySelector<HTMLElement>(".coach__title")
   const coachDescEl = root.querySelector<HTMLElement>(".coach__desc")
 
@@ -93,6 +103,9 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
   let attachCount = 0 // staged card attachments in the composer (React owns the chips)
   let notifTimer = 0
   let coachSpotTimer = 0
+  // the current notif's optional action (e.g. Undo); run by runNotifAction, cleared
+  // whenever the notif leaves (auto-dismiss or close), so a stale action never fires.
+  let pendingNotifAction: (() => void) | null = null
   let spotlightOn = false
   let savingTok = 0
   let pendingSaveName: string | null = null
@@ -151,11 +164,14 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
     root.style.height = "68px"
     const main = root.querySelector<HTMLElement>(".launcher__notif .notif__main")
     const mw = main ? main.offsetWidth : 320
+    // an optional action button (Undo) sits before the close ring; add its width +
+    // the flex gap when it's shown (hidden -> offsetWidth 0)
+    const aw = notifActionEl ? notifActionEl.offsetWidth : 0
     root.dataset.state = pS
     root.style.width = pW
     root.style.height = pH
     root.style.transition = pT
-    return 84 + mw + 14 + 40 + 14
+    return 84 + mw + (aw ? aw + 14 : 0) + 14 + 40 + 14
   }
 
   function clampLauncherW(w: number) {
@@ -363,6 +379,11 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
   }
   function relayout() {
     if (morphing) return
+    // re-read the resting content width first, so a changed agent name / label
+    // (or font) resizes the pill instead of clipping (measureDefaultW is a no-op
+    // while the default block is hidden). This also runs at the end of every morph
+    // (see morphTo) and on resize, so the pill always fits its content.
+    measureDefaultW()
     applyGeom(geom(state))
     if (backdrop.classList.contains("is-on")) placeBackdrop()
     if (coachOn) placeSpotlight()
@@ -386,6 +407,9 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
       clearTimeout(notifTimer)
       notifTimer = 0
     }
+    // the notif is leaving (auto-dismiss, close, or a new state): drop any pending
+    // action so a later Undo click can't fire a stale callback.
+    pendingNotifAction = null
     clearCoachSpot()
     root.classList.remove("is-drawing")
   }
@@ -408,6 +432,20 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
       hideSpotlight()
     }, 2000)
     notifTimer = window.setTimeout(() => dismissCoach(), 6000)
+  }
+
+  // set the notif's text + tone + action LABEL/visibility before morphing to it, so
+  // the width measures right. The action CALLBACK is set separately (after the morph)
+  // so a notif->notif refresh can't wipe it via clearNotifDraw.
+  function applyNotifContent(o: { title: string; desc: string; tone?: "positive" | "neutral"; actionLabel?: string }) {
+    if (notifTitleEl) notifTitleEl.textContent = o.title
+    if (notifDescEl) notifDescEl.textContent = o.desc
+    root.dataset.notifTone = o.tone ?? "positive"
+    if (notifActionEl) {
+      notifActionEl.hidden = !o.actionLabel
+      if (o.actionLabel) notifActionEl.textContent = o.actionLabel
+    }
+    pendingNotifAction = null
   }
 
   /* ---- the Saving step: the progress fills 0 -> 100 over ~2s (rAF), then -> notif ---- */
@@ -462,6 +500,7 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
     if (!t && attachCount === 0) return // allow send with attachments + no text
     input.value = ""
     autoGrow()
+    opts.onQuery?.("")
     if (sendBtn) sendBtn.disabled = true
     focused = false
     hovered = false
@@ -486,10 +525,19 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
   const onInput = () => {
     syncSend()
     resizeInput()
+    opts.onQuery?.(input?.value ?? "")
   }
   const onKeydown = (e: KeyboardEvent) => {
+    // SEARCH: arrow keys drive the host's result highlight instead of the caret
+    if (opts.onNav && state === "input" && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault()
+      opts.onNav(e.key === "ArrowDown" ? 1 : -1)
+      return
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
+      // SEARCH: let the host commit the highlighted result; if it did, we're done
+      if (opts.onCommit?.()) return
       if (sendBtn && !sendBtn.disabled) submit()
     } else if (e.key === "Escape") {
       if (input) {
@@ -499,6 +547,7 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
       if (sendBtn) sendBtn.disabled = true
       hovered = false
       input?.blur()
+      opts.onQuery?.("")
       if (state === "input") morphTo("default")
     }
   }
@@ -510,6 +559,8 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
     maybeCollapse()
   }
   const onSendClick = () => {
+    // SEARCH: the send button opens the highlighted result (same as Enter)
+    if (opts.onCommit?.()) return
     if (sendBtn && !sendBtn.disabled) submit()
   }
   input?.addEventListener("input", onInput)
@@ -699,10 +750,7 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
   })
 
   /* ---- keep everything docked / aligned as the layout shifts ---- */
-  const onResize = () => {
-    measureDefaultW()
-    relayout()
-  }
+  const onResize = () => relayout() // relayout re-measures the resting width itself
   const onScroll = () => relayout()
   window.addEventListener("resize", onResize)
   opts.scrollEl?.addEventListener("scroll", onScroll, { passive: true })
@@ -714,6 +762,10 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
     ro = new ResizeObserver(() => relayout())
     ro.observe(dockEl)
     if (regionEl !== dockEl) ro.observe(regionEl)
+    // observe the resting content too: when the agent name / label / font changes
+    // its width, the pill re-measures and grows/shrinks to fit (no clipped ⌘K)
+    const ctaEl = root.querySelector<HTMLElement>(".launcher__default .launcher__cta")
+    if (ctaEl) ro.observe(ctaEl)
   }
 
   // initial dock — synchronously (before first paint) so the card never flashes at 0,0,
@@ -756,15 +808,29 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
     startSaveFlow(o: { name?: string; notifTitle: string; notifDesc: string; onComplete?: () => void }) {
       pendingSaveName = o.name ?? null
       pendingComplete = o.onComplete ?? null
-      if (notifTitleEl) notifTitleEl.textContent = o.notifTitle
-      if (notifDescEl) notifDescEl.textContent = o.notifDesc
+      applyNotifContent({ title: o.notifTitle, desc: o.notifDesc })
       morphTo("saving")
     },
-    /** the reusable system-wide toast: set text + morph to the notif state */
-    showNotification(title: string, desc: string) {
-      if (notifTitleEl) notifTitleEl.textContent = title
-      if (notifDescEl) notifDescEl.textContent = desc
+    /** the reusable system-wide toast: set text + morph to the notif state. `opts`
+     *  adds a neutral tone (for a reversible delete) and an action button (e.g.
+     *  Undo) whose click runs `onAction` — see runNotifAction. */
+    showNotification(
+      title: string,
+      desc: string,
+      opts: { tone?: "positive" | "neutral"; actionLabel?: string; onAction?: () => void } = {}
+    ) {
+      applyNotifContent({ title, desc, tone: opts.tone, actionLabel: opts.actionLabel })
       morphTo("notif")
+      // set AFTER the morph: a notif->notif refresh runs clearNotifDraw (which nulls
+      // pendingNotifAction) during morphTo, so setting it here keeps the new action.
+      pendingNotifAction = opts.onAction ?? null
+    },
+    /** run the current notif's action (the Undo button), then dismiss it */
+    runNotifAction() {
+      const fn = pendingNotifAction
+      pendingNotifAction = null
+      fn?.()
+      morphTo("default")
     },
     /** dismiss the current transient state (notif close, coach close) back to the pill */
     dismiss() {
@@ -780,6 +846,16 @@ export function createLauncher(root: HTMLElement, opts: LauncherOptions) {
       }
     },
     relayout,
+    /** SEARCH: re-fit the docked composer's height to its live content (e.g. after
+     *  the host renders/updates its results list). Safe to call anytime. */
+    resizeInput,
+    /** SEARCH: clear the composer value + notify onQuery (used after committing a result) */
+    clearInput() {
+      if (input) input.value = ""
+      autoGrow()
+      syncSend()
+      opts.onQuery?.("")
+    },
     destroy() {
       morphTok++
       savingTok++

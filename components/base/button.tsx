@@ -14,16 +14,18 @@ const buttonVariants = cva(
         // primary: accent gradient (lighter top, darker bottom) + border + control shadow
         primary:
           "border-primary text-primary-foreground shadow-control bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_90%,white),color-mix(in_srgb,var(--primary)_90%,black))] hover:bg-[linear-gradient(180deg,var(--primary),color-mix(in_srgb,var(--primary)_82%,black))] active:translate-y-[0.5px] active:shadow-[0_1px_2px_rgba(10,13,18,0.12)] active:bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_84%,black),color-mix(in_srgb,var(--primary)_72%,black))]",
-        // secondary: whisper white->#f7f7f7 gradient + gray border + tiny lift
-        // (surface is permanently light, so the ink is a fixed dark, not the theme fg)
+        // secondary: whisper control-face gradient + edge + tiny lift. The face
+        // is a TOKEN, not a literal: it inverts with the color scheme, so in dark
+        // mode this reads as a raised dark control rather than a white slab that
+        // out-shouts the primary button.
         secondary:
-          "text-[#26262a] border-[#dcdcdc] shadow-[0_1px_2px_rgba(10,13,18,0.05)] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] hover:border-[#cfcfcf] hover:bg-[linear-gradient(180deg,#ffffff,#f1f1f1)] active:translate-y-[0.5px] active:bg-[linear-gradient(180deg,#f7f7f7,#ededed)]",
+          "text-[var(--ctl-ink)] border-[var(--ctl-line)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-2))] hover:border-[var(--ctl-line-hover)] hover:bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-hover))] active:translate-y-[0.5px] active:bg-[linear-gradient(180deg,var(--ctl-face-2),var(--ctl-face-press))]",
         // tertiary: flat gray outline, quiet hover fill
         tertiary:
-          "text-[#6b7280] border-[rgba(17,24,39,0.16)] hover:border-[rgba(17,24,39,0.22)] hover:bg-[rgba(17,24,39,0.04)] active:translate-y-[0.5px] active:bg-[rgba(17,24,39,0.07)]",
+          "text-[var(--ctl-ink-quiet)] border-[var(--ctl-outline)] hover:border-[var(--ctl-outline-hover)] hover:bg-[var(--ctl-wash)] active:translate-y-[0.5px] active:bg-[var(--ctl-wash-strong)]",
         // ghost: no outline until hover
         ghost:
-          "text-[#6b7280] hover:border-[rgba(17,24,39,0.16)] active:translate-y-[0.5px] active:border-[rgba(17,24,39,0.16)] active:bg-[rgba(17,24,39,0.05)]",
+          "text-[var(--ctl-ink-quiet)] hover:border-[var(--ctl-outline)] active:translate-y-[0.5px] active:border-[var(--ctl-outline)] active:bg-[var(--ctl-wash)]",
         // destructive: functional red, tinted fill
         destructive:
           "text-destructive bg-[color-mix(in_oklab,var(--destructive)_12%,transparent)] hover:bg-[color-mix(in_oklab,var(--destructive)_18%,transparent)] active:translate-y-[0.5px]",
@@ -34,8 +36,13 @@ const buttonVariants = cva(
       size: {
         default: "h-[34px] px-4 text-base [&_svg:not([class*='size-'])]:size-5",
         sm: "h-[32px] px-3 text-sm [&_svg:not([class*='size-'])]:size-[18px]",
+        // lg: 48px tall so the 24px control radius (--radius-lg) shows in FULL —
+        // 34px controls clamp it to ~17px, this one is the only place it reads at
+        // its true value. Roomier padding + 16px text keep it proportional.
+        lg: "h-12 px-5 text-md [&_svg:not([class*='size-'])]:size-[22px]",
         icon: "h-[34px] w-[34px] px-0 [&_svg:not([class*='size-'])]:size-5",
         "icon-sm": "h-[32px] w-[32px] px-0 [&_svg:not([class*='size-'])]:size-[18px]",
+        "icon-lg": "h-12 w-12 px-0 [&_svg:not([class*='size-'])]:size-[22px]",
       },
     },
     defaultVariants: {
@@ -65,7 +72,7 @@ function Button({
   children,
   ...props
 }: ButtonProps) {
-  const iconSize = size === "sm" || size === "icon-sm" ? 18 : 20
+  const iconSize = size === "sm" || size === "icon-sm" ? 18 : size === "lg" || size === "icon-lg" ? 22 : 20
 
   // reveal-label: icon-only button (children = the icon) that grows a label
   if (revealLabel) {

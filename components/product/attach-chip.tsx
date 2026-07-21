@@ -8,7 +8,10 @@ import { Icon } from "../base/icon"
 // the sent message. `accent` is the card's headline figure (money / value).
 // `sourceId` links the chip back to the card it came from, so that card can
 // reflect an "attached" state (filled paperclip) and un-attach itself.
-export type Attachment = { title: string; accent?: string; sourceId?: string }
+// `tile` is an opaque, serializable descriptor the host attaches so a dropped card
+// can be re-rendered where it lands (e.g. pinned onto a dashboard). Kept `unknown`
+// so this base component stays independent of any app's tile shape.
+export type Attachment = { title: string; accent?: string; sourceId?: string; tile?: unknown }
 
 // The chip: paperclip + optional accent + title, and (in a composer) a remove X.
 // Shares the `.bp-attach` look with the engine-rendered in-message chips (chat.css).

@@ -1,4 +1,3 @@
-import { AGENTS } from "../skins"
 import { choiceConversation } from "./_shared"
 import type { DemoPreset } from "./types"
 
@@ -9,7 +8,6 @@ export const healthPreset: DemoPreset = {
   tagline: "Programs, plans, and vitals",
   pickerIcon: "heart",
   status: "soon",
-  skin: { theme: "LinkedIn", font: "Manrope", agent: { name: "Remy", role: "Health coach", src: AGENTS.Bal.src } },
 
   brand: { mark: "V", name: "Vitals" },
   nav: [

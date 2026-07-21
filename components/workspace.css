@@ -278,28 +278,38 @@
   display: grid; place-items: center; font-weight: 800; font-size: 15px;
 }
 .ws-brand__name { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; }
+/* client build: a logomark in the square mark slot in place of the letter (see
+   BrandMark); the name text renders beside it as usual */
+.ws-brand__mark-logo { flex: none; width: 32px; height: 32px; object-fit: contain; display: block; }
 
 /* ---- AgentHomeHeader: the agent-identity header atop the agent-home column
-   (108px; a travelling-avatar SLOT + name/role + a collapse toggle). The static
+   (a travelling-avatar SLOT + name/role + a collapse toggle). The static
    .ws-agent-hdr__av is shown only on compact, inside the drawer. ---- */
-.ws-agent-hdr { flex: none; position: relative; min-height: 108px; background: var(--card); }
+.ws-agent-hdr { flex: none; position: relative; min-height: 102px; background: var(--card); }
 .ws-agent-hdr::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--border);
 }
-/* the identity row: fixed 108px, the positioning context for the absolute avatar
-   slot / name / toggle. Any header children (Context Engine) flow below it and grow
-   the gray header. */
-.ws-agent-hdr__idrow { position: relative; height: 108px; }
-.ws-agent-hdr__extra { padding: 0 16px 12px; }
+/* the identity row: the positioning context for the absolute avatar slot / name /
+   toggle. Any header children (accordions) flow below it and grow the gray header.
+   Its height is tuned so the gap below the identity (to the first accordion) matches
+   the accordions' 16px left/right padding, for even spacing all around. */
+.ws-agent-hdr__idrow { position: relative; height: 102px; }
+/* even inset: 16px left/right AND 16px below the last accordion (to the divider),
+   matching the ~16px gap the idrow leaves above the first accordion. */
+.ws-agent-hdr__extra { padding: 0 16px 16px; }
 /* docked identity avatar (open sub-nav header): sized a touch under the disc's full
    width so it doesn't crowd the header; top nudged to keep its centre on the name */
 .ws-agent-hdr__slot { position: absolute; left: 16px; top: 18px; width: 68px; height: 70px; display: block; pointer-events: none; }
 /* disc = full width, bottom-anchored; lift by the canvas headroom (11/75 of height) so the head overflows up */
 .ws-agent-hdr__av { display: none; position: absolute; left: 16px; top: 18px; width: 68px; height: auto; transform: translateY(-14.667%); }
+/* right: 48px keeps the name/role clear of the collapse toggle (right: 12px, ~32px
+   wide); a long custom name/role is clipped with an ellipsis rather than spilling
+   off the header edge. */
 .ws-agent-hdr__id {
-  position: absolute; left: 100px; top: 53.5px; transform: translateY(-50%);
+  position: absolute; left: 100px; right: 48px; top: 53.5px; transform: translateY(-50%);
   display: flex; flex-direction: column; align-items: flex-start; gap: 1px; white-space: nowrap;
 }
+.ws-agent-hdr__id b, .ws-agent-hdr__id span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .ws-agent-hdr__id b { font-weight: 700; font-size: 15px; line-height: 1.35; color: var(--foreground); }
 .ws-agent-hdr__id span { font-size: 13px; line-height: 1.35; color: var(--muted-foreground); }
 .ws-agent-hdr__toggle { position: absolute; right: 12px; top: 14px; }

@@ -14,8 +14,13 @@
    ============================================================ */
 import type { IconName } from "@/components/base/icon"
 
-/** The live demo, opened in a new tab from View Demo. */
+/** The raw live-demo app (the styleguide's demo.html deploy). Used as the iframe
+ *  source on the /demo page and the "open full screen" target — NOT the nav link. */
 export const DEMO_URL = "https://demo.onboardingloop.ai"
+
+/** Where "View Demo" goes: the on-site /demo page, which frames DEMO_URL inside
+ *  the marketing chrome with the Customize controls lifted into a top toolbar. */
+export const DEMO_PAGE = "/demo"
 
 /** Support address shown in the global footer. */
 export const SUPPORT_EMAIL = "support@onboardingloop.com"
@@ -64,5 +69,5 @@ export const FOOTER_NAV: { label: string; href?: string; external?: boolean }[] 
   { label: "Build", href: "/service" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/faq" },
-  { label: "View Demo", href: DEMO_URL, external: true },
+  { label: "View Demo", href: DEMO_PAGE },
 ]

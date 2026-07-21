@@ -32,12 +32,22 @@ import { Launcher, type CoachTarget } from "@/components/product/launcher"
 import { ChatPanel, type ChatPanelOption } from "@/components/product/chat-panel"
 import type { LauncherApi } from "@/components/product/launcher-engine"
 import type { ConversationHandle } from "@/components/product/conversation"
-import { applySkin } from "./skins"
-import { PRESET_LIST, PRESETS, DEFAULT_PRESET_ID, resolvePresetId, resolveHostPresetId } from "./presets"
+import { applyTheme, applyFont, applyNeutralTint, complementaryNeutralTint, FONTS, THEMES, AGENTS } from "./skins"
+import { PRESET_LIST, PRESETS, DEFAULT_PRESET_ID, resolvePresetId } from "./presets"
+import { resolveClient } from "./clients"
+import { DemoIdentityProvider, DEFAULT_SITES, type DemoIdentity } from "./identity"
+import { useSkinState, CustomizePanel, NEUTRAL_SKIN, type SkinChoice, type SkinState } from "./customize"
 import type { DemoPreset, DemoContext } from "./presets/types"
 import { DragProvider, type DragCallbacks } from "./drag"
 import type { Attachment } from "@/components/product/attach-chip"
 import type { CardRef, CardActionsValue } from "./presets/analytics-ui"
+import {
+  makeTileFromCard,
+  nextId,
+  type Dashboard,
+  type DashboardHandlers,
+} from "./presets/analytics-dashboard"
+import type { TileDescriptor } from "./presets/analytics-tiles"
 
 // ============================================================
 // DEMO — the design system + the agent in action (the full-viewport workspace).
@@ -46,11 +56,17 @@ import type { CardRef, CardActionsValue } from "./presets/analytics-ui"
 // to both — no drift.
 //
 // The demo is a SINGLE renderer (<DemoWorkspace>) that loads any "type of SaaS"
-// from a DemoPreset (presets/*): Analytics (Heatmap), Project Mgmt, Health,
-// Finance, CRM. The renderer owns all app STATE + behavior (chats, collection
-// rows, launcher, travelling avatar); the preset supplies only CONTENT + a Skin.
-// A visitor flips between presets with the SaaS picker; a deploy can lock to one
-// via ?saas=&lock=1, or a pinned client host (see CLIENT_HOSTS in presets/index).
+// from a DemoPreset (presets/*): Analytics, Project Mgmt, Health, Finance, CRM.
+// The renderer owns all app STATE + behavior (chats, collection rows, launcher,
+// travelling avatar); the preset supplies only CONTENT.
+//
+// BRANDING is a property of the DEPLOY, not the content (see the boot resolution
+// in Demo). The PUBLIC demo boots neutral and lets the visitor drive it via the
+// Customize accordion (customize.tsx), surviving SaaS switches; switching presets
+// changes content only, never the skin. A CLIENT build (a pinned host, or the
+// ?client= dev escape hatch; both resolve in clients.ts) boots that client's
+// brand + logo + agent + real site names, locks the picker, and hides Customize.
+// A deploy can also just hide the picker with ?saas=&lock=1 (still public).
 // ============================================================
 
 // strip only polite / imperative openers; keep question words (they read fine as titles)
@@ -64,6 +80,27 @@ function summarize(text: string) {
 }
 
 type Chat = { id: string; title: string; firstText: string; history: string; saved?: boolean }
+
+// a tile captured when it's unpinned, so an Undo can restore it to the same board + spot
+type RemovedTile = { dashId: string; index: number; tile: Dashboard["tiles"][number] }
+
+// re-insert unpinned tiles at their original board positions (for the Undo action).
+// Inserts per board in ascending index so earlier splices don't shift later targets;
+// skips any tile that got re-pinned in the meantime (dedupe by tile id).
+function reinsertTiles(dashboards: Dashboard[], removed: RemovedTile[]): Dashboard[] {
+  const byDash = new Map<string, RemovedTile[]>()
+  for (const r of removed) byDash.set(r.dashId, [...(byDash.get(r.dashId) ?? []), r])
+  return dashboards.map((d) => {
+    const adds = byDash.get(d.id)
+    if (!adds) return d
+    const tiles = d.tiles.slice()
+    for (const { index, tile } of [...adds].sort((a, b) => a.index - b.index)) {
+      if (tiles.some((t) => t.id === tile.id)) continue
+      tiles.splice(Math.min(index, tiles.length), 0, tile)
+    }
+    return { ...d, tiles }
+  })
+}
 
 /* a three-dot kebab that lives inside a NavItem <button> — the trigger renders as a
    span so there's no nested button; clicks are stopped so they don't open the row. */
@@ -193,27 +230,84 @@ function SaasPicker({
 }
 
 /* ---------------------------------------------------------------------------
-   DEMO — top-level entry. Reads ?saas= / ?lock= from the URL, holds the active
-   preset, and remounts the workspace on switch (a clean slate + skin per SaaS).
+   BOOT — resolve the deploy once: a client build (a pinned host, or the ?client=
+   escape hatch) vs the public demo, plus the starting preset, the picker lock,
+   and (public only) the visitor's saved skin. Branding is decided HERE, above the
+   workspace, so a SaaS switch below can't touch it.
    --------------------------------------------------------------------------- */
-function readParams() {
-  // A pinned client domain (e.g. heatmap.onboardingloop.ai) forces its preset and
-  // locks the picker, regardless of the URL, so the client link can't be switched
-  // to another SaaS. Every other host reads ?saas= / ?lock= as normal.
-  const hostId = resolveHostPresetId(window.location.hostname)
-  if (hostId) return { id: hostId, locked: true }
+const SKIN_KEY = "ol-demo-skin"
 
-  const p = new URLSearchParams(window.location.search)
-  const lock = p.get("lock")
+// Restore a saved public-mode skin choice, sanitized against the current lists (a
+// key saved before a list changed falls back to the neutral default).
+function readSavedSkin(): SkinChoice | null {
+  try {
+    const raw = window.localStorage.getItem(SKIN_KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw) as Partial<SkinChoice>
+    return {
+      theme: typeof p.theme === "string" && p.theme in THEMES ? p.theme : NEUTRAL_SKIN.theme,
+      font: typeof p.font === "string" && FONTS[p.font] ? p.font : NEUTRAL_SKIN.font,
+      hex: typeof p.hex === "string" ? p.hex : "",
+      dark: typeof p.dark === "boolean" ? p.dark : false,
+      agentKey: typeof p.agentKey === "string" && AGENTS[p.agentKey] ? p.agentKey : NEUTRAL_SKIN.agentKey,
+      customName: typeof p.customName === "string" ? p.customName : "",
+      customRole: typeof p.customRole === "string" ? p.customRole : "",
+      logoSrc: typeof p.logoSrc === "string" ? p.logoSrc : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+const truthyParam = (v: string | null) => v != null && v !== "0" && v !== "false"
+
+function resolveBoot() {
+  const params = new URLSearchParams(window.location.search)
+  // a client build forces its preset, locks the picker, and carries its own brand
+  const client = resolveClient(window.location.hostname, params.get("client"))
+  if (client) return { client, presetId: client.presetId, locked: true, initialSkin: NEUTRAL_SKIN, embedded: false }
+
+  // public: ?saas= picks the preset, ?lock= just hides the picker (still public).
+  // ?embed=1 wraps the demo in the marketing site's /demo page: the Customize
+  // accordion is lifted OUT into a top toolbar (customize.tsx controls, driven
+  // over postMessage), so the in-demo panel is hidden and the visitor's skin is
+  // NOT persisted here — the host page is the source of truth. The SaaS picker
+  // stays, so an embedded visitor can still switch SaaS types.
+  const embedded = truthyParam(params.get("embed"))
   return {
-    id: resolvePresetId(p.get("saas")),
-    locked: lock != null && lock !== "0" && lock !== "false",
+    client: null as null,
+    presetId: resolvePresetId(params.get("saas")),
+    locked: truthyParam(params.get("lock")),
+    initialSkin: embedded ? NEUTRAL_SKIN : readSavedSkin() ?? NEUTRAL_SKIN,
+    embedded,
   }
 }
 
 export function Demo() {
-  const initial = React.useMemo(readParams, [])
-  const [activeId, setActiveId] = React.useState(initial.id)
+  const boot = React.useMemo(resolveBoot, [])
+  const isClient = boot.client != null
+
+  // The skin lives HERE, above the preset remount, so switching SaaS never wipes
+  // it. Public: interactive + persisted. Client: inert (the hook writes nothing);
+  // the fixed brand is applied by the effect below instead. Embedded (/demo page):
+  // interactive so the top toolbar can re-skin it live, but NOT persisted — the
+  // host page owns the choice, this frame just applies what it's told.
+  const skin = useSkinState(boot.initialSkin, {
+    persistKey: isClient || boot.embedded ? undefined : SKIN_KEY,
+    enabled: !isClient,
+  })
+
+  // client build: apply the fixed brand once (raw hex, its own tint + font, light)
+  React.useEffect(() => {
+    const c = boot.client
+    if (!c) return
+    applyTheme("", c.primary)
+    applyFont(c.font)
+    applyNeutralTint(c.neutralTint ?? complementaryNeutralTint(c.primary))
+    document.documentElement.classList.remove("dark")
+  }, [boot])
+
+  const [activeId, setActiveId] = React.useState(boot.presetId)
   const preset = PRESETS[activeId] ?? PRESETS[DEFAULT_PRESET_ID]
 
   const pick = (id: string) => {
@@ -223,29 +317,95 @@ export function Demo() {
     window.history.replaceState(null, "", url) // keep a reload / share on the same SaaS
   }
 
-  // key on the preset id → each SaaS mounts fresh (its own seeds, skin, refs)
-  return <DemoWorkspace key={preset.id} preset={preset} locked={initial.locked} onPick={pick} />
+  // Embedded on the marketing /demo page: apply the skin + SaaS the host toolbar
+  // posts down (both are lifted out of the demo into that toolbar), and announce
+  // readiness on mount so the host re-pushes the current state. Uses only stable
+  // setters, so it installs once. Accepts any origin (the frame only mutates its
+  // own view; nothing sensitive is exposed).
+  const { setTheme, setHex, setFont, setDark, setAgentKey } = skin
+  React.useEffect(() => {
+    if (!boot.embedded) return
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data as { source?: string; type?: string; skin?: Partial<SkinChoice>; saas?: string } | null
+      if (!d || d.source !== "ol-demo-host") return
+      if (d.type === "skin" && d.skin) {
+        const s = d.skin
+        if (typeof s.theme === "string") setTheme(s.theme)
+        if (typeof s.hex === "string") setHex(s.hex)
+        if (typeof s.font === "string") setFont(s.font)
+        if (typeof s.dark === "boolean") setDark(s.dark)
+        if (typeof s.agentKey === "string") setAgentKey(s.agentKey)
+      } else if (d.type === "saas" && typeof d.saas === "string") {
+        setActiveId(resolvePresetId(d.saas))
+      }
+    }
+    window.addEventListener("message", onMsg)
+    window.parent?.postMessage({ source: "ol-demo", type: "ready" }, "*")
+    return () => window.removeEventListener("message", onMsg)
+  }, [boot.embedded, setTheme, setHex, setFont, setDark, setAgentKey])
+
+  // the resolved agent + avatar + logo, per mode. In public mode these track the
+  // visitor's live Customize choices; in client mode they are the client record's.
+  const agent = isClient ? boot.client!.agent : skin.agent
+  const agentSrc = isClient ? boot.client!.agent.src : skin.agentSrc
+  const brandLogo = isClient ? boot.client!.logo : undefined
+  const brandName = isClient ? boot.client!.name : preset.brand.name
+  // the content identity the analytics files read (generic sites in public, the
+  // client's real portfolio in a client build; the agent tracks the resolved one)
+  const identity: DemoIdentity = { sites: boot.client?.sites ?? DEFAULT_SITES, agent }
+
+  // key on the preset id → each SaaS mounts fresh (its own seeds, refs). The skin
+  // state + identity live ABOVE this key, so they survive the remount.
+  return (
+    <DemoWorkspace
+      key={preset.id}
+      preset={preset}
+      locked={boot.locked}
+      onPick={pick}
+      identity={identity}
+      agentSrc={agentSrc}
+      brandLogo={brandLogo}
+      brandName={brandName}
+      skin={skin}
+      showCustomize={!isClient && !boot.embedded}
+      showSaasPicker={!boot.embedded}
+    />
+  )
 }
 
 /* ---------------------------------------------------------------------------
-   DEMO WORKSPACE — the 4-column agent workspace, painted from a DemoPreset.
+   DEMO WORKSPACE — the 4-column agent workspace, painted from a DemoPreset. The
+   skin/identity/agent are resolved above (in Demo) and passed in; this component
+   owns only per-SaaS content state, so remounting it on a switch keeps the skin.
    --------------------------------------------------------------------------- */
 function DemoWorkspace({
   preset,
   locked,
   onPick,
+  identity,
+  agentSrc,
+  brandLogo,
+  brandName,
+  skin,
+  showCustomize,
+  showSaasPicker,
 }: {
   preset: DemoPreset
   locked: boolean
   onPick: (id: string) => void
+  identity: DemoIdentity
+  agentSrc: string
+  brandLogo?: string
+  brandName: string
+  skin: SkinState
+  showCustomize: boolean
+  showSaasPicker: boolean
 }) {
-  const AGENT = preset.skin.agent
-  const AV = AGENT.src
-
-  // apply this preset's skin (brand color / font / neutral tint) on mount
-  React.useEffect(() => {
-    applySkin(preset.skin)
-  }, [preset])
+  const AGENT = identity.agent
+  const AV = agentSrc
+  // only presets that render a dashboard view (analytics) make their collection
+  // rows open-able; other presets keep the old behavior (a row is drag-target only)
+  const supportsDashboards = preset.collection.seedDashboards != null
 
   const navItemsFlat = React.useMemo(() => preset.nav.flatMap((s) => s.items), [preset])
 
@@ -260,8 +420,26 @@ function DemoWorkspace({
   const [navOpen, setNavOpen] = React.useState(false)
   const [agentOpen, setAgentOpen] = React.useState(false)
 
-  // data model (seeded from the preset)
-  const [dashboards, setDashboards] = React.useState(preset.collection.seed.map((d) => ({ ...d })))
+  // data model (seeded from the preset). Analytics ships one fully-formed,
+  // populated dashboard (seedDashboards); other presets fall back to their
+  // name/count seeds mapped to empty-tile dashboards (name is a literal or a
+  // client site resolved from the identity, so no site name is baked in).
+  const [dashboards, setDashboards] = React.useState<Dashboard[]>(() =>
+    preset.collection.seedDashboards
+      ? preset.collection.seedDashboards()
+      : preset.collection.seed.map((d) => ({
+          id: d.id,
+          name: d.name ?? identity.sites[d.siteIndex ?? 0]?.name ?? "",
+          tiles: [],
+          banners: [],
+        }))
+  )
+  // the dashboard open in the content area (null = a nav / report view)
+  const [selectedDashId, setSelectedDashId] = React.useState<string | null>(null)
+  // the dashboard banner composer (opened from the content header); auto-closes
+  // whenever the open dashboard changes
+  const [bannerComposerOpen, setBannerComposerOpen] = React.useState(false)
+  React.useEffect(() => setBannerComposerOpen(false), [selectedDashId])
   const [chats, setChats] = React.useState<Chat[]>(
     preset.seedRecentChats.map((c) => ({ ...c, history: "" }))
   )
@@ -276,8 +454,12 @@ function DemoWorkspace({
   // a generated report open in the content area (from a chat's report CTA)
   const [activeReport, setActiveReport] = React.useState<{ id: string; name: string } | null>(null)
 
-  // pin state: cardId -> the dashboard names it's pinned to (empty/absent = unpinned)
-  const [pins, setPins] = React.useState<Record<string, string[]>>({})
+  // pin membership is DERIVED from the dashboards' tiles (a card is pinned iff a
+  // dashboard holds a tile from it) — no separate pins map to keep in sync.
+  const pinnedSourceIds = React.useMemo(
+    () => new Set(dashboards.flatMap((d) => d.tiles.map((t) => t.sourceId))),
+    [dashboards]
+  )
   // which card the pin modal is acting on, and which modal the launcher renders
   const [pinSource, setPinSource] = React.useState<CardRef | null>(null)
   const [modalMode, setModalMode] = React.useState<"create" | "pin">("create")
@@ -288,10 +470,11 @@ function DemoWorkspace({
     [launcherAtt, chatAtt]
   )
 
-  // select a primary-nav item (also closes any open report)
+  // select a primary-nav item (also closes any open report / dashboard)
   const selectNav = (id: string) => {
     setNavSelected(id)
     setActiveReport(null)
+    setSelectedDashId(null)
   }
 
   // refs
@@ -317,14 +500,10 @@ function DemoWorkspace({
       : [...prev, p]
 
   /* ---- PIN / ATTACH: the card-footer actions. Pin opens the launcher's pin modal
-     (a dashboard picker); confirming bumps the chosen dashboards' pinned-count and
-     fills the card's pin. Attach stages the card onto the launcher for a NEW chat.
-     Both are toggles: a filled pin un-pins, a filled paperclip un-attaches. ---- */
-  const bumpDashboards = (names: string[], delta: number) =>
-    setDashboards((prev) =>
-      prev.map((d) => (names.includes(d.name) ? { ...d, count: Math.max(0, d.count + delta) } : d))
-    )
-
+     (a dashboard picker); confirming drops a TILE built from the card onto each
+     chosen dashboard (so the board fills with the real card). Attach stages the
+     card onto the launcher for a NEW chat. Both are toggles: a filled pin un-pins
+     (removes the card's tiles everywhere), a filled paperclip un-attaches. ---- */
   const openCreateModal = () => {
     flushSync(() => setModalMode("create"))
     launcherApi.current?.openModal()
@@ -338,26 +517,39 @@ function DemoWorkspace({
     })
     launcherApi.current?.openModal()
   }
-  const applyPin = (card: CardRef, names: string[]) => {
-    // only bump dashboards this card isn't already pinned to (a drag re-pin is idempotent)
-    const existing = pins[card.id] || []
-    const added = names.filter((n) => !existing.includes(n))
-    if (!added.length) return
-    setPins((prev) => ({ ...prev, [card.id]: [...(prev[card.id] || []), ...added] }))
-    bumpDashboards(added, +1)
-  }
+  const applyPin = (card: CardRef, names: string[]) =>
+    setDashboards((prev) =>
+      prev.map((d) =>
+        // add a tile only to chosen dashboards that don't already hold this card
+        names.includes(d.name) && !d.tiles.some((t) => t.sourceId === card.id)
+          ? { ...d, tiles: [...d.tiles, makeTileFromCard(card)] }
+          : d
+      )
+    )
   const pinConfirm = (names: string[]) => {
     if (pinSource) applyPin(pinSource, names)
     setPinSource(null)
   }
-  const unpinCard = (id: string) => {
-    const names = pins[id]
-    if (names?.length) bumpDashboards(names, -1)
-    setPins((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
+  // the "pin deleted" toast (neutral tone) with an Undo that restores the removed
+  // tiles to their boards, if clicked before the 4s notif dismisses
+  const notifyPinDeleted = (desc: string, restore: () => void) =>
+    launcherApi.current?.showNotification("Pin deleted", desc, {
+      tone: "neutral",
+      actionLabel: "Undo",
+      onAction: restore,
     })
+
+  // un-pin a card from EVERY dashboard (its filled pin in any content view). Capture
+  // what's removed (per board, with position) first, so Undo can put it all back.
+  const unpinCard = (id: string) => {
+    const removed: RemovedTile[] = []
+    dashboards.forEach((d) => d.tiles.forEach((t, i) => t.sourceId === id && removed.push({ dashId: d.id, index: i, tile: t })))
+    if (!removed.length) return
+    setDashboards((prev) => prev.map((d) => ({ ...d, tiles: d.tiles.filter((t) => t.sourceId !== id) })))
+    const boards = new Set(removed.map((r) => r.dashId))
+    const name = dashboards.find((d) => d.id === removed[0].dashId)?.name
+    const desc = boards.size === 1 ? `Removed from the ${name} dashboard` : `Removed from ${boards.size} dashboards`
+    notifyPinDeleted(desc, () => setDashboards((prev) => reinsertTiles(prev, removed)))
   }
   const toggleAttach = (card: CardRef) => {
     if (launcherAtt.some((a) => a.sourceId === card.id)) {
@@ -378,11 +570,48 @@ function DemoWorkspace({
   }
 
   const cardActions: CardActionsValue = {
-    isPinned: (id) => !!pins[id]?.length,
+    isPinned: (id) => pinnedSourceIds.has(id),
     isAttached: (id) => attachedIds.has(id),
     onPin: openPinModal,
     onUnpin: unpinCard,
     onToggleAttach: toggleAttach,
+  }
+
+  /* ---- DASHBOARDS: select one to open it in the content area; its grid /
+     banners / comments mutate through these handlers (all scoped to the open
+     dashboard). ---- */
+  const selectedDash = React.useMemo(() => dashboards.find((d) => d.id === selectedDashId) ?? null, [dashboards, selectedDashId])
+  const selectDashboard = (id: string) => {
+    if (!supportsDashboards) return
+    setSelectedDashId(id)
+    setActiveReport(null)
+  }
+  const patchDash = (id: string, fn: (d: Dashboard) => Dashboard) =>
+    setDashboards((prev) => prev.map((d) => (d.id === id ? fn(d) : d)))
+  const patchTile = (dashId: string, tileId: string, fn: (t: Dashboard["tiles"][number]) => Dashboard["tiles"][number]) =>
+    patchDash(dashId, (d) => ({ ...d, tiles: d.tiles.map((t) => (t.id === tileId ? fn(t) : t)) }))
+  const dashboardHandlers: DashboardHandlers = {
+    onReorder: (tiles) => selectedDashId && patchDash(selectedDashId, (d) => ({ ...d, tiles })),
+    onResize: (tileId, size) => selectedDashId && patchTile(selectedDashId, tileId, (t) => ({ ...t, size })),
+    onUnpinTile: (tileId) => {
+      if (!selectedDashId) return
+      const dash = dashboards.find((d) => d.id === selectedDashId)
+      const index = dash ? dash.tiles.findIndex((t) => t.id === tileId) : -1
+      if (!dash || index < 0) return
+      const removed: RemovedTile[] = [{ dashId: dash.id, index, tile: dash.tiles[index] }]
+      patchDash(selectedDashId, (d) => ({ ...d, tiles: d.tiles.filter((t) => t.id !== tileId) }))
+      notifyPinDeleted(`Removed from ${dash.name}`, () => setDashboards((prev) => reinsertTiles(prev, removed)))
+    },
+    onAddComment: (tileId, text) =>
+      selectedDashId &&
+      patchTile(selectedDashId, tileId, (t) => ({
+        ...t,
+        comments: [...t.comments, { id: nextId("c"), author: "Bal Sieber", me: true, text, time: "now" }],
+        unread: false,
+      })),
+    onMarkRead: (tileId) => selectedDashId && patchTile(selectedDashId, tileId, (t) => ({ ...t, unread: false })),
+    onAddBanner: (b) => selectedDashId && patchDash(selectedDashId, (d) => ({ ...d, banners: [...d.banners, { id: nextId("banner"), ...b }] })),
+    onRemoveBanner: (bid) => selectedDashId && patchDash(selectedDashId, (d) => ({ ...d, banners: d.banners.filter((x) => x.id !== bid) })),
   }
 
   // the shared handles a preset's render slots may reach into (rebuilt per render
@@ -390,6 +619,11 @@ function DemoWorkspace({
   const ctx: DemoContext = {
     navSelected,
     activeReport,
+    selectedDash,
+    dashboardHandlers,
+    bannerComposerOpen,
+    openBannerComposer: () => setBannerComposerOpen(true),
+    closeBannerComposer: () => setBannerComposerOpen(false),
     openSaveModal: openCreateModal,
     launcher: launcherApi,
     actionsRef,
@@ -418,7 +652,11 @@ function DemoWorkspace({
     api.clear()
     api.user(text, attachments)
     preset.conversation.respond(api, text, {
-      openReport: (id, name) => setActiveReport({ id, name }),
+      // a report replaces the content: clear any open dashboard so it shows
+      openReport: (id, name) => {
+        setSelectedDashId(null)
+        setActiveReport({ id, name })
+      },
     })
   }
 
@@ -514,7 +752,10 @@ function DemoWorkspace({
     if (!t) return
     setDashboards((prev) => prev.map((d) => (d.id === id ? { ...d, name: t } : d)))
   }
-  const archiveDashboard = (id: string) => setDashboards((prev) => prev.filter((d) => d.id !== id))
+  const archiveDashboard = (id: string) => {
+    setDashboards((prev) => prev.filter((d) => d.id !== id))
+    if (selectedDashId === id) setSelectedDashId(null)
+  }
 
   const handleOption = (act: ChatPanelOption) => {
     if (!activeId) return
@@ -525,9 +766,15 @@ function DemoWorkspace({
   }
 
   /* ---- Save-to-collection: the launcher modal -> saving -> green notif -> row.
-     A brand-new dashboard starts empty (count 0, no chip) until cards are pinned. ---- */
+     A brand-new dashboard starts empty (no chip) until cards are pinned; we open
+     it straight away so the user lands on the empty board ready to fill. ---- */
   const handleSaveDashboard = (name: string) => {
-    setDashboards((prev) => [{ id: "dash-" + seq.current++, name, count: 0 }, ...prev])
+    const id = nextId("dash")
+    setDashboards((prev) => [{ id, name, tiles: [], banners: [] }, ...prev])
+    if (supportsDashboards) {
+      setActiveReport(null)
+      setSelectedDashId(id)
+    }
   }
 
   /* ---- drag-to-launcher: a dropped card STAGES as an attachment in the launcher
@@ -539,9 +786,9 @@ function DemoWorkspace({
       launcherApi.current?.openInput()
     },
     onDropDashboard: (_id, name, p) => {
-      // dropping a card on a dashboard row IS a pin (fills the card's pin too)
-      if (p.sourceId) applyPin({ id: p.sourceId, title: p.title, accent: p.accent }, [name])
-      else bumpDashboards([name], +1)
+      // dropping a card on a dashboard row IS a pin (fills the card's pin + drops
+      // the real tile onto that board, carried in the drag payload)
+      if (p.sourceId) applyPin({ id: p.sourceId, title: p.title, accent: p.accent, tile: p.tile as TileDescriptor | undefined }, [name])
       launcherApi.current?.showNotification("New pin created", `Pinned to the ${name || "dashboard"} dashboard`)
     },
     onDropChat: (p) => setChatAtt((prev) => stage(prev, p)),
@@ -602,11 +849,15 @@ function DemoWorkspace({
   const HeaderActions = preset.content.HeaderActions
   const ContentBody = preset.content.Body
   const currentNav = navItemsFlat.find((i) => i.id === navSelected) // drives the content-header title + icon
-  // an open report overrides the nav view for the content-header title + icon
-  const headerIcon: IconName = activeReport ? "file-text" : currentNav?.icon ?? preset.content.icon
-  const headerTitle = activeReport ? activeReport.name : currentNav?.label ?? preset.content.title
+  // an open dashboard or report overrides the nav view for the header title + icon
+  const headerIcon: IconName = selectedDash ? "layout-dashboard" : activeReport ? "file-text" : currentNav?.icon ?? preset.content.icon
+  const headerTitle = selectedDash ? selectedDash.name : activeReport ? activeReport.name : currentNav?.label ?? preset.content.title
+  // a dashboard / report is a DIFFERENT view than any nav item, so no primary-nav
+  // row is "current" while one is open
+  const navActive = !selectedDash && !activeReport
 
   return (
+    <DemoIdentityProvider value={identity}>
     <DragProvider cb={dragCb}>
       <WorkspaceShell
         navCollapsed={navCollapsed}
@@ -624,7 +875,11 @@ function DemoWorkspace({
         primaryNav={
           <LayoutColumn as="aside" variant="card">
             <ColumnHeader className={cn("gap-2.5", navCollapsed ? "justify-center" : "pr-3 pl-5")}>
-              {!navCollapsed && <BrandMark mark={preset.brand.mark}>{preset.brand.name}</BrandMark>}
+              {!navCollapsed && (
+                <BrandMark mark={preset.brand.mark} logo={brandLogo}>
+                  {brandName}
+                </BrandMark>
+              )}
               <IconButton
                 icon={navCollapsed ? "chevrons-right" : "chevrons-left"}
                 motion={navCollapsed ? "arrow-right" : "arrow-left"}
@@ -643,7 +898,7 @@ function DemoWorkspace({
                       icon={it.icon}
                       collapsed
                       title={it.label}
-                      current={navSelected === it.id}
+                      current={navActive && navSelected === it.id}
                       onClick={() => selectNav(it.id)}
                     >
                       {it.label}
@@ -663,7 +918,7 @@ function DemoWorkspace({
                         <NavItem
                           key={it.id}
                           icon={it.icon}
-                          current={navSelected === it.id}
+                          current={navActive && navSelected === it.id}
                           onClick={() => selectNav(it.id)}
                           tail={it.badge ? <Chip variant="new">{it.badge.text}</Chip> : undefined}
                         >
@@ -728,11 +983,17 @@ function DemoWorkspace({
                   Add Context
                 </Button>
               )}
+              {/* Customize — the same live re-skin accordion the styleguide wears,
+                  a second CollapsibleSection alongside Context Engine. Public only:
+                  a client build applies a fixed brand and never renders it. */}
+              {showCustomize && <CustomizePanel skin={skin} className="mt-2" />}
             </AgentHomeHeader>
 
-            {/* New Dashboard — opens the create-dashboard modal, just below the header */}
-            <div className="flex-none px-4 pt-4 pb-1.5">
-              <Button variant="tertiary" revealIcon="plus" className="w-full justify-center" onClick={openCreateModal}>
+            {/* New Dashboard — opens the create-dashboard modal, just below the header.
+                Secondary CTA (matches "Add Context"); the gap below it (to the first
+                sub-nav group) equals the gap above it (to the header divider) = 16px. */}
+            <div className="flex-none px-4 pt-4">
+              <Button variant="secondary" className="w-full justify-center" onClick={openCreateModal}>
                 New Dashboard
               </Button>
             </div>
@@ -757,9 +1018,11 @@ function DemoWorkspace({
                           data-drop="dashboard"
                           data-dash-id={d.id}
                           data-dash-name={d.name}
+                          current={selectedDashId === d.id}
+                          onClick={supportsDashboards ? () => selectDashboard(d.id) : undefined}
                           tail={
                             <span className="st-row-tail">
-                              {d.count > 0 && <Chip variant="new">{d.count}</Chip>}
+                              {d.tiles.length > 0 && <Chip variant="new">{d.tiles.length}</Chip>}
                               <Kebab
                                 dash
                                 items={[
@@ -807,15 +1070,6 @@ function DemoWorkspace({
                 <Icon name={headerIcon} size={20} stroke={1.5} />
               </span>
               <ColumnTitle>{headerTitle}</ColumnTitle>
-              {activeReport && (
-                <IconButton
-                  icon="x"
-                  motion="rotate"
-                  aria-label="Close report"
-                  className="ml-1"
-                  onClick={() => setActiveReport(null)}
-                />
-              )}
 
               <div className="st-content__actions" ref={actionsRef}>
                 {HeaderActions && <HeaderActions ctx={ctx} />}
@@ -891,7 +1145,8 @@ function DemoWorkspace({
       />
 
       {/* demo chrome: switch which SaaS is loaded (hidden when locked or mid-chat) */}
-      {!locked && <SaasPicker activeId={preset.id} onPick={onPick} hidden={workOpen} />}
+      {!locked && showSaasPicker && <SaasPicker activeId={preset.id} onPick={onPick} hidden={workOpen} />}
     </DragProvider>
+    </DemoIdentityProvider>
   )
 }

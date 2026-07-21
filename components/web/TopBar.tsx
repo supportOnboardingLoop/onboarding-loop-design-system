@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/base/button"
 import { Icon } from "@/components/base/icon"
 import { Cta } from "@/components/web/Cta"
-import { DEMO_URL, GET_STARTED_MENU, NAV_MORE, PRODUCTS_MENU, type MenuItem } from "@/components/web/site-nav"
+import { DEMO_PAGE, GET_STARTED_MENU, NAV_MORE, PRODUCTS_MENU, type MenuItem } from "@/components/web/site-nav"
 
 const NAV = [
   { num: "01.", label: "System", href: "#system" },
@@ -100,7 +100,9 @@ export function TopBar({
 }: TopBarProps = {}) {
   const headerRef = useRef<HTMLElement>(null)
   const hamRef = useRef<HTMLButtonElement>(null)
-  const logoHref = home || "#top"
+  // global (marketing) pages route the logo home; the landing keeps its same-page
+  // scroll-to-top (or the `home` prefix a nested page passes). Mirrors the Footer.
+  const logoHref = variant === "global" ? "/" : home || "#top"
 
   // 1. Mobile nav toggle.
   useEffect(() => {
@@ -351,12 +353,7 @@ export function TopBar({
           </nav>
 
           <div className="nav-actions reveal" style={d(270)}>
-            <a
-              className={cn(buttonVariants({ variant: "secondary" }), "nav-btn")}
-              href={DEMO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a className={cn(buttonVariants({ variant: "secondary" }), "nav-btn")} href={DEMO_PAGE}>
               View Demo
             </a>
 
@@ -400,12 +397,7 @@ export function TopBar({
           <div className="mm-actions">
             {/* `ol-cta` opts these out of the mobile-menu's plain-link styling, so
                 they render as full-width buttons keeping their own fill + color. */}
-            <a
-              className={cn(buttonVariants({ variant: "secondary" }), "ol-cta nav-btn")}
-              href={DEMO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a className={cn(buttonVariants({ variant: "secondary" }), "ol-cta nav-btn")} href={DEMO_PAGE}>
               View Demo
             </a>
             <span className="mm-label">Get started</span>

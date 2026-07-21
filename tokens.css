@@ -96,7 +96,11 @@
   --card-foreground:    var(--text);
   --popover:            var(--surface);
   --popover-foreground: var(--text);
-  --primary:            var(--ink);          /* the brand — stays a literal, never tint-derived */
+  /* The brand. --brand is written by the app when a color is chosen and is
+     UNSET for the system's own neutral brand, which falls back to --ink. Dark
+     mode consumes --brand-lift instead (see .dark), so one chosen color yields
+     both a light-mode and a dark-mode primary; nothing is picked twice. */
+  --primary:            var(--brand, var(--ink));
   --primary-foreground: var(--neutral-0);
   --secondary:          var(--subtle);
   --secondary-foreground: var(--text);
@@ -116,16 +120,61 @@
   --destructive-tint: var(--ol-error-tint);
   --info-tint: var(--ol-info-tint);
 
-  /* --- Chart palette (categorical; book-cloth deliberately excluded) --- */
+  /* --- Chart palette (neutral ramp; book-cloth deliberately excluded) --- */
   --chart-1: var(--neutral-900);
   --chart-2: var(--neutral-750);
   --chart-3: var(--neutral-600);
   --chart-4: var(--neutral-400);
   --chart-5: var(--neutral-100);
 
+  /* --- Chart CATEGORICAL palette — for part-to-whole + multi-entity series
+     (donut, stacked, discrete categories). A curated, harmonious set validated
+     with the data-viz method: worst adjacent CVD ΔE 9.1 light / 8.4 dark
+     (≥8 target), worst adjacent normal-vision ΔE 19.6 / 19.3 (≥15 floor), on the
+     white / #262626 surfaces charts render on. Assign in FIXED order, never
+     cycled; color follows the entity, not its rank. Single-series + comparison
+     charts use the brand hue below instead, so they re-skin with the client. --- */
+  --chart-cat-1: #2a78d6;  /* blue    */
+  --chart-cat-2: #008300;  /* green   */
+  --chart-cat-3: #e87ba4;  /* magenta */
+  --chart-cat-4: #eda100;  /* amber   */
+  --chart-cat-5: #1baf7a;  /* aqua    */
+  --chart-cat-6: #eb6834;  /* orange  */
+
+  /* Brand-hue series: the current period / single series carries the brand
+     (neutral ink by default; a client brand once re-skinned). --chart-compare is
+     a lighter same-hue step for the comparison period; --chart-track is the quiet
+     unfilled well behind bars + rings; grid / axis are the recessive chrome. */
+  --chart-brand:   var(--primary);
+  --chart-brand-2: color-mix(in oklab, var(--primary) 58%, var(--surface));  /* gradient far end */
+  --chart-compare: color-mix(in oklab, var(--primary) 24%, var(--surface));
+  --chart-track:   var(--subtle);
+  --chart-grid:    var(--border);
+  --chart-axis:    var(--edge);
+
   --border-strong: var(--edge);              /* crisp control edge (alias of --edge) */
   --input:  var(--edge);                     /* field border */
   --ring:   var(--neutral-750);              /* neutral focus ring */
+
+  /* === Control face — the raised shell shared by the secondary button, the
+     select / dropdown trigger, the launcher pill and the calendar nav.
+     It is defined as a RELATIONSHIP, not a color: the control sits one step
+     LIGHTER than the surface it rests on, with a faint top-to-bottom gradient
+     and ink that reads against itself. Light mode makes that the lightest thing
+     on the page; .dark mirrors it (see below) so the same lift survives, instead
+     of the shell staying white and out-shouting the primary button. === */
+  --ctl-face:          var(--neutral-0);     /* gradient top                  */
+  --ctl-face-2:        var(--neutral-25);    /* gradient bottom               */
+  --ctl-face-hover:    var(--neutral-50);    /* hover gradient bottom         */
+  --ctl-face-press:    var(--neutral-100);   /* active gradient bottom        */
+  --ctl-line:          var(--neutral-200);   /* resting edge                  */
+  --ctl-line-hover:    var(--neutral-300);
+  --ctl-ink:           var(--neutral-900);   /* label on the control face     */
+  --ctl-ink-quiet:     var(--neutral-700);   /* tertiary / ghost label        */
+  --ctl-outline:       rgba(17,24,39,.16);   /* tertiary / ghost outline      */
+  --ctl-outline-hover: rgba(17,24,39,.22);
+  --ctl-wash:          rgba(17,24,39,.04);   /* tertiary / ghost hover fill   */
+  --ctl-wash-strong:   rgba(17,24,39,.07);
   /* brand-tinted selection fill (nav-active, selected card). Carries the brand
      on purpose; a grey brand yields a light grey. */
   --accent-tint: color-mix(in srgb, var(--primary) 12%, white);
@@ -159,10 +208,10 @@
   --space-12: 3rem;
 
   /* --- Radius --- */
-  --radius-sm: 0.5rem;
-  --radius: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  --radius-sm: 0.75rem;  /* 12 — small badges, calendar cells, composer */
+  --radius: 0.75rem;     /* 12 */
+  --radius-lg: 1.5rem;   /* 24 — controls + sidebar nav rows */
+  --radius-xl: 1.5rem;   /* 24 — cards / content-card frame */
   --radius-card:    2.25rem;  /* 36: the content-card frame (outer tray)   */
   --radius-surface: 1.875rem; /* 30: the white surface well inside a card   */
   --corner-shape: squircle;
@@ -196,7 +245,10 @@
   --card-foreground:    var(--text);
   --popover:            var(--surface);
   --popover-foreground: var(--text);
-  --primary:            var(--ink);
+  /* the SAME brand, lifted to read off the dark canvas (and to carry dark ink).
+     --brand-lift is written alongside --brand and clears with it, so the neutral
+     brand keeps its own near-white --ink rather than being dragged down to 0.78. */
+  --primary:            var(--brand-lift, var(--ink));
   --primary-foreground: oklch(from var(--tint-source) 0.213 calc(c * var(--tint-strength)) h);
   --secondary:          var(--subtle);
   --secondary-foreground: var(--text);
@@ -214,8 +266,32 @@
   --chart-3: var(--neutral-600);
   --chart-4: var(--neutral-750);
   --chart-5: var(--subtle);
+  /* categorical: the same six hues re-stepped for the dark surface (#262626),
+     validated as a set — not an automatic flip of the light values */
+  --chart-cat-1: #3987e5;  /* blue    */
+  --chart-cat-2: #008300;  /* green   */
+  --chart-cat-3: #d55181;  /* magenta */
+  --chart-cat-4: #c98500;  /* amber   */
+  --chart-cat-5: #199e70;  /* aqua    */
+  --chart-cat-6: #d95926;  /* orange  */
   --border-strong: var(--edge);
   --input:  rgba(255,255,255,.14);
   --ring:   var(--neutral-400);
   --accent-tint: color-mix(in srgb, var(--primary) 22%, transparent);
+
+  /* the control face, mirrored: still a step LIGHTER than the surface it sits
+     on (--surface is 0.269), still a faint top-lit gradient, but now carrying
+     light ink. Same relationship as light mode, opposite polarity. */
+  --ctl-face:          oklch(from var(--tint-source) 0.345 calc(c * var(--tint-strength)) h);
+  --ctl-face-2:        oklch(from var(--tint-source) 0.310 calc(c * var(--tint-strength)) h);
+  --ctl-face-hover:    oklch(from var(--tint-source) 0.378 calc(c * var(--tint-strength)) h);
+  --ctl-face-press:    oklch(from var(--tint-source) 0.285 calc(c * var(--tint-strength)) h);
+  --ctl-line:          rgba(255,255,255,.16);
+  --ctl-line-hover:    rgba(255,255,255,.26);
+  --ctl-ink:           var(--text);
+  --ctl-ink-quiet:     var(--text-muted);
+  --ctl-outline:       rgba(255,255,255,.16);
+  --ctl-outline-hover: rgba(255,255,255,.26);
+  --ctl-wash:          rgba(255,255,255,.06);
+  --ctl-wash-strong:   rgba(255,255,255,.10);
 }

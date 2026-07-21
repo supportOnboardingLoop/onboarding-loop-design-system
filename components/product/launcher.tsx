@@ -19,16 +19,51 @@ import { createLauncher, type LauncherApi, type LauncherState } from "./launcher
 // element, one motion — never separate elements that swap or jump.
 // ============================================================
 
+// The resting-pill CONTENT — "Ask <agent>" (or a custom `label`) + a ⌘K hint.
+// SHARED by the standalone LauncherPill and the full Launcher's default state, so
+// the resting pill can never drift between them: one markup, one set of classes
+// (styled in launcher.css) → one font, and one flexible content model. `label`
+// overrides "Ask <agent>" entirely (the pill isn't always "Ask <name>"); `seq`
+// tags the parts for the full Launcher's engine build-in/out sequencing. Because
+// the engine measures this content's width, any label just sizes the pill to fit.
+function LauncherResting({
+  agentName,
+  label,
+  kbd = "⌘K",
+  seq,
+}: {
+  agentName?: string
+  label?: React.ReactNode
+  kbd?: string
+  seq?: boolean
+}) {
+  const seqAttr = seq ? { "data-seq": true } : {}
+  return (
+    <span className="launcher__cta">
+      <span className="launcher__ask" {...seqAttr}>
+        {label ?? `Ask ${agentName ?? ""}`.trim()}
+      </span>
+      {kbd ? (
+        <span className="launcher__kbd" {...seqAttr}>
+          {kbd}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 // The resting pill on its own — the DEFAULT state as a static, standalone
 // component (docked bottom-centre of a content area). The full morph machine is
 // <Launcher> below; this is handy where only the resting entry point is wanted.
+// Both render <LauncherResting>, so they stay identical.
 function LauncherPill({
-  agentName = "Wilson",
+  agentName = "Bal",
   avatarSrc,
   kbd = "⌘K",
+  label,
   className,
   ...props
-}: React.ComponentProps<"button"> & { agentName?: string; avatarSrc?: string; kbd?: string }) {
+}: React.ComponentProps<"button"> & { agentName?: string; avatarSrc?: string; kbd?: string; label?: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -44,12 +79,7 @@ function LauncherPill({
       {avatarSrc && (
         <img src={avatarSrc} alt="" className="pointer-events-none absolute top-2 left-[14px] block w-[51px] [transform:translateY(-14.667%)]" />
       )}
-      <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
-        <span className="text-base font-semibold tracking-[-0.01em] text-foreground">Ask {agentName}</span>
-        <span className="inline-flex h-6 items-center justify-center rounded-xl [corner-shape:squircle] border border-border-strong px-[9px] text-xs font-medium text-muted-foreground">
-          {kbd}
-        </span>
-      </span>
+      <LauncherResting agentName={agentName} label={label} kbd={kbd} />
     </button>
   )
 }
@@ -79,6 +109,8 @@ export type CoachTarget = {
 
 type LauncherProps = {
   agentName?: string
+  /** overrides the "Ask <agent>" resting label (the pill isn't always "Ask <name>") */
+  label?: React.ReactNode
   avatarSrc?: string
   kbd?: string
   /** the content region the pill docks to (bottom-centre) */
@@ -108,6 +140,22 @@ type LauncherProps = {
   onSaveDashboard?: (name: string) => void
   /** receive the engine API (drive states from a parent control bar) */
   onReady?: (api: LauncherApi | null) => void
+  // ---- SEARCH capability (opt-in). When `searchMode` is on, the composer acts as a
+  // command-palette: the send button is dropped, the resting agent avatar is hidden
+  // while expanded, and `resultsSlot` renders a results list ABOVE the field. All of
+  // this is gated, so the demo/agent usage (no search props) is unchanged. ----
+  /** the composer placeholder (defaults to "Ask me anything…") */
+  placeholder?: string
+  /** turn the composer into a search palette (see above) */
+  searchMode?: boolean
+  /** the results list rendered above the field (host-owned; only shown in searchMode) */
+  resultsSlot?: React.ReactNode
+  /** fired on every keystroke with the live query */
+  onQuery?: (value: string) => void
+  /** move the host's result highlight (ArrowDown = +1 / ArrowUp = -1) */
+  onNav?: (dir: 1 | -1) => void
+  /** commit the highlighted result on Enter (return true if handled) */
+  onCommit?: () => boolean
 }
 
 const VIEW_OPTS = [
@@ -116,7 +164,8 @@ const VIEW_OPTS = [
 ]
 
 function Launcher({
-  agentName = "Wilson",
+  agentName = "Bal",
+  label,
   avatarSrc,
   kbd = "⌘K",
   dockRef,
@@ -133,6 +182,12 @@ function Launcher({
   onNewChat,
   onSaveDashboard,
   onReady,
+  placeholder,
+  searchMode = false,
+  resultsSlot,
+  onQuery,
+  onNav,
+  onCommit,
 }: LauncherProps) {
   const rootRef = React.useRef<HTMLDivElement>(null)
   const apiRef = React.useRef<LauncherApi | null>(null)
@@ -149,8 +204,8 @@ function Launcher({
     : !!dashName.trim() && access.length > 0 && !!view
 
   // keep the newest callbacks + attachments reachable from the mount-only engine effect
-  const cb = React.useRef({ onNewChat, onSaveDashboard, onReady, coaches, attachments })
-  cb.current = { onNewChat, onSaveDashboard, onReady, coaches, attachments }
+  const cb = React.useRef({ onNewChat, onSaveDashboard, onReady, coaches, attachments, onQuery, onNav, onCommit })
+  cb.current = { onNewChat, onSaveDashboard, onReady, coaches, attachments, onQuery, onNav, onCommit }
 
   // sync staged attachments to the engine (enables send, keeps composer open, resizes)
   React.useEffect(() => {
@@ -172,6 +227,15 @@ function Launcher({
       onNewChat: (t) => cb.current.onNewChat?.(t, cb.current.attachments),
       onSaveDashboard: (n) => cb.current.onSaveDashboard?.(n),
       onState: (s) => setLState(s),
+      // SEARCH hooks are wired ONLY in searchMode, so a plain agent composer keeps
+      // native arrow-key caret motion + its default Enter-to-send behaviour.
+      ...(searchMode
+        ? {
+            onQuery: (v: string) => cb.current.onQuery?.(v),
+            onNav: (d: 1 | -1) => cb.current.onNav?.(d),
+            onCommit: () => cb.current.onCommit?.() ?? false,
+          }
+        : {}),
     })
     apiRef.current = api
     cb.current.onReady?.(api)
@@ -216,19 +280,14 @@ function Launcher({
     setPinTargets((prev) => (prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]))
 
   return (
-    <div className="launcher" ref={rootRef} data-state="default">
+    <div className={cn("launcher", searchMode && "is-search")} ref={rootRef} data-state="default">
       <img className="launcher__av" src={avatarSrc} alt="" />
 
-      {/* DEFAULT: the resting pill — "Ask <agent>" + ⌘K where the field + send are */}
+      {/* DEFAULT: the resting pill — the SAME <LauncherResting> the standalone
+          LauncherPill renders, so the two can't drift. The engine measures its
+          width (see measureDefaultW / relayout), so any label sizes the pill. */}
       <div className="launcher__block launcher__default">
-        <span className="launcher__cta">
-          <span className="launcher__ask" data-seq>
-            Ask {agentName}
-          </span>
-          <span className="launcher__kbd" data-seq>
-            {kbd}
-          </span>
-        </span>
+        <LauncherResting agentName={agentName} label={label} kbd={kbd} seq />
       </div>
 
       {/* INPUT: the composer (auto-grow field + send), engine-wired */}
@@ -243,11 +302,13 @@ function Launcher({
         <div className="launcher__composer">
           <div className="launcher__field" data-seq>
             <div className="launcher__field-control">
-              <textarea className="launcher__input-field" rows={1} placeholder="Ask me anything…" />
+              <textarea className="launcher__input-field" rows={1} placeholder={placeholder ?? "Ask me anything…"} />
             </div>
           </div>
           {/* the DS Button: reveal-label secondary, sized (in launcher.css) to the field
-              height so "Send" grows out the LEFT of the icon on hover. Engine-wired. */}
+              height so "Send" grows out the LEFT of the icon on hover. Engine-wired.
+              Kept identical in searchMode (consistent with the agent composer); there the
+              engine routes its click through onCommit to open the highlighted result. */}
           <Button
             type="button"
             variant="secondary"
@@ -259,6 +320,10 @@ function Launcher({
             <Icon name="send" size={20} loop="fly" />
           </Button>
         </div>
+        {/* SEARCH: results / answer render BELOW the composer (conventional command
+            palette). The card is bottom-docked and grows upward, so the composer +
+            avatar stay put and identical to the demo launcher — no chrome divergence. */}
+        {searchMode && resultsSlot}
       </div>
 
       {/* MODAL: the ONE morphing modal, in create OR pin mode — a header + a body
@@ -287,7 +352,7 @@ function Launcher({
               {/* the dashboard picker: multi-select of the LIVE dashboards, with a
                   "New Dashboard" row that jumps to the create modal in place */}
               <Dropdown>
-                <DropdownTrigger className="group/trigger bp-chev-host flex h-[34px] w-full items-center gap-2 rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] px-3.5 text-base font-medium text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-colors hover:border-[#cfcfcf] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
+                <DropdownTrigger className="group/trigger bp-chev-host flex h-[34px] w-full items-center gap-2 rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-[var(--ctl-line)] bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-2))] px-3.5 text-base font-medium text-[var(--ctl-ink)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-colors hover:border-[var(--ctl-line-hover)] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
                   <span className={cn("min-w-0 flex-1 truncate text-left", pinTargets.length === 0 && "text-muted-foreground")}>
                     {pinTargets.length === 0
                       ? "Choose a dashboard"
@@ -329,7 +394,7 @@ function Launcher({
                     shows the comma-joined picks. The launcher is a fixed z-95 layer, so the
                     popup is bumped above it. */}
                 <Dropdown>
-                  <DropdownTrigger className="group/trigger bp-chev-host flex h-[34px] w-full items-center gap-2 rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-[#dcdcdc] bg-[linear-gradient(180deg,#ffffff,#f7f7f7)] px-3.5 text-base font-medium text-[#26262a] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-colors hover:border-[#cfcfcf] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
+                  <DropdownTrigger className="group/trigger bp-chev-host flex h-[34px] w-full items-center gap-2 rounded-[var(--ctl-radius)] [corner-shape:squircle] border border-[var(--ctl-line)] bg-[linear-gradient(180deg,var(--ctl-face),var(--ctl-face-2))] px-3.5 text-base font-medium text-[var(--ctl-ink)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none transition-colors hover:border-[var(--ctl-line-hover)] data-[popup-open]:border-primary data-[popup-open]:shadow-[0_0_0_3px_var(--accent-tint)]">
                     <span className={cn("min-w-0 flex-1 truncate text-left", access.length === 0 && "text-muted-foreground")}>
                       {access.length ? access.join(", ") : "Who has access?"}
                     </span>
@@ -378,12 +443,16 @@ function Launcher({
         </div>
       </div>
 
-      {/* NOTIF: the positive (green) confirmation toast + a 4s dismiss ring */}
+      {/* NOTIF: the confirmation toast + a 4s dismiss ring. Positive (green) by
+          default; a neutral tone (data-notif-tone, engine-set) is used for a
+          reversible action like a delete, which pairs the trash glyph with an
+          optional action button (e.g. Undo). */}
       <div className="launcher__block launcher__notif">
         <div className="notif__main">
           <div className="notif__row">
             <span className="notif__check" data-seq>
-              <Icon name="circle-check" size={20} />
+              <Icon name="circle-check" size={20} className="notif__ico notif__ico--positive" />
+              <Icon name="trash" size={20} className="notif__ico notif__ico--neutral" />
             </span>
             <span className="notif__title" data-seq>
               New dashboard created
@@ -396,6 +465,11 @@ function Launcher({
             Your dashboard has been saved.
           </div>
         </div>
+        {/* optional action (e.g. Undo). Label + visibility are engine-driven (so
+            the notif width measures right); the click runs the stored callback. */}
+        <button type="button" className="notif__action" data-seq hidden onClick={() => apiRef.current?.runNotifAction()}>
+          Undo
+        </button>
         <TimerRingButton onClick={() => apiRef.current?.dismiss()} />
       </div>
 
