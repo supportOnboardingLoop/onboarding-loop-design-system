@@ -35,7 +35,9 @@ const HERO = {
   headline: { before: "The onboarding system your product ", mark: "deserves", after: "." },
   trusted: "Built from designing products used by millions.",
   sub: "Get the onboarding protocol stack. Activation. Retention. Expansion.",
-  cta: { href: "#stack", label: "Get the Full Stack" },
+  // /system is on the global chrome now: CTAs route to the home fork, not to an
+  // in-page section (there is no page-anchor nav here anymore).
+  cta: { href: "/#fork", label: "Get the Full Stack" },
   logoStrip: {
     intro: "Created from two decades of work across teams at",
     logos: [
@@ -193,7 +195,7 @@ const STACK = {
     note: "Built specifically to collaborate with Claude, ChatGPT, Gemini, or whatever LLM you use.",
     price: { was: "$196", now: "$129", save: "Save $67" },
     updates: "Lifetime updates included.",
-    cta: { href: "#", label: "Get the Full Stack" },
+    cta: { href: "/#fork", label: "Get the Full Stack" },
   },
 }
 
@@ -347,7 +349,7 @@ const CTA = {
   headline: { before: "Get the ", mark: "complete", after: " system." },
   sub: "Three protocols. One toolkit. Activation to expansion, designed to build from.",
   price: { was: "$196", now: "$129", save: "Save $67" },
-  cta: { href: "#", label: "Get the Full Stack" },
+  cta: { href: "/#fork", label: "Get the Full Stack" },
 }
 
 export default function Landing() {
@@ -360,7 +362,7 @@ export default function Landing() {
       <AboutSection {...ABOUT} reveal />
       <QuoteSection {...QUOTE} reveal />
       <FaqSection {...FAQ} reveal />
-      <CtaSection {...CTA} reveal />
+      <CtaSection {...CTA} reveal footerVariant="global" />
     </ScrollStage>
   )
 }

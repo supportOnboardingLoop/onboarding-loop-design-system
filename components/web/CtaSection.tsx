@@ -24,16 +24,20 @@ export interface CtaSectionProps {
   price: { was: string; now: string; save: string }
   cta: { href: string; label: string }
   reveal?: boolean
+  /** which footer nav to render. "global" (System · Product · Service · View Demo
+   *  + Terms · Privacy · support) now that the landing lives at /system on the
+   *  global chrome; "landing" (numbered section links) is the legacy default. */
+  footerVariant?: "landing" | "global"
 }
 
-export function CtaSection({ headline, sub, price, cta, reveal = false }: CtaSectionProps) {
+export function CtaSection({ headline, sub, price, cta, reveal = false, footerVariant = "landing" }: CtaSectionProps) {
   return (
     <Section className="g-e2">
       {/* CLOSING CTA band — cube spread springs on entry (inside the stage) */}
       <CtaBand headline={headline} sub={sub} price={price} cta={cta} reveal={reveal} spring dock="final" />
 
-      {/* FOOTER — the shared component; on the landing it is same-page (home="") */}
-      <Footer reveal={reveal} />
+      {/* FOOTER — the shared component; global variant on /system (route links) */}
+      <Footer reveal={reveal} variant={footerVariant} />
     </Section>
   )
 }

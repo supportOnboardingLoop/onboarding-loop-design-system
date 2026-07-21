@@ -10,7 +10,9 @@
  * the closing scroll group's floor, so index.astro composes Base + TopBar + Landing
  * directly. A standard page has a normal-flow footer at the bottom instead.
  *
- * home="/" points the header + footer section links back to the landing sections.
+ * Chrome is the GLOBAL variant (System · Product · Service · View Demo · Get
+ * Started; footer mirrors + Terms · Privacy · support), the same header/footer as
+ * every other page. Get Started routes to the home fork (/#fork, the default).
  * The sticky header takes flow space, so <slot> content begins just below it.
  */
 import Base from "./Base.astro"
@@ -25,9 +27,9 @@ const { title, description } = Astro.props
 ---
 
 <Base title={title} description={description}>
-  <TopBar client:load home="/" />
+  <TopBar client:load variant="global" />
   <main class="page-main" id="top">
     <slot />
   </main>
-  <Footer client:load reveal home="/" />
+  <Footer client:load reveal variant="global" />
 </Base>

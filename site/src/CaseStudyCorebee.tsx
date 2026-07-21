@@ -18,7 +18,7 @@ export default function CaseStudyCorebee() {
   return (
     <>
       <CaseStudyHero
-        crumb={[{ label: "Results", href: "/#about" }, { label: "Corebee" }]}
+        crumb={[{ label: "Results", href: "/system" }, { label: "Corebee" }]}
         title={<>How Corebee turned setup into its agent’s first job</>}
         sub="The signup wizard was earning the win; the dashboard was throwing it away. One Blueprint week later, a new user goes from signup to a live agent in a single guided conversation."
         beforeAfter={{
@@ -168,7 +168,7 @@ export default function CaseStudyCorebee() {
         headline={{ before: "Get the ", mark: "complete", after: " system." }}
         sub="Three protocols. One toolkit. Activation to expansion, designed to build from."
         price={{ was: "$196", now: "$129", save: "Save $67" }}
-        cta={{ href: "/#stack", label: "Get the Full Stack" }}
+        cta={{ href: "/#fork", label: "Get the Full Stack" }}
       />
     </>
   )
