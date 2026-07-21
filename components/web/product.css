@@ -42,6 +42,75 @@
 /* footer: the global nav row wraps if it runs long; the support email sits with
    Terms · Privacy in the legal row (Footer.tsx renders it inside .legal). */
 .ol-web footer .foot-nav { flex-wrap: wrap }
+/* footer placeholder items (Pricing, FAQ) — inert, quiet */
+.ol-web footer .foot-soon { cursor: default; opacity: .85 }
+
+/* --- header dropdowns: Products (nav) + Get Started (button) mega-menus.
+   Reveal on hover / focus-within (no JS); each is a card of rows (framed
+   thumbnail + title + description), the Attio/Untitled layout in OL style. --- */
+.ol-web .nav-dd { position: relative; display: inline-flex }
+
+/* the Products trigger reads as a nav link; the chevron rotates when open */
+.ol-web .nav-desktop .nav-dd-trigger {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: 0; background: none;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+  color: var(--secondary); padding: 4px 8px; border-radius: 8px; transition: background .14s ease, color .14s ease;
+}
+.ol-web .nav-desktop .nav-dd:hover .nav-dd-trigger,
+.ol-web .nav-desktop .nav-dd:focus-within .nav-dd-trigger,
+.ol-web .nav-desktop .nav-dd-trigger.is-active { background: var(--panel); color: var(--ink) }
+.ol-web .nav-dd-trigger--btn { cursor: pointer }   /* Get Started keeps its Button fill */
+.ol-web .nav-chev { transition: transform .2s ease }
+.ol-web .nav-dd:hover .nav-chev, .ol-web .nav-dd:focus-within .nav-chev { transform: rotate(180deg) }
+
+/* placeholder top-level items (Pricing, FAQ) — look like nav links, inert for now */
+.ol-web .nav-desktop .nav-soon {
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+  color: var(--secondary); padding: 4px 8px; border-radius: 8px; cursor: default;
+  transition: background .14s ease, color .14s ease;
+}
+.ol-web .nav-desktop .nav-soon:hover { background: var(--panel); color: var(--ink) }
+
+/* the panel: a transparent positioned wrapper (top padding bridges the hover gap)
+   holding the white card */
+.ol-web .nav-dd-panel {
+  position: absolute; top: 100%; left: 0; z-index: 60; padding-top: 10px;
+  opacity: 0; visibility: hidden; transform: translateY(6px); pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+.ol-web .nav-dd--right .nav-dd-panel { left: auto; right: 0 }
+.ol-web .nav-dd:hover .nav-dd-panel,
+.ol-web .nav-dd:focus-within .nav-dd-panel { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto }
+@media (prefers-reduced-motion: reduce) { .ol-web .nav-dd-panel { transition: none; transform: none } }
+
+.ol-web .nav-menu {
+  width: 340px; display: flex; flex-direction: column; gap: 2px; padding: 8px;
+  background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop);
+}
+.ol-web .nav-menu-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px; text-decoration: none; transition: background .14s ease }
+.ol-web .nav-menu-item:hover { background: var(--panel) }
+.ol-web .nav-menu-item--soon { cursor: default }   /* future Stripe link, not wired yet */
+/* framed thumbnail slot — a dot-grid blueprint square + Tabler icon (placeholder
+   for a real thumbnail image Bal can drop in) */
+.ol-web .nav-menu-thumb {
+  flex: none; width: 44px; height: 44px; display: grid; place-items: center; color: var(--secondary);
+  border: 1px solid var(--line-strong); border-radius: 12px; background: var(--paper);
+  background-image: radial-gradient(var(--dot) 0.5px, transparent 0.6px); background-size: 6px 6px;
+}
+.ol-web .nav-menu-text { display: flex; flex-direction: column; gap: 1px; min-width: 0 }
+.ol-web .nav-menu-title { font-size: 15px; font-weight: 600; line-height: 20px; color: var(--ink-strong) }
+.ol-web .nav-menu-desc { font-size: 13px; line-height: 18px; color: var(--muted) }
+
+/* mobile: taller open menu for the fuller list + the "Get started" caption */
+@media (max-width: 767px) {
+  .ol-web.nav-open .mobile-menu { max-height: 620px; overflow-y: auto }
+  .ol-web .mobile-menu .mm-soon {
+    display: block; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500; color: var(--secondary); padding: 14px 4px;
+  }
+  .ol-web .mobile-menu .mm-label {
+    display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 18px 4px 2px;
+  }
+}
 
 /* ============================================================
    2) PRODUCT PAGE (/product)

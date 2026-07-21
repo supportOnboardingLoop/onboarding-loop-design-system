@@ -27,8 +27,9 @@ import { useEffect, useRef } from "react"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/base/button"
+import { Icon } from "@/components/base/icon"
 import { Cta } from "@/components/web/Cta"
-import { DEMO_URL, GLOBAL_NAV } from "@/components/web/site-nav"
+import { DEMO_URL, GET_STARTED_MENU, NAV_MORE, PRODUCTS_MENU, type MenuItem } from "@/components/web/site-nav"
 
 const NAV = [
   { num: "01.", label: "System", href: "#system" },
@@ -36,6 +37,41 @@ const NAV = [
   { num: "03.", label: "Source", href: "#about" },
   { num: "04.", label: "Answers", href: "#faq" },
 ]
+
+// The dropdown panel shared by Products (nav) and Get Started (button): a card of
+// rows, each a framed thumbnail + title + description (Attio/Untitled layout, in
+// OL style). Reveals on hover / focus-within (see .nav-dd in product.css). A row
+// with no href (a future Stripe link, or an unbuilt page) renders inert.
+function NavMenu({ items }: { items: MenuItem[] }) {
+  return (
+    <div className="nav-dd-panel">
+      <div className="nav-menu">
+        {items.map((it) => {
+          const body = (
+            <>
+              <span className="nav-menu-thumb" aria-hidden="true">
+                <Icon name={it.icon} size={22} />
+              </span>
+              <span className="nav-menu-text">
+                <span className="nav-menu-title">{it.label}</span>
+                <span className="nav-menu-desc">{it.desc}</span>
+              </span>
+            </>
+          )
+          return it.href ? (
+            <a key={it.key} className="nav-menu-item" href={it.href}>
+              {body}
+            </a>
+          ) : (
+            <span key={it.key} className="nav-menu-item nav-menu-item--soon" aria-disabled="true">
+              {body}
+            </span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 export interface TopBarProps {
   /** prefix for the internal section links, so a non-landing page routes back to
@@ -48,10 +84,11 @@ export interface TopBarProps {
    *  for the standard marketing pages. Both render inside the same `.bar` chrome so
    *  editing one updates every page. The /system routing session flips the default. */
   variant?: "landing" | "global"
-  /** global only: which top-level page is current (adds aria-current + active tint). */
-  active?: "system" | "product" | "service"
-  /** global only: where "Get Started" points. On /product & /service it targets that
-   *  page's buy card / checkout; elsewhere the home fork (`/#fork`). */
+  /** global only: which top-level nav item is current (adds aria-current + active
+   *  tint). /product and /service are both under Products. */
+  active?: "system" | "products" | "pricing" | "faq"
+  /** deprecated: Get Started is now a Build/Plan dropdown, not a single link, so
+   *  this is unused. Kept so existing callers don't need editing. */
   getStartedHref?: string
 }
 
@@ -260,24 +297,60 @@ export function TopBar({
   //    Both buttons are the design-system Button rendered as anchors (buttonVariants),
   //    so they inherit the marketing brand (--primary #404040 in the .ol-web scope).
   if (variant === "global") {
+    const d = (ms: number) => ({ "--d": `${ms}ms` } as React.CSSProperties)
     return (
       <header className="bar" ref={headerRef}>
         <div className="bar-inner">
           {logo}
           <nav className="nav-desktop nav-global">
-            {GLOBAL_NAV.map((n, i) => (
-              <a
-                key={n.key}
-                className={cn("reveal", active === n.key && "is-active")}
-                style={{ "--d": `${110 + i * 40}ms` } as React.CSSProperties}
-                href={n.href}
-                aria-current={active === n.key ? "page" : undefined}
+            <a
+              className={cn("reveal", active === "system" && "is-active")}
+              style={d(110)}
+              href="/system"
+              aria-current={active === "system" ? "page" : undefined}
+            >
+              System
+            </a>
+
+            {/* Products — a two-item mega-menu (Build → /product, Plan → /service) */}
+            <div className="nav-dd reveal" style={d(150)}>
+              <button
+                type="button"
+                className={cn("nav-dd-trigger", active === "products" && "is-active")}
+                aria-haspopup="true"
+                aria-current={active === "products" ? "page" : undefined}
               >
-                {n.label}
-              </a>
-            ))}
+                Products
+                <Icon name="chevron-down" size={16} className="nav-chev" />
+              </button>
+              <NavMenu items={PRODUCTS_MENU} />
+            </div>
+
+            {NAV_MORE.map((n, i) =>
+              n.href ? (
+                <a
+                  key={n.key}
+                  className={cn("reveal", active === n.key && "is-active")}
+                  style={d(190 + i * 40)}
+                  href={n.href}
+                  aria-current={active === n.key ? "page" : undefined}
+                >
+                  {n.label}
+                </a>
+              ) : (
+                // no page yet — inert placeholder styled like a nav link
+                <span
+                  key={n.key}
+                  className={cn("nav-soon reveal", active === n.key && "is-active")}
+                  style={d(190 + i * 40)}
+                >
+                  {n.label}
+                </span>
+              )
+            )}
           </nav>
-          <div className="nav-actions reveal" style={{ "--d": "230ms" } as React.CSSProperties}>
+
+          <div className="nav-actions reveal" style={d(270)}>
             <a
               className={cn(buttonVariants({ variant: "secondary" }), "nav-btn")}
               href={DEMO_URL}
@@ -286,22 +359,47 @@ export function TopBar({
             >
               View Demo
             </a>
-            <a className={cn(buttonVariants({ variant: "primary" }), "nav-btn")} href={getStartedHref}>
-              Get Started
-            </a>
+
+            {/* Get Started — a Build/Plan dropdown (each a future Stripe link) */}
+            <div className="nav-dd nav-dd--right">
+              <button
+                type="button"
+                className={cn(buttonVariants({ variant: "primary" }), "nav-btn nav-dd-trigger nav-dd-trigger--btn")}
+                aria-haspopup="true"
+              >
+                Get Started
+                <Icon name="chevron-down" size={18} className="nav-chev" />
+              </button>
+              <NavMenu items={GET_STARTED_MENU} />
+            </div>
           </div>
           {hamburger}
         </div>
+
         <div className="mobile-menu">
-          {GLOBAL_NAV.map((n) => (
-            <a key={n.key} href={n.href} aria-current={active === n.key ? "page" : undefined}>
-              {n.label}
+          <a href="/system" aria-current={active === "system" ? "page" : undefined}>
+            System
+          </a>
+          {/* Products flattens to its two routes on mobile */}
+          {PRODUCTS_MENU.map((it) => (
+            <a key={it.key} href={it.href}>
+              {it.label}
             </a>
           ))}
+          {NAV_MORE.map((n) =>
+            n.href ? (
+              <a key={n.key} href={n.href}>
+                {n.label}
+              </a>
+            ) : (
+              <span key={n.key} className="mm-soon">
+                {n.label}
+              </span>
+            )
+          )}
           <div className="mm-actions">
-            {/* `ol-cta` opts these out of the mobile-menu's plain-link styling
-                (`.mobile-menu a:not(.ol-cta)`), so they render as full-width
-                buttons keeping their own fill + text color, like the landing's. */}
+            {/* `ol-cta` opts these out of the mobile-menu's plain-link styling, so
+                they render as full-width buttons keeping their own fill + color. */}
             <a
               className={cn(buttonVariants({ variant: "secondary" }), "ol-cta nav-btn")}
               href={DEMO_URL}
@@ -310,9 +408,16 @@ export function TopBar({
             >
               View Demo
             </a>
-            <a className={cn(buttonVariants({ variant: "primary" }), "ol-cta nav-btn")} href={getStartedHref}>
-              Get Started
-            </a>
+            <span className="mm-label">Get started</span>
+            {GET_STARTED_MENU.map((it, i) => (
+              <a
+                key={it.key}
+                className={cn(buttonVariants({ variant: i === 0 ? "primary" : "secondary" }), "ol-cta nav-btn")}
+                {...(it.href ? { href: it.href } : {})}
+              >
+                {it.label}
+              </a>
+            ))}
           </div>
         </div>
       </header>

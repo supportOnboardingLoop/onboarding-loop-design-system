@@ -17,7 +17,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-import { DEMO_URL, GLOBAL_NAV, SUPPORT_EMAIL } from "@/components/web/site-nav"
+import { FOOTER_NAV, SUPPORT_EMAIL } from "@/components/web/site-nav"
 
 // The footer LinkedIn glyph — ported verbatim from the source (single path, round
 // badge). A true circle, but an <svg>, not an element the global squircle touches.
@@ -71,24 +71,28 @@ export function Footer({ home = "", reveal = false, variant = "landing" }: Foote
               <img src="/assets/OnboardingLoop_LogoDark.png" alt="Onboarding Loop" />
             </a>
             <nav className="foot-nav">
-              {variant === "global" ? (
-                <>
-                  {GLOBAL_NAV.map((n) => (
-                    <a key={n.key} href={n.href}>
-                      {n.label}
+              {variant === "global"
+                ? FOOTER_NAV.map((n) =>
+                    n.href ? (
+                      <a
+                        key={n.label}
+                        href={n.href}
+                        {...(n.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      >
+                        {n.label}
+                      </a>
+                    ) : (
+                      // no page yet (Pricing, FAQ) — inert placeholder
+                      <span key={n.label} className="foot-soon">
+                        {n.label}
+                      </span>
+                    )
+                  )
+                : FOOT_NAV.map((n) => (
+                    <a key={n.href} href={home + n.href}>
+                      <span className="badge-num">{n.num}</span> {n.label}
                     </a>
                   ))}
-                  <a href={DEMO_URL} target="_blank" rel="noopener noreferrer">
-                    View Demo
-                  </a>
-                </>
-              ) : (
-                FOOT_NAV.map((n) => (
-                  <a key={n.href} href={home + n.href}>
-                    <span className="badge-num">{n.num}</span> {n.label}
-                  </a>
-                ))
-              )}
             </nav>
           </div>
           <div className="foot-by">
