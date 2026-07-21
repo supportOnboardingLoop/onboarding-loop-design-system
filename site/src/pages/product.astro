@@ -1,0 +1,26 @@
+---
+/*
+ * /product — Do it yourself, $129. Composes Base directly (not PageShell) so it
+ * can use the GLOBAL header/footer variant: System · Product · Service ·
+ * View Demo · Get Started. `active="product"` tints the current link;
+ * getStartedHref="#buy" points the header's Get Started at this page's buy card
+ * (the checkout CTA). `bodyClass="has-buybar"` reserves space for the fixed
+ * mobile buy bar so it never hides the footer.
+ */
+import Base from "../layouts/Base.astro"
+import { TopBar } from "@/components/web/TopBar"
+import { Footer } from "@/components/web/Footer"
+import ProductPage from "../ProductPage"
+---
+
+<Base
+  title="Do it yourself · Onboarding Loop"
+  description="The Onboarding Loop protocols, the Claude skill, and the design system. Feed them to your favorite LLM and build the onboarding your product should have shipped with. $129, one-time."
+  bodyClass="has-buybar"
+>
+  <TopBar client:load variant="global" active="product" getStartedHref="#buy" />
+  <main id="top">
+    <ProductPage client:load />
+  </main>
+  <Footer client:load reveal variant="global" />
+</Base>

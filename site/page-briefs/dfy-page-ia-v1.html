@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA v1 · Done for you · product page</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#171717; --ink-strong:#0a0a0a; --muted:#525252; --secondary:#404040;
+  --faint:#a3a3a3; --line:#e5e5e5; --line-strong:#d4d4d4; --panel:#f5f5f5;
+  --white:#fff; --paper:#fcfcfc; --dash:#d4d4d4; --btn:#404040; --btn-fg:#fff;
+  --dot:#e4e4e4; --green:#1f9d57;
+  --font-display:Georgia,'Times New Roman',serif;
+  --radius:12px; --radius-lg:18px; --page:1280px; --pad:56px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--white);
+  font-size:17px;line-height:26px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--page);margin:0 auto;padding:0 var(--pad)}
+.kicker{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+h2{font-size:38px;line-height:48px;font-weight:600;letter-spacing:-.02em;color:var(--ink-strong);margin:12px 0 10px}
+.sub{font-size:19px;line-height:29px;color:var(--muted);max-width:640px;margin-bottom:8px}
+h3{font-size:22px;line-height:30px;font-weight:600}
+.small{font-size:15px;line-height:23px;color:var(--muted)}
+.ph{border:1.5px dashed var(--dash);border-radius:var(--radius);background:
+  repeating-linear-gradient(45deg,#fafafa,#fafafa 12px,#f3f3f3 12px,#f3f3f3 24px);
+  display:flex;align-items:center;justify-content:center;color:#9a9a9a;
+  font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:center;padding:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:50px;padding:0 24px;
+  border-radius:14px;font-size:15px;font-weight:600;background:var(--btn);color:var(--btn-fg);
+  border:1px solid var(--btn);text-decoration:none;cursor:pointer}
+.btn-ghost{background:var(--white);color:var(--secondary);border:1px solid var(--line-strong)}
+header{position:sticky;top:0;z-index:50;background:var(--white);border-bottom:1px solid var(--line)}
+.bar{max-width:var(--page);margin:0 auto;padding:0 var(--pad);height:68px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:700;font-size:16px}
+nav a{font-size:14px;font-weight:500;color:var(--secondary);text-decoration:none;margin-left:22px}
+.nav-cta{border:1px solid var(--line-strong);border-radius:10px;padding:8px 14px}
+.nav-cta-primary{background:var(--btn);color:var(--btn-fg);border-color:var(--btn)}
+.shell{max-width:var(--page);margin:0 auto;padding:0 var(--pad);display:grid;grid-template-columns:1fr 360px;gap:56px;align-items:start}
+@media(max-width:1000px){.shell{grid-template-columns:1fr}.buyrail{position:static !important;order:-1}}
+.main section{position:relative;padding:72px 0;border-bottom:1px solid var(--line)}
+.main section:last-child{border-bottom:none}
+.buyrail{position:sticky;top:92px;margin-top:72px}
+.buycard{border:1px solid var(--line-strong);border-radius:var(--radius-lg);background:#fff;
+  box-shadow:0 1px 3px rgba(16,24,40,.06);padding:30px}
+.pname{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+.was{font-size:18px;color:var(--faint);text-decoration:line-through;margin-right:8px}
+.price{font-size:44px;line-height:1;font-weight:600;letter-spacing:-.02em;color:var(--ink-strong)}
+.price small{font-size:14px;font-weight:500;color:var(--faint)}
+.why{font-size:13px;line-height:20px;color:var(--muted);margin:10px 0 18px;border:1px dashed var(--line-strong);border-radius:8px;padding:10px 12px;background:var(--paper)}
+.buycard .btn{width:100%;height:52px}
+.inc{margin-top:18px}
+.inc div{font-size:14px;line-height:21px;color:var(--secondary);padding:7px 0 7px 24px;position:relative;border-bottom:1px solid var(--panel)}
+.inc div:last-child{border-bottom:none}
+.inc div::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.fineprint{font-size:12px;color:var(--faint);margin-top:12px;text-align:center}
+.hero{padding-top:64px !important;background-image:radial-gradient(var(--dot) .6px,transparent .7px);background-size:8px 8px}
+.hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(34px,3.6vw,52px);line-height:1.2;color:var(--ink-strong);margin:14px 0 16px}
+.cta-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.heroshot{margin-top:44px}
+.heroshot .ph{aspect-ratio:16/9}
+.dlv-row{border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;
+  display:grid;grid-template-columns:7fr 5fr;gap:28px;padding:28px;align-items:center;margin-bottom:18px}
+@media(max-width:900px){.dlv-row{grid-template-columns:1fr}}
+.dlv-media .ph{aspect-ratio:4/3}
+.count-line{font-size:15px;font-weight:600;color:var(--ink);margin:4px 0 8px}
+.desc{font-size:15.5px;line-height:24px;color:var(--muted)}
+.rail-step{display:grid;grid-template-columns:60px 1fr;gap:20px;padding:20px 0;border-bottom:1px solid var(--line)}
+.rail-step:last-child{border-bottom:none}
+.rail-num{font-family:var(--font-display);font-size:34px;line-height:1;color:var(--line-strong)}
+.rail-step h4{font-size:18px;font-weight:600;margin-bottom:4px}
+.rail-step p{font-size:15px;line-height:23px;color:var(--muted)}
+.founder{display:grid;grid-template-columns:4fr 8fr;gap:32px;align-items:center}
+@media(max-width:900px){.founder{grid-template-columns:1fr}}
+.founder .ph{aspect-ratio:4/5;max-width:260px}
+.resultcard{border:1px solid var(--line-strong);border-radius:var(--radius-lg);background:var(--paper);
+  display:grid;grid-template-columns:6fr 6fr;overflow:hidden;margin-top:10px}
+@media(max-width:900px){.resultcard{grid-template-columns:1fr}}
+.resultcard .media{min-height:340px;border-right:1px solid var(--line)}
+.resultcard .media .ph{height:100%;border:none;border-radius:0}
+.resultcard .body{padding:40px}
+.resultstat{display:flex;gap:32px;margin:18px 0}
+.resultstat div b{display:block;font-size:30px;font-weight:600;color:var(--ink-strong);letter-spacing:-.02em}
+.resultstat div span{font-size:13px;color:var(--faint)}
+.rquote{font-family:var(--font-display);font-size:20px;line-height:1.5;color:var(--ink-strong);margin-bottom:8px}
+.rattr{font-size:13.5px;color:var(--muted);margin-bottom:18px}
+.faq-item{border-bottom:1px solid var(--line);padding:18px 0}
+.faq-item .q{font-size:16.5px;font-weight:600;margin-bottom:6px}
+.faq-item .a{font-size:15px;line-height:23px;color:var(--muted);max-width:600px}
+.cross{background:var(--paper);border-top:1px solid var(--line)}
+.crossband{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:44px 0}
+@media(max-width:900px){.crossband{flex-direction:column;align-items:flex-start}}
+footer{border-top:1px solid var(--line);padding:36px 0;font-size:13px;color:var(--faint)}
+.wf-note{position:fixed;bottom:14px;right:14px;z-index:99;font-size:11px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;background:#111;color:#fff;border-radius:8px;padding:8px 12px;opacity:.85}
+</style>
+</head>
+<body>
+
+<div class="wf-note">IA v1 · placeholder copy, final copy comes later</div>
+
+<header>
+  <div class="bar">
+    <div class="logo">Onboarding Loop</div>
+    <nav>
+      <a href="#">System</a><a href="#">Product</a><a href="#">Service</a>
+      <a href="#" class="nav-cta">View Demo</a>
+      <a href="#" class="nav-cta nav-cta-primary">Get Started</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="main">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="kicker">Done for you</div>
+      <h1>A plain headline saying I build your onboarding plan on your actual product</h1>
+      <p class="sub">The complementary line: who this is for, what lands in their hands, and the three-day window, at about this length.</p>
+      <div class="cta-row">
+        <a class="btn" href="#">Get started</a>
+        <a class="btn btn-ghost" href="#">See a finished build</a>
+      </div>
+      <div class="heroshot">
+        <div class="ph">One big visual: the Corebee prototype running, or a before/after frame<br>(the hero here is the finished work itself)</div>
+      </div>
+    </section>
+
+    <!-- WHAT YOU GET -->
+    <section>
+      <div class="kicker">What you get</div>
+      <h2>A headline framing the four deliverables</h2>
+      <p class="sub">A subline that sets up the list in one sentence of roughly this length.</p>
+
+      <div class="dlv-row" style="margin-top:34px">
+        <div>
+          <h3>Your onboarding blueprint</h3>
+          <div class="count-line">The plan · built on your actual product</div>
+          <p class="desc">Two lines on what the plan covers: where users stall, the first win, the loop, what to build first, written against their real screens. About this long in total.</p>
+        </div>
+        <div class="dlv-media"><div class="ph">Real plan spread<br>(Corebee, redacted if needed)</div></div>
+      </div>
+
+      <div class="dlv-row">
+        <div>
+          <h3>One moment, already working</h3>
+          <div class="count-line">An interactive prototype of the first win</div>
+          <p class="desc">Two lines: a clickable prototype built on screenshots of their product with the real agent on top; looks and feels like their product, their engineers wire it in. Honest scope, about this long.</p>
+        </div>
+        <div class="dlv-media"><div class="ph">Prototype running<br>(shareable link frame)</div></div>
+      </div>
+
+      <div class="dlv-row">
+        <div>
+          <h3>The build roadmap</h3>
+          <div class="count-line">What to ship, in what order</div>
+          <p class="desc">Two lines on the prioritized list their team builds from, written to be handed to an engineer or an LLM. About this long.</p>
+        </div>
+        <div class="dlv-media"><div class="ph">Roadmap page<br>(real render)</div></div>
+      </div>
+
+      <div class="dlv-row">
+        <div>
+          <h3>The walkthrough</h3>
+          <div class="count-line">Delivered live, recorded for the team</div>
+          <p class="desc">Two lines: Bal walks the founder through the plan and the prototype, question by question. About this long.</p>
+        </div>
+        <div class="dlv-media"><div class="ph">Call frame or Loom still</div></div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section>
+      <div class="kicker">How it works</div>
+      <h2>A headline about the three days</h2>
+      <div class="rail" style="margin-top:24px">
+        <div class="rail-step"><div class="rail-num">01</div><div><h4>The intake</h4><p>One line: pay, then a short pre-filled interview about your product; most of it is already answered before you arrive.</p></div></div>
+        <div class="rail-step"><div class="rail-num">02</div><div><h4>The build</h4><p>One line: Bal runs the same system sold on this site against your real product and screens.</p></div></div>
+        <div class="rail-step"><div class="rail-num">03</div><div><h4>The handoff</h4><p>One line: plan, prototype, roadmap, and the live walkthrough, inside three days.</p></div></div>
+      </div>
+    </section>
+
+    <!-- SAME SYSTEM NOTE -->
+    <section style="padding:56px 0">
+      <div class="kicker">Same system</div>
+      <h2 style="font-size:30px;line-height:38px">One line stating this is the $129 system, run by the person who built it</h2>
+      <p class="sub">A supporting line of about this length on what hiring the author adds: judgment, speed, and the first piece built.</p>
+    </section>
+
+    <!-- FOUNDER -->
+    <section>
+      <div class="founder">
+        <div><div class="ph">Founder photo</div></div>
+        <div>
+          <div class="kicker">Who builds it</div>
+          <h2 style="font-size:30px;line-height:38px">A bio headline of roughly this length</h2>
+          <p class="desc">Two lines: twenty years across marketing and product, agents run most of the company, one human's judgment on your product. About this long in total.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section>
+      <div class="kicker">Results</div>
+      <h2>A headline introducing the proof</h2>
+      <div class="resultcard">
+        <div class="media"><div class="ph">Big case visual<br>(Corebee before/after or prototype frame)</div></div>
+        <div class="body">
+          <p class="rquote">"The client quote goes here, two or three lines of it, pulled verbatim from Jonathan and long enough to feel like a real sentence someone said."</p>
+          <p class="rattr">Name · role · Corebee</p>
+          <div class="resultstat">
+            <div><b>stat</b><span>label</span></div>
+            <div><b>stat</b><span>label</span></div>
+            <div><b>3 days</b><span>label</span></div>
+          </div>
+          <a class="btn btn-ghost" href="#">Read the Corebee story</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section>
+      <div class="kicker">FAQ</div>
+      <h2>A plain FAQ headline</h2>
+      <div style="margin-top:10px">
+        <div class="faq-item">
+          <div class="q">Do you write code into my product?</div>
+          <div class="a">Two or three lines answering the prototype-on-screenshots scope honestly, at about the length a real answer needs so nothing feels dodged.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">What do you need from me?</div>
+          <div class="a">Two lines: the short intake, access to sign up for the product, roughly this long.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">Why is it $750 right now?</div>
+          <div class="a">Two or three lines stating the early-clients reason plainly: the standing price is $1,500, this window buys the case-study shelf. About this long.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">What happens after delivery?</div>
+          <div class="a">Two lines on building it with their team or continuing with Bal, about this long.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">How fast is three days, really?</div>
+          <div class="a">Two lines on the schedule from payment to walkthrough, about this long.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- STICKY BUY RAIL -->
+  <aside class="buyrail">
+    <div class="buycard">
+      <div class="pname">Onboarding Loop · Done for you</div>
+      <div><span class="was">$1,500</span><span class="price">$750 <small>one-time</small></span></div>
+      <p class="why">One honest line on why: early-clients price while the case-study shelf builds. Length of this note.</p>
+      <a class="btn" href="#">Get started</a>
+      <div class="inc">
+        <div>Your onboarding blueprint</div>
+        <div>One moment built as a working prototype</div>
+        <div>The build roadmap</div>
+        <div>Live walkthrough, recorded</div>
+        <div>Delivered in 3 days</div>
+      </div>
+      <p class="fineprint">Stripe checkout · starts the following Monday · guarantee line TBD</p>
+    </div>
+  </aside>
+
+</div>
+
+<!-- CROSS-LINK -->
+<div class="cross">
+  <div class="wrap crossband">
+    <div>
+      <h3>One sentence asking if they'd rather build it themselves</h3>
+      <p class="small" style="max-width:520px">A supporting line of about this length naming the DIY route and its price.</p>
+    </div>
+    <a class="btn btn-ghost" href="#">Do it yourself · $129 →</a>
+  </div>
+</div>
+
+<footer><div class="wrap">Global footer · System · Product · Service · View Demo · Terms · Privacy · support@onboardingloop.com</div></footer>
+
+</body>
+</html>

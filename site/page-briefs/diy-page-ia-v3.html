@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA v3 · Do it yourself · product page</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#171717; --ink-strong:#0a0a0a; --muted:#525252; --secondary:#404040;
+  --faint:#a3a3a3; --line:#e5e5e5; --line-strong:#d4d4d4; --panel:#f5f5f5;
+  --white:#fff; --paper:#fcfcfc; --dash:#d4d4d4; --btn:#404040; --btn-fg:#fff;
+  --dot:#e4e4e4; --green:#1f9d57;
+  --font-display:Georgia,'Times New Roman',serif;
+  --radius:12px; --radius-lg:18px; --page:1280px; --pad:56px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--white);
+  font-size:17px;line-height:26px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--page);margin:0 auto;padding:0 var(--pad)}
+.kicker{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+h2{font-size:38px;line-height:48px;font-weight:600;letter-spacing:-.02em;color:var(--ink-strong);margin:12px 0 10px}
+.sub{font-size:19px;line-height:29px;color:var(--muted);max-width:640px;margin-bottom:8px}
+h3{font-size:22px;line-height:30px;font-weight:600}
+.small{font-size:15px;line-height:23px;color:var(--muted)}
+.ph{border:1.5px dashed var(--dash);border-radius:var(--radius);background:
+  repeating-linear-gradient(45deg,#fafafa,#fafafa 12px,#f3f3f3 12px,#f3f3f3 24px);
+  display:flex;align-items:center;justify-content:center;color:#9a9a9a;
+  font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:center;padding:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:50px;padding:0 24px;
+  border-radius:14px;font-size:15px;font-weight:600;background:var(--btn);color:var(--btn-fg);
+  border:1px solid var(--btn);text-decoration:none;cursor:pointer}
+.btn-ghost{background:var(--white);color:var(--secondary);border:1px solid var(--line-strong)}
+header{position:sticky;top:0;z-index:50;background:var(--white);border-bottom:1px solid var(--line)}
+.bar{max-width:var(--page);margin:0 auto;padding:0 var(--pad);height:68px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:700;font-size:16px}
+nav a{font-size:14px;font-weight:500;color:var(--secondary);text-decoration:none;margin-left:22px}
+.nav-cta{border:1px solid var(--line-strong);border-radius:10px;padding:8px 14px}
+.nav-cta-primary{background:var(--btn);color:var(--btn-fg);border-color:var(--btn)}
+.shell{max-width:var(--page);margin:0 auto;padding:0 var(--pad);display:grid;grid-template-columns:1fr 360px;gap:56px;align-items:start}
+@media(max-width:1000px){.shell{grid-template-columns:1fr}.buyrail{position:static !important;order:-1}}
+.main section{position:relative;padding:72px 0;border-bottom:1px solid var(--line)}
+.main section:last-child{border-bottom:none}
+.buyrail{position:sticky;top:92px;margin-top:72px}
+.buycard{border:1px solid var(--line-strong);border-radius:var(--radius-lg);background:#fff;
+  box-shadow:0 1px 3px rgba(16,24,40,.06);padding:30px}
+.pname{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+.price{font-size:44px;line-height:1;font-weight:600;letter-spacing:-.02em;color:var(--ink-strong)}
+.price small{font-size:14px;font-weight:500;color:var(--faint)}
+.terms{font-size:13px;color:var(--muted);margin:8px 0 18px}
+.buycard .btn{width:100%;height:52px}
+.inc{margin-top:18px}
+.inc div{font-size:14px;line-height:21px;color:var(--secondary);padding:7px 0 7px 24px;position:relative;border-bottom:1px solid var(--panel)}
+.inc div:last-child{border-bottom:none}
+.inc div::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.fineprint{font-size:12px;color:var(--faint);margin-top:12px;text-align:center}
+.hero{padding-top:64px !important;background-image:radial-gradient(var(--dot) .6px,transparent .7px);background-size:8px 8px}
+.hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(34px,3.6vw,52px);line-height:1.2;color:var(--ink-strong);margin:14px 0 16px}
+.cta-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.show3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:44px}
+@media(max-width:900px){.show3{grid-template-columns:1fr}}
+.show3 .cell .ph{aspect-ratio:4/3;margin-bottom:8px}
+.cell-label{font-size:13px;font-weight:600;color:var(--secondary)}
+.cell-sub{font-size:12.5px;color:var(--faint)}
+.logostrip{display:flex;gap:36px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.logostrip .pl{width:96px;height:24px;border:1px dashed var(--dash);border-radius:5px;background:#fafafa;
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:#ababab;font-weight:600;letter-spacing:.05em}
+.inv-row{border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;
+  display:grid;grid-template-columns:7fr 5fr;gap:28px;padding:28px;align-items:center;margin-bottom:18px}
+@media(max-width:900px){.inv-row{grid-template-columns:1fr}}
+.inv-media .ph{aspect-ratio:4/3}
+.count-line{font-size:15px;font-weight:600;color:var(--ink);margin:4px 0 8px}
+.desc{font-size:15.5px;line-height:24px;color:var(--muted)}
+.rail-step{display:grid;grid-template-columns:60px 1fr;gap:20px;padding:20px 0;border-bottom:1px solid var(--line)}
+.rail-step:last-child{border-bottom:none}
+.rail-num{font-family:var(--font-display);font-size:34px;line-height:1;color:var(--line-strong)}
+.rail-step h4{font-size:18px;font-weight:600;margin-bottom:4px}
+.rail-step p{font-size:15px;line-height:23px;color:var(--muted)}
+.founder{display:grid;grid-template-columns:4fr 8fr;gap:32px;align-items:center}
+@media(max-width:900px){.founder{grid-template-columns:1fr}}
+.founder .ph{aspect-ratio:4/5;max-width:260px}
+.resultcard{border:1px solid var(--line-strong);border-radius:var(--radius-lg);background:var(--paper);
+  display:grid;grid-template-columns:6fr 6fr;overflow:hidden;margin-top:10px}
+@media(max-width:900px){.resultcard{grid-template-columns:1fr}}
+.resultcard .media{min-height:340px;border-right:1px solid var(--line)}
+.resultcard .media .ph{height:100%;border:none;border-radius:0}
+.resultcard .body{padding:40px}
+.resultstat{display:flex;gap:32px;margin:18px 0}
+.resultstat div b{display:block;font-size:30px;font-weight:600;color:var(--ink-strong);letter-spacing:-.02em}
+.resultstat div span{font-size:13px;color:var(--faint)}
+.rquote{font-family:var(--font-display);font-size:20px;line-height:1.5;color:var(--ink-strong);margin-bottom:8px}
+.rattr{font-size:13.5px;color:var(--muted);margin-bottom:18px}
+.faq-item{border-bottom:1px solid var(--line);padding:18px 0}
+.faq-item .q{font-size:16.5px;font-weight:600;margin-bottom:6px}
+.faq-item .a{font-size:15px;line-height:23px;color:var(--muted);max-width:600px}
+.cross{background:var(--paper);border-top:1px solid var(--line)}
+.crossband{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:44px 0}
+@media(max-width:900px){.crossband{flex-direction:column;align-items:flex-start}}
+footer{border-top:1px solid var(--line);padding:36px 0;font-size:13px;color:var(--faint)}
+.wf-note{position:fixed;bottom:14px;right:14px;z-index:99;font-size:11px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;background:#111;color:#fff;border-radius:8px;padding:8px 12px;opacity:.85}
+</style>
+</head>
+<body>
+
+<div class="wf-note">IA v3 · placeholder copy, final copy comes later</div>
+
+<header>
+  <div class="bar">
+    <div class="logo">Onboarding Loop</div>
+    <nav>
+      <a href="#">System</a><a href="#">Product</a><a href="#">Service</a>
+      <a href="#" class="nav-cta">View Demo</a>
+      <a href="#" class="nav-cta nav-cta-primary">Get Started</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="main">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="kicker">Do it yourself</div>
+      <h1>A plain headline that says what the system actually is</h1>
+      <p class="sub">The complementary line: who this is for and the specific way it helps them, running to about this length and no longer.</p>
+      <div class="cta-row">
+        <a class="btn" href="#">Get started</a>
+        <a class="btn btn-ghost" href="#">Look at the demo</a>
+      </div>
+      <div class="show3">
+        <div class="cell">
+          <div class="ph">Live demo<br>(real screenshot, links out)</div>
+          <div class="cell-label">The demo, running</div>
+          <div class="cell-sub">One line on what you're seeing</div>
+        </div>
+        <div class="cell">
+          <div class="ph">Protocol thumbnails<br>(existing renders)</div>
+          <div class="cell-label">The protocols</div>
+          <div class="cell-sub">One line on what you're seeing</div>
+        </div>
+        <div class="cell">
+          <div class="ph">Style guide screen<br>(real screenshot)</div>
+          <div class="cell-label">The design system</div>
+          <div class="cell-sub">One line on what you're seeing</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOGOS (optional, flagged) -->
+    <section style="padding:44px 0">
+      <p class="small" style="color:var(--faint)">A short career-proof caption sits here, one line</p>
+      <div class="logostrip">
+        <span class="pl">Google</span><span class="pl">Microsoft</span><span class="pl">Intel</span><span class="pl">Couchbase</span><span class="pl">Nokia</span>
+      </div>
+    </section>
+
+    <!-- WHAT'S INSIDE -->
+    <section>
+      <div class="kicker">What's inside</div>
+      <h2>A headline framing the three things you get</h2>
+      <p class="sub">A subline that sets up the inventory in one sentence of roughly this length.</p>
+
+      <div class="inv-row" style="margin-top:34px">
+        <div>
+          <h3>The protocols</h3>
+          <div class="count-line">4 documents · PDF, MD, and readable web pages</div>
+          <p class="desc">Two lines defining what a protocol is on first use and what the four cover: activation, retention, expansion, and the pattern library. Sales register, concrete, about this long in total.</p>
+        </div>
+        <div class="inv-media"><div class="ph">Real protocol spread<br>(existing render)</div></div>
+      </div>
+
+      <div class="inv-row">
+        <div>
+          <h3>The Claude skill</h3>
+          <div class="count-line">1 skill file · runs as a prompt in any LLM</div>
+          <p class="desc">Two lines on what happens when you load it: your favorite LLM interviews you about your product, then the two of you build your onboarding plan together. About this long.</p>
+        </div>
+        <div class="inv-media"><div class="ph">Chat screenshot<br>(real interview exchange)</div></div>
+      </div>
+
+      <div class="inv-row">
+        <div>
+          <h3>The design system</h3>
+          <div class="count-line">Style guide + working React components · GitHub access</div>
+          <p class="desc">Two lines: the same system that powers this site and the demo, including the agent-led onboarding component, ready to carry the redesign your plan may call for. About this long.</p>
+        </div>
+        <div class="inv-media"><div class="ph">Style guide or component<br>(real screenshot)</div></div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section>
+      <div class="kicker">How it works</div>
+      <h2>From download to plan in an afternoon</h2>
+      <div class="rail" style="margin-top:24px">
+        <div class="rail-step"><div class="rail-num">01</div><div><h4>Feed it to your favorite LLM</h4><p>One concrete line describing the literal action, about this long.</p></div></div>
+        <div class="rail-step"><div class="rail-num">02</div><div><h4>It interviews you</h4><p>One line on the interview: what it asks about your product and your users.</p></div></div>
+        <div class="rail-step"><div class="rail-num">03</div><div><h4>Your plan comes out</h4><p>One line naming what the plan contains, in plain words a stranger restates correctly.</p></div></div>
+        <div class="rail-step"><div class="rail-num">04</div><div><h4>Build with the system</h4><p>One line: ship the first fix with the components, redesigning screens where the plan calls for it.</p></div></div>
+      </div>
+    </section>
+
+    <!-- FOUNDER -->
+    <section>
+      <div class="founder">
+        <div><div class="ph">Founder photo</div></div>
+        <div>
+          <div class="kicker">Who made this</div>
+          <h2 style="font-size:30px;line-height:38px">A bio headline of roughly this length</h2>
+          <p class="desc">Two lines: twenty years across marketing and product, and the fact that this is the working system behind the client business. Shorter than the About-page bio, about this long in total.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section>
+      <div class="kicker">Results</div>
+      <h2>A headline introducing the proof</h2>
+      <div class="resultcard">
+        <div class="media"><div class="ph">Big case visual<br>(before/after or demo frame)</div></div>
+        <div class="body">
+          <p class="rquote">"The client quote goes here, two or three lines of it, pulled verbatim from Jonathan and long enough to feel like a real sentence someone said."</p>
+          <p class="rattr">Name · role · Corebee</p>
+          <div class="resultstat">
+            <div><b>stat</b><span>label</span></div>
+            <div><b>stat</b><span>label</span></div>
+            <div><b>3 days</b><span>label</span></div>
+          </div>
+          <a class="btn btn-ghost" href="#">Read the Corebee story</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section>
+      <div class="kicker">FAQ</div>
+      <h2>A plain FAQ headline</h2>
+      <div style="margin-top:10px">
+        <div class="faq-item">
+          <div class="q">Is this software I install?</div>
+          <div class="a">Two or three lines answering plainly. This placeholder runs to the length a real answer would, so the section's rhythm and spacing read true in design.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">Is it a course?</div>
+          <div class="a">Two or three lines answering plainly, at roughly this length, no longer than this.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">Which LLM do I need?</div>
+          <div class="a">Two lines naming the mainstream assistants and how the skill behaves in each, about this long.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">Couldn't I just ask my LLM to do this for free?</div>
+          <div class="a">Three lines answering the technical founder's real objection, honestly, at about this length so the answer has room to actually land rather than dodge.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">My product isn't live yet. Should I buy this?</div>
+          <div class="a">Two lines, honest about who gets the most from it, roughly this long.</div>
+        </div>
+        <div class="faq-item">
+          <div class="q">How do refunds and updates work?</div>
+          <div class="a">Two lines covering both plainly, at about this length.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- STICKY BUY RAIL -->
+  <aside class="buyrail">
+    <div class="buycard">
+      <div class="pname">Onboarding Loop · Do it yourself</div>
+      <div class="price">$129 <small>one-time</small></div>
+      <p class="terms">Pay once · free updates · no subscription</p>
+      <a class="btn" href="#">Get started</a>
+      <div class="inc">
+        <div>The protocols · 4 documents</div>
+        <div>The Claude skill</div>
+        <div>The design system · GitHub access</div>
+        <div>Free updates, forever</div>
+      </div>
+      <p class="fineprint">Stripe checkout · instant access · refund line</p>
+    </div>
+  </aside>
+
+</div>
+
+<!-- CROSS-LINK -->
+<div class="cross">
+  <div class="wrap crossband">
+    <div>
+      <h3>One sentence asking if they'd rather have it done for them</h3>
+      <p class="small" style="max-width:520px">A supporting line of about this length naming what the done-for-you adds and its price.</p>
+    </div>
+    <a class="btn btn-ghost" href="#">Done for you · $750 →</a>
+  </div>
+</div>
+
+<footer><div class="wrap">Global footer · System · Product · Service · View Demo · Terms · Privacy · support@onboardingloop.com</div></footer>
+
+</body>
+</html>

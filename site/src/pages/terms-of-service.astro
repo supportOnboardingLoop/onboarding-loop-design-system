@@ -1,0 +1,17 @@
+---
+/*
+ * /terms-of-service — the legal-page template (LegalPage) inside the shared
+ * PageShell chrome (header + footer). The content lives in the React island so its
+ * JSX prose crosses no serialization boundary; client:load hydrates the hero reveal
+ * + the sticky-tab scroll-spy.
+ */
+import PageShell from "../layouts/PageShell.astro"
+import TermsPage from "../TermsPage"
+---
+
+<PageShell
+  title="Terms of Service · The Onboarding Loop Protocols"
+  description="The terms governing your access to and use of onboardingloop.ai and the digital products sold on it."
+>
+  <TermsPage client:load />
+</PageShell>

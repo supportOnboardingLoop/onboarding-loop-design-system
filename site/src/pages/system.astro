@@ -1,0 +1,21 @@
+---
+/*
+ * /system — the system page: the current rebuilt onboardingloop.ai landing,
+ * relocated here as-is so building the new home at `/` doesn't orphan it (and so
+ * the global header's "System" link resolves). This is the "move" only; the
+ * dedicated /system session still owes the chrome swap to the global header/
+ * footer + repointing its CTAs to the home fork (and the new day-in-the-life
+ * section). Until then it keeps its own landing-variant TopBar + in-stage footer,
+ * with same-page section anchors, exactly as it rendered at `/`.
+ */
+import Base from "../layouts/Base.astro"
+import { TopBar } from "@/components/web/TopBar"
+import Landing from "../Landing"
+---
+
+<Base title="The System · Onboarding Loop">
+  <TopBar client:load />
+  <main id="top">
+    <Landing client:load />
+  </main>
+</Base>

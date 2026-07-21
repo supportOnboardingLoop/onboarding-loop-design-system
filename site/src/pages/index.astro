@@ -1,0 +1,26 @@
+---
+/*
+ * / (home) — the new marketing home: five screens, huge display type, one idea
+ * per screen (the Polsia rhythm). Composes Base directly with the GLOBAL header/
+ * footer. The header's Get Started routes to the fork on this page (#fork);
+ * the fork cards route to /product and /service. HomePage is static (no island):
+ * every screen is a sentence plus at most one element, links + CSS only.
+ *
+ * The previous `/` content (the system landing) now lives at /system.
+ */
+import Base from "../layouts/Base.astro"
+import { TopBar } from "@/components/web/TopBar"
+import { Footer } from "@/components/web/Footer"
+import HomePage from "../HomePage"
+---
+
+<Base
+  title="Onboarding Loop — onboarding your product should have shipped with"
+  description="Signups arrive; most quit before they pay. Onboarding Loop is the system that fixes it: do it yourself for $129, or have it built on your product for $750."
+>
+  <TopBar client:load variant="global" getStartedHref="#fork" />
+  <main id="top">
+    <HomePage />
+  </main>
+  <Footer client:load reveal variant="global" />
+</Base>

@@ -1,0 +1,17 @@
+---
+/*
+ * /case-study-corebee — the Corebee case study inside the shared PageShell chrome
+ * (TopBar + Footer). Content is the React island; client:load hydrates the hero
+ * reveal, the before/after slider, the scroll reveals, the header theming's
+ * data-bar sections, and the live-demo fallback.
+ */
+import PageShell from "../layouts/PageShell.astro"
+import CaseStudyCorebee from "../CaseStudyCorebee"
+---
+
+<PageShell
+  title="Corebee — Case Study · Onboarding Loop"
+  description="How Corebee turned setup into its agent's first job. A one-week Activation Blueprint by the Onboarding Loop."
+>
+  <CaseStudyCorebee client:load />
+</PageShell>

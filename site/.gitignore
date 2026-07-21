@@ -1,0 +1,4 @@
+# Astro site build + local toolchain (kept out of the design system repo).
+node_modules/
+dist/
+.astro/

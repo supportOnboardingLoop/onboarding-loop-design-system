@@ -1,0 +1,19 @@
+/* The site's global stylesheet + Tailwind entry.
+
+   It pulls in the design system's Tailwind layer (theme.css -> tailwindcss +
+   tokens + kit component CSS) and the web layer (web.css), in that order so the
+   marketing scope overrides the collisions.
+
+   Tailwind v4 auto-detects its content sources rooted at the Astro project
+   (site/), but the design system's components it renders live at the repo root,
+   OUTSIDE site/. Without naming them, the utility classes those components use
+   (the Button's gradient fill, h-[48px], rounded-[24px], focus ring, etc.) are
+   never generated. @source points Tailwind at the repo-root component + lib
+   trees so their classes are emitted. Paths are relative to this file. */
+@import "../../../theme.css";
+@import "../../../components/web/web.css";
+@import "../../../components/web/product.css";
+@import "../../../components/web/home.css";
+
+@source "../../../components";
+@source "../../../lib";
