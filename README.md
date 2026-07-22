@@ -1,4 +1,4 @@
-# Onboarding Loop — Design System
+# The OnboardingLoop System
 
 The single, reusable source of truth for OL brand: colors, type, spacing, radius,
 and the base UI primitives. Built so any new product (Loop OS, the Blueprint
